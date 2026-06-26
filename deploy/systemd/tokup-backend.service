@@ -1,0 +1,15 @@
+ [Unit]
+ Description=TokUp Backend API
+ After=network.target
+ 
+ [Service]
+ Type=simple
+ User=tokup
+ WorkingDirectory=/opt/tokup/backend
+ EnvironmentFile=/opt/tokup/backend/.env
+ ExecStart=/opt/tokup/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+ Restart=on-failure
+ RestartSec=5
+ 
+ [Install]
+ WantedBy=multi-user.target

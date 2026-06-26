@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokUp · 脉充</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 360px;
+      min-height: 400px;
+      background: #0A0A0F;
+      color: #fff;
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding: 20px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .logo-icon { width: 32px; height: 32px; background: rgba(16,185,129,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #10B981; font-size: 18px; font-weight: 700; }
+    .logo-text { font-size: 16px; font-weight: 600; }
+    .logo-sub { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; }
+    .card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .balance { font-size: 28px; font-weight: 700; color: #10B981; }
+    .balance-label { font-size: 10px; color: rgba(255,255,255,0.2); margin-top: 2px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);
+      background: rgba(16,185,129,0.08); color: #10B981;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+      text-decoration: none; margin-top: 8px;
+    }
+    .btn:hover { background: rgba(16,185,129,0.15); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat { text-align: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+    .stat-value { font-size: 16px; font-weight: 600; }
+    .stat-label { font-size: 9px; color: rgba(255,255,255,0.25); margin-top: 2px; }
+    .footer { text-align: center; font-size: 10px; color: rgba(255,255,255,0.15); margin-top: 16px; }
+    .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block; box-shadow: 0 0 6px rgba(16,185,129,0.5); margin-right: 4px; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <div class="logo-icon">T</div>
+    <div><div class="logo-text">TokUp</div><div class="logo-sub">脉充</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Balance</div>
+    <div class="balance" id="balance">—</div>
+    <div class="balance-label" id="keys-count">Loading...</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="today-usage">—</div><div class="stat-label">Today Usage</div></div>
+    <div class="stat"><div class="stat-value" id="status"><span class="online-dot"></span>Online</div><div class="stat-label">Gateway</div></div>
+  </div>
+  <a href="http://localhost:3000" class="btn" target="_blank">Open TokUp Dashboard →</a>
+  <div class="footer">AI API Token Management Platform</div>
+  <script src="popup.js"></script>
+</body>
+</html>

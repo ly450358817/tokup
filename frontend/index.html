@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TokUp · 脉充 — 你的AI能量仪表盘</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  <div id="err" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0A0A0F;color:#EF4444;padding:40px;font-family:monospace;font-size:14px;z-index:9999;overflow:auto;"></div>
+<script>
+window.onerror = function(m,u,l,c,e) {
+  var el = document.getElementById('err');
+  el.style.display = 'block';
+  el.textContent = m + '
+' + (e ? e.stack : (u + ':' + l));
+};
+window.addEventListener('unhandledrejection', function(e) {
+  document.getElementById('err').style.display = 'block';
+  document.getElementById('err').textContent = e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'Unknown';
+});
+</script>
+</body>
+</html>
