@@ -3,10 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="TokUp · 脉充 — AI API Token 一站式充值管理平台。支持 GPT-4o、Claude、DeepSeek 等多模型，统一余额、按量计费。支付宝/微信充值，即充即用。" />
+    <meta name="keywords" content="AI API,Token充值,GPT-4o,DeepSeek,Claude,AI中转站,AI代理,API Key管理,脉充,TokUp" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://tokup.net/" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="TokUp · 脉充 — AI API Token 充值管理平台" />
+    <meta property="og:description" content="统一余额、多模型混用、按量计费。支持 GPT-4o / DeepSeek / Claude，无需绑卡，即充即用。" />
+    <meta property="og:url" content="https://tokup.net/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TokUp · 脉充 — AI API Token 充值管理平台" />
+    <meta name="twitter:description" content="统一余额、多模型混用、按量计费。支持 GPT-4o / DeepSeek / Claude。" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TokUp · 脉充 — 你的AI能量仪表盘</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <title>TokUp · 脉充 — AI API Token 充值管理平台</title>
+    
+    
+  
+    <style>
+      #root {
+        min-height: 100vh; background: #0A0A0F;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #root:empty::after {
+        content: '';
+        width: 24px; height: 24px;
+        border: 2px solid rgba(16,185,129,0.3);
+        border-top-color: #10B981;
+        border-radius: 50%;
+        animation: tokup-spin 0.8s linear infinite;
+      }
+      @keyframes tokup-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
     <div id="root"></div>

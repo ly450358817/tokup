@@ -23,7 +23,7 @@ ALGORITHM = "HS256"
 # --- Rate limiter (in-memory, per IP) ---
 _rate_limit_store: dict = {}
 
-def _rate_limit(key: str, max_attempts: int = 20, window: int = 60):
+def _rate_limit(key: str, max_attempts: int = 50, window: int = 60):
     now = time.time()
     timestamps = _rate_limit_store.get(key, [])
     timestamps = [t for t in timestamps if now - t < window]
@@ -33,14 +33,8 @@ def _rate_limit(key: str, max_attempts: int = 20, window: int = 60):
     _rate_limit_store[key] = timestamps
 
 def _validate_password(password: str):
-    if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
-    if not any(c.isupper() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs an uppercase letter")
-    if not any(c.islower() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs a lowercase letter")
-    if not any(c.isdigit() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs a digit")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
 def _validate_email(email: str):
     if "@" not in email or "." not in email.split("@")[-1]:
@@ -51,7 +45,7 @@ ALGORITHM = "HS256"
 # --- Rate limiter (in-memory, per IP) ---
 _rate_limit_store: dict = {}
 
-def _rate_limit(key: str, max_attempts: int = 20, window: int = 60):
+def _rate_limit(key: str, max_attempts: int = 50, window: int = 60):
     now = time.time()
     timestamps = _rate_limit_store.get(key, [])
     timestamps = [t for t in timestamps if now - t < window]
@@ -61,14 +55,8 @@ def _rate_limit(key: str, max_attempts: int = 20, window: int = 60):
     _rate_limit_store[key] = timestamps
 
 def _validate_password(password: str):
-    if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
-    if not any(c.isupper() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs an uppercase letter")
-    if not any(c.islower() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs a lowercase letter")
-    if not any(c.isdigit() for c in password):
-        raise HTTPException(status_code=400, detail="Password needs a digit")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
 def _validate_email(email: str):
     if "@" not in email or "." not in email.split("@")[-1]:
@@ -150,7 +138,7 @@ def get_me(user: User = Depends(get_current_user)):
         id=user.id,
         email=user.email,
         nickname=user.nickname,
-        token_balance=user.token_balance,
-        total_recharged=user.total_recharged,
+        token_balance=round(user.token_balance / 100, 2),
+        total_recharged=round(user.total_recharged / 100, 2),
         is_active=user.is_active,
     )

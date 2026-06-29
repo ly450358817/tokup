@@ -51,3 +51,10 @@ export const keysApi = {
   create: (name = '', monthly_cap = 0, daily_cap = 0) => api.post('/keys', { name, monthly_cap, daily_cap }).then((r) => r.data),
   delete: (id: string) => api.delete(`/keys/${id}`).then((r) => r.data),
 };
+
+export const subscriptionApi = {
+  plans: () => api.get('/subscription/plans').then((r) => r.data),
+  purchase: (planId: string) =>
+    api.post(`/subscription/purchase/${planId}`).then((r) => r.data),
+  status: () => api.get('/subscription/status').then((r) => r.data),
+};

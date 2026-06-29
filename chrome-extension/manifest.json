@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "AI API Token 充值管理 — 检测到访问 AI 官网时推荐 TokUp",
   "permissions": ["storage", "tabs"],
-  "host_permissions": ["https://*.openai.com/*", "https://*.anthropic.com/*", "https://*.tokup.io/*"],
+  "host_permissions": ["https://*.openai.com/*", "https://*.anthropic.com/*", "https://*.deepseek.com/*", "https://tokup.net/*"],
   "action": { "default_popup": "popup.html" },
   "background": { "service_worker": "background.js" },
   "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }

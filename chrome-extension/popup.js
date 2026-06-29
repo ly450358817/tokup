@@ -1,5 +1,5 @@
 // TokUp Browser Extension
-const API = 'http://localhost:8000/api';
+const API = 'https://tokup.net/api';
 
 async function loadData() {
   try {
@@ -8,7 +8,7 @@ async function loadData() {
       document.getElementById('balance').textContent = 'Login required';
       document.getElementById('keys-count').textContent = 'Click to login →';
       document.querySelector('.btn').textContent = 'Login to TokUp →';
-      document.querySelector('.btn').href = 'http://localhost:3000/#/login';
+      document.querySelector('.btn').href = 'https://tokup.net/#/login';
       return;
     }
 
@@ -30,7 +30,7 @@ async function loadData() {
 chrome.storage.local.get('tokup_token', (data) => {
   if (!data.tokup_token) {
     // Try to get from localStorage (if user is logged in on the main site)
-    chrome.tabs.query({ url: 'http://localhost:3000/*' }, (tabs) => {
+    chrome.tabs.query({ url: 'https://tokup.net/*' }, (tabs) => {
       if (tabs.length > 0) {
         chrome.scripting.executeScript({
           target: { tabId: tabs[0].id },

@@ -82,7 +82,7 @@ export default function DashboardPage() {
   const dailyTrend = stats?.daily_trend || [];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Header: title left, sync info right */}
       <div className="flex items-center justify-between">
         <div>

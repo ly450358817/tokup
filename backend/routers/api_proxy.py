@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User, ApiKey
 from services.ai_service import proxy_request, calculate_cost
-from services.token_service import deduct_token
+from routers.auth import get_current_user
+    from services.token_service import deduct_token
 
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
@@ -64,3 +65,36 @@ def list_models():
             "object": "model",
         })
     return {"data": models}
+
+
+class TestChatReq(BaseModel):
+    model: str = "deepseek-chat"
+    messages: list = []
+
+
+@router.post("/test/chat")
+async def test_chat(req: TestChatReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Test chat with JWT auth (no API Key needed)"""
+    from services.ai_service import proxy_request
+    from routers.auth import get_current_user
+    from services.token_service import deduct_token
+
+    result = await proxy_request(req.model, req.messages, stream=False)
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+
+    cost = result.get("usage", {}).get("cost", 0.01)
+    token_cost = round(cost * 100)
+    if token_cost < 1:
+        token_cost = 1
+
+    deduct = deduct_token(user.id, token_cost, db, f"Test: {req.model}")
+    if not deduct["success"]:
+        raise HTTPException(status_code=402, detail="余额不足")
+
+    return {
+        "success": True,
+        "data": result["data"],
+        "cost": cost,
+        "balance_remaining": deduct["balance"],
+    }

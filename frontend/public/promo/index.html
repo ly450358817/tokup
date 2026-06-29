@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>推广 TokUp · 脉充</title>
+<style>body{background:#0A0A0F;color:#fff;font-family:Inter,-apple-system,sans-serif;max-width:700px;margin:auto;padding:40px 20px}
+h1{font-size:22px;font-weight:600;margin-bottom:4px}.sub{color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:30px}
+.card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px;margin-bottom:20px}
+h2{font-size:15px;font-weight:600;margin-bottom:12px;color:rgba(255,255,255,0.8)}
+pre{background:#000;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px;font-size:12px;color:#10B981;overflow-x:auto;margin:12px 0}
+code{font-family:monospace;font-size:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#10B981;text-decoration:none;font-size:13px;margin:8px 4px;transition:all 0.2s}
+.btn:hover{background:rgba(16,185,129,0.2)}
+.copy-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);cursor:pointer;padding:6px 12px;border-radius:6px;font-size:11px;float:right}
+.copy-btn:hover{background:rgba(255,255,255,0.1)}
+</style></head>
+<body>
+<h1>🚀 TokUp · 脉充 推广工具包</h1>
+<p class="sub">一键复制，到处粘贴</p>
+
+<div class="card">
+<h2>📝 推荐语（朋友圈/微信群）</h2>
+<pre id="post1" style="color:rgba(255,255,255,0.7);white-space:pre-wrap">
+💡 发现一个好东西——TokUp·脉充
+
+AI API Token 充值平台，一句话总结：
+充钱 → 拿 API Key → 调 GPT-4o / DeepSeek → 自动扣费
+
+✅ 不用绑卡
+✅ 不用注册 OpenAI 账号
+✅ 微信扫码就能充值
+✅ 支持 GPT-4o、DeepSeek 所有模型
+✅ OpenAI 兼容接口，一行代码接入
+
+我就在用，省心。试试不亏 👇
+https://tokup.net</pre>
+<button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('post1').textContent);this.textContent='已复制!'">复制</button>
+</div>
+
+<div class="card">
+<h2>🐦 Twitter / 即刻 短帖</h2>
+<pre id="post2" style="color:rgba(255,255,255,0.7);white-space:pre-wrap">
+做了一个 AI API 充值平台 TokUp·脉充
+充 Token → 拿 Key → 调 GPT-4o/DeepSeek
+
+不用绑信用卡，微信扫码付款
+OpenAI 兼容接口，改个 base_url 就行
+审美在线，暗黑高级感 UI
+
+https://tokup.net</pre>
+<button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('post2').textContent);this.textContent='已复制!'">复制</button>
+</div>
+
+<div class="card">
+<h2>🔌 嵌入脚本（别人网站贴一行就能挂上你的品牌）</h2>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">把下面这行代码放到任何 HTML 页面里，右下角会出现 TokUp 品牌标。</p>
+<pre>&lt;script src="https://tokup.net/promo/widget.js" data-theme="dark"&gt;&lt;/script&gt;</pre>
+<p style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:8px">主题参数: <code>data-theme="dark|light"</code> · 位置: <code>data-position="bottom-right|bottom-left"</code></p>
+</div>
+
+<div class="card">
+<h2>⬇️ Chrome 扩展</h2>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px">手动安装：下载解压 → Chrome 打开 chrome://extensions → 开启开发者模式 → 加载已解压的扩展 → 选择文件夹</p>
+<a class="btn" href="/ext/" download>📦 下载扩展</a>
+</div>
+
+<div class="card">
+<h2>🔗 推广链接</h2>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">分享时带上 <code>?ref=你的ID</code>，以后好统计来源。</p>
+<pre>https://tokup.net/?ref=my-promo</pre>
+</div>
+
+<div class="card">
+<h2>📡 SEO 提交</h2>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">提交给百度收录：</p>
+<pre>https://ziyuan.baidu.com/linksubmit/index （提交网站首页）
+https://ziyuan.baidu.com/sitemap （提交 sitemap）
+sitemap 地址: https://tokup.net/sitemap.xml</pre>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:12px">提交给 Google：</p>
+<pre>https://search.google.com/search-console （添加 tokup.net → 提交 sitemap）</pre>
+</div>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(b => {
+  b.onclick = function() {
+    var pre = this.previousElementSibling;
+    navigator.clipboard.writeText(pre.textContent);
+    this.textContent = '已复制!';
+    setTimeout(() => this.textContent = '复制', 2000);
+  };
+});
+</script>
+</body></html>
+<div class="card">
+<h2>🔖 书签工具（Bookmarklet）</h2>
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">拖拽下面的链接到浏览器书签栏，一键打开 TokUp。</p>
+<a href="javascript:(function(){window.open('https://tokup.net/?ref=bookmark','tokup','width=1300,height=850');})();" style="display:inline-block;padding:10px 20px;border-radius:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#10B981;text-decoration:none;font-size:13px;cursor:grab;">🔖 TokUp 一键直达</a>
+</div>

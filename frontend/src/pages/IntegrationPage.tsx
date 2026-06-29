@@ -77,7 +77,7 @@ export default function IntegrationPage() {
 
   
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('integration.title')}</h1>
@@ -101,6 +101,50 @@ export default function IntegrationPage() {
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-[13px] font-medium text-white/70 mb-2">{tr('integration.baseUrlLabel')}</h3>
         <div className="bg-[#0A0A0F] rounded-xl px-4 py-3 font-mono text-[13px] text-emerald-400 select-all">https://api.tokup.io/v1</div>
+      </div>
+
+      {/* {tr('integration.sdkCompat')} */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">
+          <span className="flex items-center gap-2"><ExternalLink size={14} /> {tr('integration.sdkCompat')}</span>
+        </h3>
+        <div className="space-y-2 text-[12px] text-white/50">
+          <p>{tr('integration.sdkCompatDesc')}</p>
+          <ul className="list-disc list-inside space-y-1 pt-2">
+            <li><span className="text-white/60">Python</span> — <code className="font-mono text-[11px] text-emerald-400">pip install openai</code></li>
+            <li><span className="text-white/60">Node.js</span> — <code className="font-mono text-[11px] text-emerald-400">npm install openai</code></li>
+            <li><span className="text-white/60">Go</span> — <code className="font-mono text-[11px] text-emerald-400">go get github.com/openai/openai-go</code></li>
+            <li><span className="text-white/60">Any OpenAI-compatible client</span> — Just change the base URL</li>
+          </ul>
+        </div>
+      </div>
+
+
+      {/* Client Setup Guide */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">
+          <span className="flex items-center gap-2"><ExternalLink size={14} /> 客户端配置</span>
+        </h3>
+        <div className="space-y-4 text-[12px] text-white/50 leading-relaxed">
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <p className="text-white/70 font-medium mb-2">OpenCat / ChatBox / NextChat</p>
+            <ol className="list-decimal list-inside space-y-2">
+              <li>打开客户端设置 → API 设置</li>
+              <li>接口地址（Base URL）改为：<code className="text-emerald-400 font-mono text-[11px]">http://43.139.189.112/v1</code></li>
+              <li>API Key 填入你在 TokUp 创建的 Key</li>
+              <li>模型选择 <code className="text-emerald-400 font-mono text-[11px]">deepseek-chat</code> 或 <code className="text-emerald-400 font-mono text-[11px]">gpt-4o</code></li>
+              <li>保存即可使用</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      {/* Config QR */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">扫码配置</h3>
+        <p className="text-[12px] text-white/40 mb-4">扫描二维码获取接口地址和配置信息</p>
+        <img src="/assets/qr/config.png" alt="配置二维码" className="w-36 h-36 mx-auto rounded-xl bg-white p-2"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <p className="text-[11px] text-white/30 mt-3">配置信息: http://43.139.189.112/v1</p>
       </div>
 
       {/* {tr('integration.codeExamples')} */}
@@ -160,20 +204,31 @@ export default function IntegrationPage() {
         </div>
       </div>
 
-      {/* {tr('integration.sdkCompat')} */}
+      {/* Client Setup Guide */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-[13px] font-medium text-white/70 mb-4">
-          <span className="flex items-center gap-2"><ExternalLink size={14} /> {tr('integration.sdkCompat')}</span>
+          <span className="flex items-center gap-2"><ExternalLink size={14} /> 客户端配置</span>
         </h3>
-        <div className="space-y-2 text-[12px] text-white/50">
-          <p>{tr('integration.sdkCompatDesc')}</p>
-          <ul className="list-disc list-inside space-y-1 pt-2">
-            <li><span className="text-white/60">Python</span> — <code className="font-mono text-[11px] text-emerald-400">pip install openai</code></li>
-            <li><span className="text-white/60">Node.js</span> — <code className="font-mono text-[11px] text-emerald-400">npm install openai</code></li>
-            <li><span className="text-white/60">Go</span> — <code className="font-mono text-[11px] text-emerald-400">go get github.com/openai/openai-go</code></li>
-            <li><span className="text-white/60">Any OpenAI-compatible client</span> — Just change the base URL</li>
-          </ul>
+        <div className="space-y-4 text-[12px] text-white/50 leading-relaxed">
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <p className="text-white/70 font-medium mb-2">OpenCat / ChatBox / NextChat</p>
+            <ol className="list-decimal list-inside space-y-2">
+              <li>打开客户端设置 → API 设置</li>
+              <li>接口地址（Base URL）改为：<code className="text-emerald-400 font-mono text-[11px]">http://43.139.189.112/v1</code></li>
+              <li>API Key 填入你在 TokUp 创建的 Key</li>
+              <li>模型选择 <code className="text-emerald-400 font-mono text-[11px]">deepseek-chat</code> 或 <code className="text-emerald-400 font-mono text-[11px]">gpt-4o</code></li>
+              <li>保存即可使用</li>
+            </ol>
+          </div>
         </div>
+      </div>
+      {/* Config QR */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">扫码配置</h3>
+        <p className="text-[12px] text-white/40 mb-4">扫描二维码获取接口地址和配置信息</p>
+        <img src="/assets/qr/config.png" alt="配置二维码" className="w-36 h-36 mx-auto rounded-xl bg-white p-2"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <p className="text-[11px] text-white/30 mt-3">配置信息: http://43.139.189.112/v1</p>
       </div>
 
       {/* Endpoints */}

@@ -15,19 +15,22 @@ import {
   Coins,
   Code,
   Activity,
+  Globe,
   BookOpen,
 } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: LayoutDashboard, href: '/' },
+  { id: 'transfer-station', labelKey: 'nav.transferStation', icon: Globe, href: '/transfer-station' },
   { id: 'recharge', labelKey: 'nav.recharge' as const, icon: Zap, href: '', accent: true },
+  { id: 'pricing', labelKey: '订阅', icon: Coins, href: '/pricing' },
   { id: 'keys', labelKey: 'nav.apiKeys' as const, icon: Key, href: '/keys' },
   { id: 'transactions', labelKey: 'nav.transactions' as const, icon: History, href: '/transactions' },
-  { id: 'pricing', labelKey: 'nav.pricing' as const, icon: Coins, href: '/pricing' },
   { id: 'integration', labelKey: 'nav.integration', icon: BookOpen, href: '/integration' },
-  { id: 'docs', labelKey: 'API Docs', icon: Code, href: '/docs' },
+  { id: 'docs', labelKey: 'nav.docs', icon: Code, href: '/docs' },
   { id: 'monitor', labelKey: 'nav.monitor', icon: Activity, href: '/monitor' },
   { id: 'settings', labelKey: 'nav.settings' as const, icon: Settings, href: '/settings' },
+  { id: 'analytics', labelKey: 'nav.analytics', icon: Activity, href: '/analytics' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -67,7 +70,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F]">
+    <div className="flex h-screen bg-[#0A0A0F] relative overflow-hidden">
+      <div className="aurora-bg" />
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-20 lg:hidden"
@@ -122,6 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </button>
               );
             }
+            if (item.id === 'analytics' && !user?.is_admin) return null;
             return (
               <a
                 key={item.id}
@@ -183,9 +188,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </div>
                   {/* Details */}
                   <div className="space-y-1.5 px-1">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-[10px] text-white/30">{tr('settings.nickname') || 'Nickname'}</span>
-                      <span className="text-[11px] text-white/60">{user?.nickname || '-'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-white/60">{user?.nickname || '-'}</span>
+                        <button
+                          onClick={() => {
+                            const name = prompt('输入新昵称:', user?.nickname || '');
+                            if (name && name.trim()) {
+                              fetch('/api/settings/profile/nickname', {
+                                method: 'POST',
+                                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tokup_token'), 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ nickname: name.trim() })
+                              }).then(r => r.json()).then(d => { if (d.success) window.location.reload(); });
+                            }
+                          }}
+                          className="text-[10px] text-emerald-400/40 hover:text-emerald-400 transition-all"
+                        >
+                          编辑
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] text-white/30">ID</span>

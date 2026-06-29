@@ -59,7 +59,7 @@ export default function MonitorPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -110,7 +110,7 @@ export default function MonitorPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <p className="text-[28px] font-bold text-white">{data?.uptime || '99.97%'}</p>
           </div>
-          <p className="text-[10px] text-white/20 mt-1">Uptime · Online</p>
+          <p className="text-[10px] text-white/20 mt-1">Uptime · {tr("monitor.online")}</p>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export default function MonitorPage() {
                   <td className="py-3 px-4 text-right">
                     <span className="text-white/60">{m.avg_latency_ms}ms</span>
                     <span className={`ml-2 text-[10px] ${m.avg_latency_ms < 400 ? 'text-emerald-400' : m.avg_latency_ms < 700 ? 'text-yellow-400' : 'text-red-400'}`}>
-                      {m.avg_latency_ms < 400 ? 'Fast' : m.avg_latency_ms < 700 ? 'Moderate' : 'Slow'}
+                      {m.avg_latency_ms < 400 ? tr("monitor.fast") : m.avg_latency_ms < 700 ? tr("monitor.moderate") : tr("monitor.slow")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -188,7 +188,7 @@ export default function MonitorPage() {
       {/* Info */}
       <div className="flex items-center justify-between text-[10px] text-white/20">
         <span>Data refreshes every 30s</span>
-        <span>Last updated: {data?.last_updated ? new Date(data.last_updated).toLocaleTimeString() : '-'}</span>
+        <span>{tr("monitor.lastUpdated")} {data?.last_updated ? new Date(data.last_updated).toLocaleTimeString() : '-'}</span>
       </div>
     </div>
   );

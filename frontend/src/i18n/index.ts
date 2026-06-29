@@ -13,8 +13,22 @@ export type TranslationKeys = typeof en;
 
 const translations: Record<Lang, TranslationKeys> = { en, zh, ja, ko, fr, de, es, pt, ru };
 
+function deepMerge(target: any, source: any): any {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(result[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
 export function getTranslations(lang: Lang): TranslationKeys {
-  return translations[lang] || translations.zh;
+  if (lang === 'en') return translations.en;
+  // Fall back to English for any missing keys
+  return deepMerge(translations.en, translations[lang] || {}) as TranslationKeys;
 }
 
 export interface LangOption {

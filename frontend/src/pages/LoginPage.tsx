@@ -120,6 +120,12 @@ export default function LoginPage() {
               <p className="text-[12px] text-red-400 text-center">{error}</p>
             )}
 
+            {mode === 'register' && !error && (
+              <p className="text-[10px] text-white/20 text-center leading-relaxed">
+                At least 6 characters
+              </p>
+            )}
+
             <button
               type="submit"
               disabled={loading}
