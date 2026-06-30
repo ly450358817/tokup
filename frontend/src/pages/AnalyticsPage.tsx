@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useLang } from '../contexts/LanguageContext';
-import { Activity, Users, MousePointerClick, Clock, Globe } from 'lucide-react';
+import { Activity, Users } from 'lucide-react';
 
 export default function AnalyticsPage() {
-  const { t } = useLang();
-  const tr = (key: string): string => {
-    const ks = key.split('.');
-    let r: any = t;
-    for (const k of ks) r = r?.[k];
-    return r || key;
-  };
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,7 +14,7 @@ export default function AnalyticsPage() {
     })
       .then(r => r.json())
       .then(d => { setStats(d); setLoading(false); })
-      .catch(e => { setError('加载失败'); setLoading(false); });
+      .catch(() => { setError('加载失败'); setLoading(false); });
   }, []);
 
   if (loading) return <div className="flex items-center justify-center h-full"><div className="text-white/30 text-sm">Loading...</div></div>;
@@ -30,7 +22,7 @@ export default function AnalyticsPage() {
   if (!stats) return <div className="flex items-center justify-center h-full"><div className="text-white/30 text-sm">No data</div></div>;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full page-container space-y-6">
       <div>
         <h1 className="text-[20px] font-semibold text-white">数据分析</h1>
         <p className="text-[12px] text-white/30 mt-1">网站访问统计</p>

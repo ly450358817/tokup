@@ -18,8 +18,10 @@ import {
 } from 'recharts';
 
 const MODELS = [
+  { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '30/1M input' },
+  { id: 'gpt-4.1', label: 'GPT-4.1', provider: 'OpenAI', cost: '15/1M input' },
   { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '20/1M input' },
-  { id: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic', cost: '15/1M input' },
+  { id: 'claude-4-sonnet', label: 'Claude 4 Sonnet', provider: 'Anthropic', cost: '20/1M input' },
   { id: 'deepseek-chat', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '0.5/1M input' },
 ];
 
@@ -82,7 +84,7 @@ export default function DashboardPage() {
   const dailyTrend = stats?.daily_trend || [];
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       {/* Header: title left, sync info right */}
       <div className="flex items-center justify-between">
         <div>

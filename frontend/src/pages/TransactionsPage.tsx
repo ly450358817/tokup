@@ -50,7 +50,7 @@ export default function TransactionsPage() {
   useEffect(() => { loadTxns(); }, []);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full page-container space-y-6">
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('nav.transactions')}</h1>
         <p className="text-[12px] text-white/30 mt-1">Transaction history</p>

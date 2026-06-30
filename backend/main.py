@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine, Base, SessionLocal
 from models import User
-from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, ws as ws_router
+from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, ws as ws_router
 from services.security_service import AISecurityMiddleware, ip_tracker
 
 # ── 环境配置 ──
@@ -67,6 +67,7 @@ app.include_router(security.router)
 app.include_router(monitor.router)
 app.include_router(settings.router)
 app.include_router(ws_router.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health")

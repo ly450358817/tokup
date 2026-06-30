@@ -77,7 +77,7 @@ export default function IntegrationPage() {
 
   
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('integration.title')}</h1>

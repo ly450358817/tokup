@@ -18,7 +18,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('nav.settings')}</h1>
         <p className="text-[12px] text-white/30 mt-1">{tr('settings.preferences')}</p>

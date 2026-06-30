@@ -246,7 +246,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="text-[11px] text-white/30">{tr('dashboard.online')}</span>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 lg:px-4 py-4 lg:py-8">{children}</div>
       </main>
     </div>
   );

@@ -202,3 +202,9 @@
   66% { transform: translate(-40px, 80px) scale(0.9); }
   100% { transform: translate(60px, -40px) scale(1.05); }
 }
+
+/* Force full-width content on all pages */
+.page-container {
+  width: 100% !important;
+  max-width: none !important;
+}

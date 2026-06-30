@@ -11,7 +11,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       <div>
         <h1 className="text-[20px] font-semibold text-white">Contact Support</h1>
         <p className="text-[12px] text-white/30 mt-1">AI-powered support — ask anything</p>

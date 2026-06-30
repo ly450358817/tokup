@@ -26,12 +26,15 @@ interface ModelPrice {
 }
 
 const models: ModelPrice[] = [
+  { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', note: 'Latest flagship' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', note: 'Fast reasoning' },
   { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: 'Best for most tasks' },
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: 'Fast & cheap' },
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', note: 'Best for reasoning' },
-  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', note: 'Fastest Claude' },
+  { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', note: 'Best for reasoning' },
+  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', note: 'Solid reasoning' },
+  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', note: 'Fastest Claude' },
   { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: 'Best value' },
-  { id: 'deepseek-coder', name: 'DeepSeek Coder', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: 'Code specialist' },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1', output: '¥2.0', note: 'Deep reasoning' },
 ];
 
 export default function TransferStationPage() {
@@ -42,7 +45,7 @@ export default function TransferStationPage() {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeKey, setActiveKey] = useState('');
-  const [testModel, setTestModel] = useState('deepseek-chat');
+  const [testModel, setTestModel] = useState('gpt-4o');
   const [testInput, setTestInput] = useState('');
   const [testResponse, setTestResponse] = useState('');
   const [testError, setTestError] = useState('');
@@ -122,7 +125,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="deepseek-chat",
+    model="gpt-4o",
     messages=[{"role": "user", "content": "Hello"}]
 )
 print(response.choices[0].message.content)`;
@@ -136,7 +139,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: 'deepseek-chat',
+  model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello' }],
 });
 
@@ -162,7 +165,7 @@ console.log(response.choices[0].message.content);`;
   const avgLatency = stats?.avg_response_ms || 0;
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

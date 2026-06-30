@@ -5,14 +5,16 @@ import { subscriptionApi } from '../utils/api';
 import { Check, Zap, Shield, CreditCard, Loader2 } from 'lucide-react';
 
 const MODELS = [
+  { name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90' },
+  { name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45' },
   { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60' },
   { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5' },
-  { name: 'GPT-4-Turbo', provider: 'OpenAI', input: '¥30', output: '¥60' },
+  { name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24' },
+  { name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80' },
   { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75' },
-  { name: 'Claude 3 Opus', provider: 'Anthropic', input: '¥60', output: '¥180' },
-  { name: 'Claude 3 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6' },
-  { name: 'DeepSeek Chat', provider: 'DeepSeek', input: '¥0.5', output: '¥1' },
-  { name: 'DeepSeek Coder', provider: 'DeepSeek', input: '¥0.5', output: '¥1' },
+  { name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6' },
+  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1' },
+  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1', output: '¥2' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -64,7 +66,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full page-container space-y-8">
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('pricing.title')}</h1>
         <p className="text-[12px] text-white/30 mt-1">{tr('pricing.desc')}</p>
