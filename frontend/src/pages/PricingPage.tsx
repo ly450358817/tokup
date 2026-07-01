@@ -10,6 +10,7 @@ const MODELS = [
   { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: 'Hot', note: '通用主力' },
   { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '', note: '轻量高效' },
   { name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24', badge: '', note: '轻量推理' },
+  { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', badge: 'New', note: '最新 Claude' },
   { name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', badge: 'Hot', note: '最强推理' },
   { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', badge: '', note: '稳定可靠' },
   { name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', badge: '', note: '快速响应' },
@@ -17,7 +18,12 @@ const MODELS = [
   { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', badge: '', note: '极致性价比' },
   { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
   { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '', note: '深度推理' },
-  { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', badge: 'New', note: '最新 Claude' },
+  { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', badge: '', note: '通义旗舰' },
+  { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '', note: '智谱旗舰' },
+  { name: 'Doubao Seed 1.6', provider: '字节跳动', input: '¥1.5', output: '¥4.5', badge: '', note: '豆包旗舰' },
+  { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
+  { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: 'New', note: 'Kimi 最新' },
+  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];

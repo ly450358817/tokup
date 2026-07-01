@@ -24,6 +24,9 @@ const MODELS = [
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥0.8/1M input' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥0.3/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥0.5/1M input' },
+  { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '通义千问', cost: '¥5.0/1M input' },
+  { id: 'qwen3-max', label: 'Qwen3 Max', provider: '通义千问', cost: '¥3.0/1M input' },
+  { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },
 ];
 
 const TIME_RANGES = [

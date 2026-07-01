@@ -34,9 +34,11 @@ MODEL_ROUTES = {
     # Anthropic → 七牛云（合规上游）
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
     # 国产模型 → 七牛云（合规上游）
-    "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
-    "glm-4.5": ("qiniu", QINIU_ENDPOINT),
+   "glm-4.5": ("qiniu", QINIU_ENDPOINT),
     "doubao-seed-1.6": ("qiniu", QINIU_ENDPOINT),
+    "qwen3-max": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
+    "qwen3-coder-480b-a35b-instruct": ("qiniu", QINIU_ENDPOINT),
 }
 
 MODEL_COST = {
@@ -59,6 +61,9 @@ MODEL_COST = {
     "qwen/qwen3.7-max": (5.0, 15.0),
     "glm-4.5": (3.0, 9.0),
     "doubao-seed-1.6": (1.5, 4.5),
+    "qwen3-max": (3.0, 9.0),
+    "moonshotai/kimi-k2.6": (4.0, 12.0),
+    "qwen3-coder-480b-a35b-instruct": (4.0, 12.0),
 }
 
 
