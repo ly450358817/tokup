@@ -20,6 +20,9 @@ class User(Base):
     total_recharged = Column(Float, default=0.0)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    invite_code = Column(String, unique=True, nullable=True, index=True)
+    referred_by = Column(String, ForeignKey("users.id"), nullable=True)
+    invite_count = Column(Integer, default=0)
     auto_topup_threshold = Column(Float, default=0)  # 0 = disabled
     auto_topup_amount = Column(Float, default=50)  # yuan
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -3,7 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
 
 export default function LoginPage() {
-  const { login, register } = useAuth();
+    const { login, register } = useAuth();
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get('code') || '';
   const { t } = useLang();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -19,7 +21,7 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(email, password);
+        await register(email, password, inviteCode);
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Something went wrong');

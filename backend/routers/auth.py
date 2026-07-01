@@ -67,6 +67,7 @@ def _validate_email(email: str):
 class RegisterReq(BaseModel):
     email: str
     password: str
+    invite_code: str = ""  # 可选邀请码
 
 
 class LoginReq(BaseModel):
@@ -114,12 +115,27 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         email=req.email,
         password_hash=pwd.hash(req.password),
         nickname=req.email.split("@")[0],
+        token_balance=1000,  # 注册送 ¥10 体验金
+        invite_code=uuid.uuid4().hex[:8].upper(),
     )
     db.add(user)
+    db.flush()  # 获取 user.id
+    
+    # 处理邀请奖励
+    if req.invite_code:
+        referrer = db.query(User).filter(User.invite_code == req.invite_code).first()
+        if referrer and referrer.id != user.id:
+            user.referred_by = referrer.id
+            # 邀请人 +¥5 (500 分)
+            referrer.token_balance += 500
+            referrer.invite_count += 1
+            # 被邀请人额外 +¥5 (500 分)
+            user.token_balance += 500
+    
     db.commit()
     db.refresh(user)
     token = create_token(user.id)
-    return {"token": token, "user_id": user.id}
+    return {"token": token, "user_id": user.id, "invite_code": user.invite_code}
 
 
 @router.post("/login")

@@ -17,8 +17,9 @@ import {
   BookOpen,
   Globe,
   Activity,
-  BarChart3,
   Shield,
+  BarChart3,
+  Gift,
 } from 'lucide-react';
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { id: 'analytics', labelKey: 'nav.analytics', icon: Activity, href: '/analytics' },
   { id: 'usage', labelKey: '消费明细', icon: BarChart3, href: '/usage' },
   { id: 'compliance', labelKey: '合规声明', icon: Shield, href: '/compliance' },
+  { id: 'invite', labelKey: '邀请好友', icon: Gift, href: '/invite' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
