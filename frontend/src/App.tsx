@@ -15,6 +15,8 @@ import DocsPage from './pages/DocsPage';
 import IntegrationPage from './pages/IntegrationPage';
 import TransferStationPage from './pages/TransferStationPage';
 import MonitorPage from './pages/MonitorPage';
+import CompliancePage from './pages/CompliancePage';
+import UsagePage from './pages/UsagePage';
 import AnalyticsPage from './pages/AnalyticsPage';
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: any}> {
@@ -71,6 +73,8 @@ function AppRoutes() {
       <Route path="/monitor" element={<ProtectedRoute><MonitorPage /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
       <Route path="/transfer-station" element={<ProtectedRoute><TransferStationPage /></ProtectedRoute>} />
+      <Route path="/compliance" element={<CompliancePage />} />
+      <Route path="/usage" element={<ProtectedRoute><UsagePage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>

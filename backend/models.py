@@ -46,6 +46,25 @@ class Transaction(Base):
     user = relationship("User", back_populates="transactions")
 
 
+class UsageRecord(Base):
+    __tablename__ = "usage_records"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True)
+    model = Column(String, nullable=False)
+    provider = Column(String, default="")  # "openai" | "anthropic" | "deepseek"
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    cost_cny = Column(Float, default=0.0)  # 费用（元）
+    latency_ms = Column(Integer, default=0)  # 响应时间（毫秒）
+    status = Column(String, default="success")  # "success" | "error"
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User")
+    api_key = relationship("ApiKey")
+
+
 class ApiKey(Base):
     __tablename__ = "api_keys"
 
