@@ -23,18 +23,25 @@ interface ModelPrice {
   input: string;
   output: string;
   note: string;
+  badge?: string;
 }
 
 const models: ModelPrice[] = [
-  { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', note: 'Latest flagship' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', note: 'Fast reasoning' },
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: 'Best for most tasks' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: 'Fast & cheap' },
-  { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', note: 'Best for reasoning' },
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', note: 'Solid reasoning' },
-  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', note: 'Fastest Claude' },
-  { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: 'Best value' },
-  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1', output: '¥2.0', note: 'Deep reasoning' },
+  // OpenAI (直连)
+  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: '适用于大多数场景' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: '轻量高效' },
+  // Anthropic (直连)
+  { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', note: '最强推理能力' },
+  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', note: '快速响应' },
+  // DeepSeek (七牛云合规上游)
+  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek(七牛云)', input: '¥0.8', output: '¥1.6', note: '旗舰模型', badge: '合规' },
+  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek(七牛云)', input: '¥0.3', output: '¥0.6', note: '极致性价比', badge: '合规' },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek(七牛云)', input: '¥0.5', output: '¥1.0', note: '通用模型', badge: '合规' },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek(七牛云)', input: '¥1.0', output: '¥2.0', note: '深度推理', badge: '合规' },
+  // 国产模型 (七牛云合规上游)
+  { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问(七牛云)', input: '¥5.0', output: '¥15.0', note: '通义旗舰', badge: '合规' },
+  { id: 'glm-4.5', name: 'GLM-4.5', provider: '智谱AI(七牛云)', input: '¥3.0', output: '¥9.0', note: '智谱旗舰', badge: '合规' },
+  { id: 'doubao-seed-1.6', name: 'Doubao Seed 1.6', provider: '字节跳动(七牛云)', input: '¥1.5', output: '¥4.5', note: '豆包旗舰', badge: '合规' },
 ];
 
 export default function TransferStationPage() {

@@ -5,16 +5,32 @@ import { subscriptionApi } from '../utils/api';
 import { Check, Zap, Shield, CreditCard, Loader2 } from 'lucide-react';
 
 const MODELS = [
-  { name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90' },
-  { name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45' },
-  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60' },
-  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5' },
-  { name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24' },
-  { name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80' },
-  { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75' },
-  { name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6' },
-  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1' },
-  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1', output: '¥2' },
+  // OpenAI (直连)
+  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: 'Hot',
+    note: '兼容 OpenAI SDK · 直连保障' },
+  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '',
+    note: '轻量高效 · 直连保障' },
+  // Anthropic (直连)
+  { name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', badge: '',
+    note: '最强推理 · 直连保障' },
+  { name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', badge: '',
+    note: '快速响应 · 直连保障' },
+  // DeepSeek → 七牛云（合规上游）
+  { name: 'DeepSeek V4 Pro', provider: 'DeepSeek · 七牛云', input: '¥0.8', output: '¥1.6', badge: '合规',
+    note: '旗舰模型 · 七牛云合规上游' },
+  { name: 'DeepSeek V4 Flash', provider: 'DeepSeek · 七牛云', input: '¥0.3', output: '¥0.6', badge: '合规',
+    note: '极致性价比 · 七牛云合规上游' },
+  { name: 'DeepSeek V3', provider: 'DeepSeek · 七牛云', input: '¥0.5', output: '¥1.0', badge: '合规',
+    note: '通用模型 · 七牛云合规上游' },
+  { name: 'DeepSeek R1', provider: 'DeepSeek · 七牛云', input: '¥1.0', output: '¥2.0', badge: '合规',
+    note: '推理模型 · 七牛云合规上游' },
+  // 国产模型 → 七牛云（合规上游）
+  { name: 'Qwen 3.7 Max', provider: '通义千问 · 七牛云', input: '¥5.0', output: '¥15.0', badge: '合规',
+    note: '通义千问旗舰 · 七牛云合规上游' },
+  { name: 'GLM-4.5', provider: '智谱AI · 七牛云', input: '¥3.0', output: '¥9.0', badge: '合规',
+    note: '智谱旗舰 · 七牛云合规上游' },
+  { name: 'Doubao Seed 1.6', provider: '字节跳动 · 七牛云', input: '¥1.5', output: '¥4.5', badge: '合规',
+    note: '豆包旗舰 · 七牛云合规上游' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -148,8 +164,15 @@ export default function PricingPage() {
           <tbody className="divide-y divide-white/[0.04]">
             {MODELS.map((m, i) => (
               <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                <td className="px-6 py-4 text-[13px] text-white/80">{m.name}</td>
-                <td className="px-6 py-4 text-[12px] text-white/40">{m.provider}</td>
+               <td className="px-6 py-4 text-[13px] text-white/80">{m.name}</td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] text-white/40">{m.provider}</span>
+                    {m.badge && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">{m.badge}</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-6 py-4 text-[13px] text-white/70">{m.input}</td>
                 <td className="px-6 py-4 text-[13px] text-white/70">{m.output}</td>
               </tr>

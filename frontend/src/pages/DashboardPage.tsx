@@ -18,11 +18,12 @@ import {
 } from 'recharts';
 
 const MODELS = [
-  { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '30/1M input' },
-  { id: 'gpt-4.1', label: 'GPT-4.1', provider: 'OpenAI', cost: '15/1M input' },
-  { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '20/1M input' },
-  { id: 'claude-4-sonnet', label: 'Claude 4 Sonnet', provider: 'Anthropic', cost: '20/1M input' },
-  { id: 'deepseek-chat', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '0.5/1M input' },
+  { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '¥20/1M input' },
+  { id: 'claude-4-sonnet', label: 'Claude 4 Sonnet', provider: 'Anthropic', cost: '¥20/1M input' },
+  { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: '七牛云', cost: '¥0.8/1M input' },
+  { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: '七牛云', cost: '¥0.3/1M input' },
+  { id: 'deepseek-v3', label: 'DeepSeek V3', provider: '七牛云', cost: '¥0.5/1M input' },
+  { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '七牛云', cost: '¥5.0/1M input' },
 ];
 
 const TIME_RANGES = [
