@@ -14,9 +14,11 @@ import {
   Settings,
   Coins,
   Code,
-  Activity,
-  Globe,
   BookOpen,
+  Globe,
+  Activity,
+  BarChart3,
+  Shield,
 } from 'lucide-react';
 
 const navItems = [
@@ -31,6 +33,8 @@ const navItems = [
   { id: 'monitor', labelKey: 'nav.monitor', icon: Activity, href: '/monitor' },
   { id: 'settings', labelKey: 'nav.settings' as const, icon: Settings, href: '/settings' },
   { id: 'analytics', labelKey: 'nav.analytics', icon: Activity, href: '/analytics' },
+  { id: 'usage', labelKey: '消费明细', icon: BarChart3, href: '/usage' },
+  { id: 'compliance', labelKey: '合规声明', icon: Shield, href: '/compliance' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -70,7 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F] relative overflow-hidden">
+    <div className="flex w-full h-screen bg-[#0A0A0F] relative overflow-hidden">
       <div className="aurora-bg" />
       {sidebarOpen && (
         <div

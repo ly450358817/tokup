@@ -1,81 +1,69 @@
 import { useState, useEffect } from 'react';
-import { Activity, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Activity, Users, DollarSign, Key, RefreshCw } from 'lucide-react';
 
 export default function AnalyticsPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
     const token = localStorage.getItem('tokup_token');
-    if (!token) { setLoading(false); return; }
-    fetch('/api/analytics/stats', {
+    if (!token) { setLoading(false); setError('Not logged in'); return; }
+    fetch('/api/admin/stats', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(r => r.json())
       .then(d => { setStats(d); setLoading(false); })
-      .catch(() => { setError('加载失败'); setLoading(false); });
-  }, []);
+      .catch(() => { setError('Failed to load'); setLoading(false); });
+  };
 
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="text-white/30 text-sm">Loading...</div></div>;
+  useEffect(() => {
+    if (user && !user.is_admin) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => { loadData(); }, []);
+
+  if (loading) return <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" /></div>;
   if (error) return <div className="flex items-center justify-center h-full"><div className="text-red-400 text-sm">{error}</div></div>;
   if (!stats) return <div className="flex items-center justify-center h-full"><div className="text-white/30 text-sm">No data</div></div>;
 
   return (
-    <div className="w-full page-container space-y-6">
-      <div>
-        <h1 className="text-[20px] font-semibold text-white">数据分析</h1>
-        <p className="text-[12px] text-white/30 mt-1">网站访问统计</p>
+    <div className="w-full space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[20px] font-semibold text-white">管理面板</h1>
+          <p className="text-[12px] text-white/30 mt-1">管理员专用</p>
+        </div>
+        <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-xs hover:text-white/70 transition-all">
+          <RefreshCw size={14} /> Refresh
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2"><Activity size={14} className="text-emerald-400" /><span className="text-[10px] text-white/30 uppercase">总请求</span></div>
-          <p className="text-[24px] font-bold text-white">{stats.total_requests?.toLocaleString() || 0}</p>
+          <div className="flex items-center gap-2 mb-3"><Users size={14} className="text-emerald-400" /><span className="text-[10px] text-white/30 uppercase">注册用户</span></div>
+          <p className="text-[28px] font-bold text-white">{stats.total_users?.toLocaleString() || 0}</p>
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2"><Activity size={14} className="text-blue-400" /><span className="text-[10px] text-white/30 uppercase">今日请求</span></div>
-          <p className="text-[24px] font-bold text-white">{stats.today_requests?.toLocaleString() || 0}</p>
+          <div className="flex items-center gap-2 mb-3"><DollarSign size={14} className="text-blue-400" /><span className="text-[10px] text-white/30 uppercase">累计充值 (¥)</span></div>
+          <p className="text-[28px] font-bold text-white">¥{(stats.total_recharged || 0).toFixed(2)}</p>
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2"><Users size={14} className="text-purple-400" /><span className="text-[10px] text-white/30 uppercase">累计独立IP</span></div>
-          <p className="text-[24px] font-bold text-white">{stats.unique_ips?.toLocaleString() || 0}</p>
+          <div className="flex items-center gap-2 mb-3"><Activity size={14} className="text-purple-400" /><span className="text-[10px] text-white/30 uppercase">消耗 Token</span></div>
+          <p className="text-[28px] font-bold text-white">{stats.total_consumed?.toLocaleString() || 0}</p>
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2"><Users size={14} className="text-emerald-400" /><span className="text-[10px] text-white/30 uppercase">今日独立IP</span></div>
-          <p className="text-[24px] font-bold text-white">{stats.today_unique_ips?.toLocaleString() || 0}</p>
+          <div className="flex items-center gap-2 mb-3"><Key size={14} className="text-emerald-400" /><span className="text-[10px] text-white/30 uppercase">API Key</span></div>
+          <p className="text-[28px] font-bold text-white">{stats.total_keys || 0}<span className="text-[14px] text-white/30 ml-1">/ {stats.active_keys || 0} active</span></p>
         </div>
       </div>
-
-      {/* Top Pages */}
-      {stats.top_pages && stats.top_pages.length > 0 && (
-        <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <h3 className="text-[13px] font-medium text-white/70 mb-4">热门页面</h3>
-          <div className="space-y-2">
-            {stats.top_pages.slice(0, 10).map((p: any, i: number) => (
-              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.02]">
-                <span className="text-[12px] text-white/60 font-mono">{p.path}</span>
-                <span className="text-[11px] text-emerald-400/60">{p.count} 次</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Status Codes */}
-      {stats.status_codes && (
-        <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-          <h3 className="text-[13px] font-medium text-white/70 mb-4">状态码分布</h3>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(stats.status_codes).map(([code, count]: [string, any]) => (
-              <div key={code} className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <span className="text-[12px] text-white/60">{code}</span>
-                <span className="text-[11px] text-white/30 ml-2">{count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
