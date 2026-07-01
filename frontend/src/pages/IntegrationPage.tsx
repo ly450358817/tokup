@@ -170,6 +170,67 @@ export default function IntegrationPage() {
         ))}
       </div>
 
+      {/* 模型参考 — 移至订阅页 */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">
+          <span className="flex items-center justify-center gap-2"><BookOpen size={14} /> 模型参考</span>
+        </h3>
+        <p className="text-[12px] text-white/40 mb-4">完整模型列表与最新报价请查看订阅页面</p>
+        <a href="/pricing" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[13px] hover:bg-emerald-500/15 transition-all">
+          查看全部模型与报价 →
+        </a>
+      </div>
+
+      {/* Client Setup Guide */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">
+          <span className="flex items-center gap-2"><ExternalLink size={14} /> 客户端配置</span>
+        </h3>
+        <div className="space-y-4 text-[12px] text-white/50 leading-relaxed">
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <p className="text-white/70 font-medium mb-2">OpenCat / ChatBox / NextChat</p>
+            <ol className="list-decimal list-inside space-y-2">
+              <li>打开客户端设置 → API 设置</li>
+              <li>接口地址（Base URL）改为：<code className="text-emerald-400 font-mono text-[11px]">http://43.139.189.112/v1</code></li>
+              <li>API Key 填入你在 TokUp 创建的 Key</li>
+              <li>模型选择 <code className="text-emerald-400 font-mono text-[11px]">deepseek-chat</code> 或 <code className="text-emerald-400 font-mono text-[11px]">gpt-4o</code></li>
+              <li>保存即可使用</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      {/* Config QR */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">扫码配置</h3>
+        <p className="text-[12px] text-white/40 mb-4">扫描二维码获取接口地址和配置信息</p>
+        <img src="/assets/qr/config.png" alt="配置二维码" className="w-36 h-36 mx-auto rounded-xl bg-white p-2"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <p className="text-[11px] text-white/30 mt-3">配置信息: http://43.139.189.112/v1</p>
+      </div>
+
+      {/* {tr('integration.codeExamples')} */}
+      <div className="space-y-4">
+        <h3 className="text-[13px] font-medium text-white/70">{tr('integration.codeExamples')}</h3>
+        {codeExamples.map((ex) => (
+          <div key={ex.lang} className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
+              <span className="flex items-center gap-2 text-[12px] text-white/50 font-mono">
+                {ex.lang === 'curl' ? <Terminal size={12} /> : <Code size={12} />}
+                {ex.lang}
+              </span>
+              <button
+                onClick={() => handleCopy(ex.code, ex.lang)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] text-white/40 hover:text-white/70 hover:bg-white/[0.03] transition-all"
+              >
+                {copied === ex.lang ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                {copied === ex.lang ? tr('integration.copied') : tr('integration.copy')}
+              </button>
+            </div>
+            <pre className="p-5 text-[12px] text-white/60 font-mono leading-relaxed overflow-x-auto">{ex.code}</pre>
+          </div>
+        ))}
+      </div>
+
       {/* {tr('integration.modelRef')} */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-[13px] font-medium text-white/70 mb-4">

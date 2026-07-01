@@ -49,7 +49,7 @@ export default function LoginPage() {
       </div>
 
       {/* Auth card */}
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-lg">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-4">

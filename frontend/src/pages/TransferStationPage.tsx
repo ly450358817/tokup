@@ -41,11 +41,11 @@ const models: ModelPrice[] = [
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型' },
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', note: '深度推理' },
   { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', note: '通义旗舰' },
+  { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', note: '通义旗舰' },
+  { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用' },
   { id: 'glm-4.5', name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', note: '智谱旗舰' },
   { id: 'doubao-seed-1.6', name: 'Doubao Seed 1.6', provider: '字节跳动', input: '¥1.5', output: '¥4.5', note: '豆包旗舰' },
-  { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', note: '通义旗舰' },
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: 'Kimi 最新', badge: 'New' },
-  { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用' },
 ];
 
 export default function TransferStationPage() {

@@ -19,11 +19,11 @@ const MODELS = [
   { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
   { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '', note: '深度推理' },
   { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', badge: '', note: '通义旗舰' },
+  { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
+  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
   { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '', note: '智谱旗舰' },
   { name: 'Doubao Seed 1.6', provider: '字节跳动', input: '¥1.5', output: '¥4.5', badge: '', note: '豆包旗舰' },
-  { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
   { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: 'New', note: 'Kimi 最新' },
-  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -103,7 +103,7 @@ export default function PricingPage() {
           </div>
           <div className="text-right shrink-0">
             <p className="text-[20px] font-bold text-emerald-400">1:100</p>
-            <p className="text-[10px] text-white/30">Token : 元</p>
+            <p className="text-[10px] text-white/30">元 : Token</p>
           </div>
         </div>
       </div>
