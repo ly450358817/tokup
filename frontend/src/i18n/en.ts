@@ -181,7 +181,7 @@ export const en = {
     howItWorks: "How it works",
     howItWorksDesc: "Recharge → Generate API Key → Call any model",
     supportedModels: "Supported Models",
-    supportedModelsDesc: "GPT-4o, GPT-4o-mini, Claude 3.5 Sonnet, Claude 3 Opus, DeepSeek Chat & Coder",
+    supportedModelsDesc: "GPT-5.5, GPT-4.1, GPT-4o, GPT-4o-mini, o4-mini, Claude Fable 5, Claude 4 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, DeepSeek V4 Pro, V4 Flash, V3, R1, Qwen 3.7 Max, Qwen3 Max, Qwen3 Coder 480B, GLM-4.5, Doubao Seed 1.6, Kimi K2.6",
     quickStart: "Quick Start",
     learnMore: "Learn more →",
     comingSoon: "Coming soon",

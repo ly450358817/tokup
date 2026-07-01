@@ -186,7 +186,7 @@ export const zh = {
     howItWorks: "三步使用",
     howItWorksDesc: "充值 → 生成 API Key → 调用任何模型",
     supportedModels: "支持的模型",
-    supportedModelsDesc: "GPT-4o, GPT-4o-mini, Claude 3.5 Sonnet, Claude 3 Opus, DeepSeek Chat & Coder",
+    supportedModelsDesc: "GPT-5.5, GPT-4.1, GPT-4o, GPT-4o-mini, o4-mini, Claude Fable 5, Claude 4 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, DeepSeek V4 Pro, V4 Flash, V3, R1, Qwen 3.7 Max, Qwen3 Max, Qwen3 Coder 480B, GLM-4.5, Doubao Seed 1.6, Kimi K2.6",
     quickStart: "快速开始",
     learnMore: "了解更多 →",
     comingSoon: "开发中",
