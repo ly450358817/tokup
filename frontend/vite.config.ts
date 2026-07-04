@@ -10,6 +10,7 @@ export default defineConfig({
     },
   },
   build: {
+    crossorigin: '',
     rollupOptions: {
       output: {
         manualChunks: {

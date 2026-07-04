@@ -28,7 +28,7 @@ interface ModelPrice {
 
 const models: ModelPrice[] = [
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', note: '最新旗舰', badge: 'Hot' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', note: '快速推理' },
+    { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', note: '快速推理' },
   { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: '通用主力', badge: 'Hot' },
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: '轻量高效' },
   { id: 'o4-mini', name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24', note: '轻量推理' },
@@ -40,6 +40,7 @@ const models: ModelPrice[] = [
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', note: '极致性价比' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型' },
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', note: '深度推理' },
+  { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥15', output: '¥45', note: '谷歌旗舰', badge: 'New' },
   { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', note: '通义旗舰' },
   { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', note: '通义旗舰' },
   { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用' },
@@ -249,6 +250,38 @@ console.log(response.choices[0].message.content);`;
         )}
       </div>
 
+      {/* {tr("transfer.modelPricing")} */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4 flex items-center gap-2"><BarChart3 size={14} /> {tr("transfer.modelPricing")}</h3>
+        <p className="text-[11px] text-white/40 mb-4">{tr("transfer.priceNote")} — no separate billing needed.</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="border-b border-white/[0.04]">
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">Model</th>
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">Name</th>
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">Provider</th>
+                <th className="text-right text-white/30 font-medium pb-3 pr-3">Input</th>
+                <th className="text-right text-white/30 font-medium pb-3">Output</th>
+                <th className="text-right text-white/30 font-medium pb-3 pl-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {models.map((m) => (
+                <tr key={m.id} className="border-b border-white/[0.02] last:border-0">
+                  <td className="py-3 pr-3 font-mono text-[11px] text-emerald-400">{m.id}</td>
+                  <td className="py-3 pr-3 text-white/70">{m.name}</td>
+                  <td className="py-3 pr-3 text-white/40">{m.provider}</td>
+                  <td className="py-3 pr-3 text-right text-white/60">{m.input}/1M</td>
+                  <td className="py-3 text-right text-white/60">{m.output}/1M</td>
+                  <td className="py-3 pl-3 text-right">{m.badge && (<span className={"text-[10px] px-1.5 py-0.5 rounded-full border " + (m.badge === "New" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400")}>{m.badge}</span>)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* {tr("transfer.quickStart")} with Code Examples */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-[13px] font-medium text-white/70 mb-4 flex items-center gap-2"><Code size={14} /> {tr("transfer.quickStart")}</h3>
@@ -272,36 +305,6 @@ console.log(response.choices[0].message.content);`;
         <a href="/integration" className="inline-flex items-center gap-1.5 mt-3 text-[11px] text-emerald-400 hover:underline">
           <BookOpen size={12} /> {tr("transfer.viewGuide")}
         </a>
-      </div>
-
-      {/* {tr("transfer.modelPricing")} */}
-      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-        <h3 className="text-[13px] font-medium text-white/70 mb-4 flex items-center gap-2"><BarChart3 size={14} /> {tr("transfer.modelPricing")}</h3>
-        <p className="text-[11px] text-white/40 mb-4">{tr("transfer.priceNote")} — no separate billing needed.</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12px]">
-            <thead>
-              <tr className="border-b border-white/[0.04]">
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Model</th>
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Name</th>
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Provider</th>
-                <th className="text-right text-white/30 font-medium pb-3 pr-3">Input</th>
-                <th className="text-right text-white/30 font-medium pb-3">Output</th>
-              </tr>
-            </thead>
-            <tbody>
-              {models.map((m) => (
-                <tr key={m.id} className="border-b border-white/[0.02] last:border-0">
-                  <td className="py-3 pr-3 font-mono text-[11px] text-emerald-400">{m.id}</td>
-                  <td className="py-3 pr-3 text-white/70">{m.name}</td>
-                  <td className="py-3 pr-3 text-white/40">{m.provider}</td>
-                  <td className="py-3 pr-3 text-right text-white/60">{m.input}/1M</td>
-                  <td className="py-3 text-right text-white/60">{m.output}/1M</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
 
       {/* Active endpoints */}

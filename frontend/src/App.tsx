@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -54,14 +54,6 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
-    <Suspense fallback={
-      <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0A0A0F'}}>
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'12px'}}>
-          <div style={{width:'24px',height:'24px',border:'2px solid rgba(16,185,129,0.3)',borderTopColor:'#10B981',borderRadius:'50%',animation:'spin 0.8s linear infinite'}} />
-          <span style={{fontSize:'12px',color:'rgba(255,255,255,0.3)'}}>Loading TokUp...</span>
-        </div>
-      </div>
-    }>
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -79,7 +71,7 @@ function AppRoutes() {
       <Route path="/invite" element={<ProtectedRoute><InvitePage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    </Suspense>
+    
   );
 }
 

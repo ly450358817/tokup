@@ -6,6 +6,37 @@ import { useState } from 'react';
 
 export default function SettingsPage() {
   const [showHelp, setShowHelp] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role:string;content:string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const msg = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, {role:'user', content: msg}]);
+    setChatLoading(true);
+    try {
+      const token = localStorage.getItem('tokup_token');
+      const res = await fetch('/api/v1/test/chat', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + (token || ''), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'gpt-4o', messages: [{role:'user', content: msg}] })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const reply = data.data?.choices?.[0]?.message?.content || '抱歉，暂时无法回答。请稍后再试。';
+        setChatMessages(prev => [...prev, {role:'assistant', content: reply}]);
+      } else {
+        const errDetail = data.detail || '服务暂时不可用，请稍后重试。';
+        setChatMessages(prev => [...prev, {role:'assistant', content: errDetail === 'Not authenticated' ? '请先登录后再使用AI客服。' : errDetail}]);
+      }
+    } catch (e) {
+      const errMsg = e instanceof TypeError ? '网络连接失败，请检查网络后重试。' : '服务暂时不可用，请稍后重试。';
+      setChatMessages(prev => [...prev, {role:'assistant', content: errMsg}]);
+    }
+    setChatLoading(false);
+  };
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, lang, setLang, languages } = useLang();
@@ -127,24 +158,72 @@ export default function SettingsPage() {
       {/* Help modal (inside return) */}
       {showHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
-          <div className="bg-[#16161E] border border-white/[0.06] rounded-2xl p-6 max-w-sm mx-4 shadow-2xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <MessageCircle size={20} className="text-emerald-400" />
+          <div className="bg-[#16161E] border border-white/[0.06] rounded-2xl w-[420px] max-w-[90vw] h-[540px] max-h-[80vh] flex flex-col shadow-2xl animate-slide-up overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06] shrink-0">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <MessageCircle size={18} className="text-emerald-400" />
               </div>
-              <div>
-                <h3 className="text-[15px] font-medium text-white">{tr('settings.aiSupport')}</h3>
+              <div className="flex-1">
+                <h3 className="text-[14px] font-medium text-white">{tr('settings.aiSupport')}</h3>
                 <p className="text-[10px] text-white/30">{tr('settings.aiPowered')}</p>
               </div>
+              <button onClick={() => setShowHelp(false)} className="w-7 h-7 rounded-full bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white/70 text-[14px]">&times;</button>
             </div>
-            <p className="text-[12px] text-white/50 leading-relaxed mb-4">{tr('settings.aiSupportDesc')}</p>
-            <p className="text-[11px] text-white/30 mb-5">{tr('settings.aiNoTickets')}</p>
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all"
-            >
-              {tr('common.confirm')}
-            </button>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" id="ai-chat-messages">
+              {chatMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <MessageCircle size={32} className="text-emerald-400/30 mb-3" />
+                  <p className="text-[12px] text-white/40">{tr('settings.aiNoTickets')}</p>
+                  <p className="text-[11px] text-white/20 mt-1">{tr('settings.aiQuestionDesc')}</p>
+                </div>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} className="flex gap-3" style={{flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'}}>
+                    <div className={"w-7 h-7 rounded-full flex items-center justify-center text-[11px] shrink-0 " + (msg.role === 'user' ? 'bg-white/[0.05] text-white/40' : 'bg-emerald-500/10 text-emerald-400')}>
+                      {msg.role === 'user' ? 'U' : 'AI'}
+                    </div>
+                    <div className={"max-w-[75%] px-4 py-2.5 rounded-2xl text-[12px] leading-relaxed " + (msg.role === 'user' ? 'bg-emerald-500/10 text-white/80' : 'bg-white/[0.04] text-white/60')}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))
+              )}
+              {chatLoading && (
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center text-[11px] text-emerald-400">AI</div>
+                  <div className="px-4 py-2.5 rounded-2xl bg-white/[0.04]">
+                    <div className="flex gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/50 animate-bounce" style={{animationDelay:'0ms'}} />
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/50 animate-bounce" style={{animationDelay:'150ms'}} />
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/50 animate-bounce" style={{animationDelay:'300ms'}} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Input */}
+            <div className="p-4 border-t border-white/[0.06] shrink-0">
+              <div className="flex items-center gap-2 bg-[#0A0A0F] rounded-xl px-4 py-2 border border-white/[0.06]">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+                  placeholder={tr('settings.aiSupportDesc')}
+                  className="flex-1 bg-transparent text-white/70 text-[12px] outline-none placeholder:text-white/20"
+                />
+                <button
+                  onClick={handleChatSend}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {/* Simple SVG send icon */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

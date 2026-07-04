@@ -142,8 +142,7 @@ export default function IntegrationPage() {
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center">
         <h3 className="text-[13px] font-medium text-white/70 mb-4">扫码配置</h3>
         <p className="text-[12px] text-white/40 mb-4">扫描二维码获取接口地址和配置信息</p>
-        <img src="/assets/qr/config.png" alt="配置二维码" className="w-36 h-36 mx-auto rounded-xl bg-white p-2"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <img src="/assets/qr/config.png?v=1" alt="配置二维码" className="w-36 h-36 mx-auto rounded-xl bg-white p-2" />
         <p className="text-[11px] text-white/30 mt-3">配置信息: http://43.139.189.112/v1</p>
       </div>
 

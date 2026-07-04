@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokUp · 脉充 — 设计稿</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0A0A0F;color:#fff;font-family:'Inter',sans-serif;overflow-x:hidden}
+  
+  /* ── 设计标注 ── */
+  .design-lab{position:fixed;top:20px;right:20px;z-index:9999;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:14px 18px;font-size:11px;color:#ef4444;max-width:280px;backdrop-filter:blur(12px)}
+  .design-lab .tag{display:inline-block;background:rgba(239,68,68,0.2);padding:2px 8px;border-radius:4px;font-size:9px;margin-top:6px}
+  
+  /* ── 预览容器 ── */
+  .preview-container{position:relative;min-height:100vh;overflow:hidden}
+  
+  /* ── 粒子背景 Canvas ── */
+  #particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  
+  /* ── 背景光晕 ── */
+  .bg-glow{position:fixed;border-radius:50%;pointer-events:none;filter:blur(80px);z-index:0}
+  .bg-glow-1{width:600px;height:600px;background:rgba(16,185,129,0.08);top:-200px;right:-100px;animation:glowPulse 8s ease-in-out infinite}
+  .bg-glow-2{width:400px;height:400px;background:rgba(16,185,129,0.05);bottom:-150px;left:-100px;animation:glowPulse 6s ease-in-out infinite 2s}
+  @keyframes glowPulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+  
+  /* ── 网格背景 ── */
+  .grid-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+    background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%)}
+  
+  /* ── 导航 ── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(180deg,rgba(10,10,15,0.95) 0%,transparent 100%)}
+  .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+  .nav-logo .logo-ring{width:32px;height:32px;border:2px solid rgba(16,185,129,0.4);border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
+  .nav-logo .logo-ring::after{content:'';position:absolute;width:12px;height:12px;border:2px solid #10B981;border-radius:50%;border-right-color:transparent;animation:spin 3s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .nav-logo span{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.02em}
+  .nav-logo small{font-size:9px;color:rgba(255,255,255,0.3);margin-left:6px;font-weight:400}
+  .nav-links{display:flex;align-items:center;gap:32px}
+  .nav-links a{color:rgba(255,255,255,0.5);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.3s;position:relative}
+  .nav-links a:hover{color:rgba(255,255,255,0.8)}
+  .nav-cta{background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.25);color:#10B981!important;padding:8px 20px;border-radius:10px;transition:all 0.3s}
+  .nav-cta:hover{background:rgba(16,185,129,0.25)!important}
+  
+  /* ── HERO ── */
+  .hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px}
+  
+  /* ── 能量光环 ── */
+  .energy-ring-container{position:relative;width:200px;height:100px;margin-bottom:40px}
+  .energy-ring-svg{width:100%;height:100%;overflow:visible}
+  .energy-ring-path{fill:none;stroke:url(#ringGradient);stroke-width:2;stroke-linecap:round;
+    stroke-dasharray:220;stroke-dashoffset:0;animation:ringDraw 3s ease-in-out infinite alternate}
+  @keyframes ringDraw{0%{stroke-dashoffset:220;opacity:0.4}100%{stroke-dashoffset:0;opacity:1}}
+  .ring-glow{position:absolute;top:50%;left:50%;width:180px;height:90px;transform:translate(-50%,-50%);border-radius:180px 180px 0 0;
+    background:radial-gradient(ellipse at 50% 100%,rgba(16,185,129,0.15),transparent 70%);filter:blur(20px);animation:ringGlow 3s ease-in-out infinite alternate}
+  @keyframes ringGlow{0%{opacity:0.5;transform:translate(-50%,-50%) scaleX(0.9)}100%{opacity:1;transform:translate(-50%,-50%) scaleX(1.1)}}
+  
+  .hero-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);font-size:11px;color:#34D399;margin-bottom:24px;letter-spacing:0.03em;backdrop-filter:blur(8px)}
+  .hero-tag .dot{width:5px;height:5px;border-radius:50%;background:#10B981;box-shadow:0 0 6px rgba(16,185,129,0.5);animation:dotPulse 2s ease-in-out infinite}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  
+  .hero h1{font-size:clamp(40px,7vw,80px);font-weight:800;line-height:1.05;margin-bottom:16px;letter-spacing:-0.02em}
+  .hero h1 .gradient{background:linear-gradient(135deg,#10B981 0%,#34D399 30%,#6EE7B7 60%,#fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero h1 .brand{color:#fff;-webkit-text-fill-color:#fff}
+  .hero p{font-size:clamp(14px,1.8vw,18px);color:rgba(255,255,255,0.4);max-width:520px;line-height:1.7;margin-bottom:40px;font-weight:400}
+  
+  .hero-btns{display:flex;gap:16px;margin-bottom:60px}
+  .btn-primary{padding:14px 32px;border-radius:12px;background:linear-gradient(135deg,#10B981,#059669);border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;text-decoration:none}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(16,185,129,0.25)}
+  .btn-secondary{padding:14px 32px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.3s;text-decoration:none}
+  .btn-secondary:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
+  
+  /* ── 模型条 ── */
+  .model-strip{position:relative;z-index:1;padding:0 48px 80px;text-align:center}
+  .model-strip p{font-size:11px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:20px}
+  .model-logos{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
+  .model-logo{padding:10px 20px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);font-size:12px;color:rgba(255,255,255,0.35);font-weight:500;transition:all 0.3s}
+  .model-logo:hover{background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.15);color:rgba(255,255,255,0.6)}
+  .model-logo em{font-style:normal;color:#10B981;font-weight:600}
+  
+  /* ── Features ── */
+  .features{position:relative;z-index:1;padding:0 48px 100px;max-width:1200px;margin:0 auto}
+  .features h2{text-align:center;font-size:28px;font-weight:700;margin-bottom:48px;color:rgba(255,255,255,0.9)}
+  .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .feature-card{padding:28px;border-radius:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);transition:all 0.4s;position:relative;overflow:hidden}
+  .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(16,185,129,0.2),transparent);opacity:0;transition:opacity 0.4s}
+  .feature-card:hover::before{opacity:1}
+  .feature-card:hover{background:rgba(255,255,255,0.04);border-color:rgba(16,185,129,0.15);transform:translateY(-3px)}
+  .feature-icon{width:40px;height:40px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px}
+  .feature-card h3{font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:8px}
+  .feature-card p{font-size:12px;color:rgba(255,255,255,0.35);line-height:1.6}
+  
+  /* ── CTA Section ── */
+  .cta-section{position:relative;z-index:1;padding:0 24px 120px;text-align:center}
+  .cta-card{max-width:600px;margin:0 auto;padding:56px 40px;border-radius:24px;background:linear-gradient(135deg,rgba(16,185,129,0.04),rgba(16,185,129,0.01));border:1px solid rgba(16,185,129,0.1);position:relative;overflow:hidden}
+  .cta-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 50% 50%,rgba(16,185,129,0.03),transparent 60%);animation:ctaGlow 6s ease-in-out infinite alternate}
+  @keyframes ctaGlow{0%{transform:translate(-10%,-10%)}100%{transform:translate(10%,10%)}}
+  .cta-card h2{font-size:24px;font-weight:700;color:#fff;margin-bottom:12px;position:relative;z-index:1}
+  .cta-card p{font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:28px;position:relative;z-index:1}
+  
+  /* ── 粒子说明 ── */
+  .particle-note{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;font-size:10px;color:rgba(255,255,255,0.15);backdrop-filter:blur(8px);background:rgba(0,0,0,0.3);padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- 设计标注 -->
+<div class="design-lab">
+  ⚡ 设计稿 · 未上线
+  <br>
+  <span class="tag">动态粒子背景</span>
+  <span class="tag">能量光环</span>
+  <span class="tag">翡翠绿主题</span>
+  <span class="tag">毛玻璃卡片</span>
+</div>
+
+<!-- 背景光晕 -->
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="grid-bg"></div>
+
+<!-- 粒子 Canvas -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- 导航 -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-ring"></div>
+    <span>TokUp</span><small>脉充</small>
+  </a>
+  <div class="nav-links">
+    <a href="#">模型</a>
+    <a href="#">订阅</a>
+    <a href="#">API</a>
+    <a href="#">合规</a>
+    <a href="#" class="nav-cta">开始使用</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-tag"><span class="dot"></span> 19 个模型 · 合规透明</div>
+  
+  <div class="energy-ring-container">
+    <svg class="energy-ring-svg" viewBox="0 0 200 100">
+      <defs>
+        <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
+          <stop offset="30%" stop-color="#34D399" stop-opacity="0.8"/>
+          <stop offset="60%" stop-color="#10B981" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#10B981" stop-opacity="0.2"/>
+        </linearGradient>
+      </defs>
+      <path class="energy-ring-path" d="M 10,95 A 90,40 0 0,1 190,95"
+        stroke-dasharray="250" stroke-dashoffset="250"/>
+    </svg>
+    <div class="ring-glow"></div>
+  </div>
+
+  <h1>
+    <span class="gradient">Up Your</span><br>
+    <span class="brand">AI</span>
+  </h1>
+  <p>统一管理 GPT、Claude、DeepSeek 等 19 个主流模型的 API 调用与余额，按量计费，合规透明。</p>
+  
+  <div class="hero-btns">
+    <a href="#" class="btn-primary">免费开始 →</a>
+    <a href="#" class="btn-secondary">查看全部模型</a>
+  </div>
+</section>
+
+<!-- 模型条 -->
+<section class="model-strip">
+  <p>支持的模型</p>
+  <div class="model-logos">
+    <span class="model-logo"><em>GPT</em>-5.5</span>
+    <span class="model-logo"><em>Claude</em> Fable 5</span>
+    <span class="model-logo"><em>DeepSeek</em> V4 Pro</span>
+    <span class="model-logo"><em>Qwen</em> 3.7 Max</span>
+    <span class="model-logo"><em>Kimi</em> K2.6</span>
+    <span class="model-logo"><em>GLM</em>-4.5</span>
+    <span class="model-logo"><em>Doubao</em> 1.6</span>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <h2>为什么选择 TokUp</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔐</div>
+      <h3>合规上游</h3>
+      <p>DeepSeek 等国产模型通过七牛云合规链路接入，通过网信办「清朗 AI」行动合规要求。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <h3>明码标价</h3>
+      <p>每百万 Token 价格清晰透明，每笔消费都能追溯，支持 CSV 导出审计报表。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>数据不落地</h3>
+      <p>API 调用只做透传转发，消息内容不留存数据库，调用完即丢弃。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>OpenAI 兼容</h3>
+      <p>完全兼容 OpenAI SDK，改一行 base_url 就能用。19 个模型一个接口搞定。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <h3>安全护盾</h3>
+      <p>9 层 AI 安全防护：SQL 注入/XSS/速率限制/IP 封禁/异常检测全覆盖。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎁</div>
+      <h3>免费体验</h3>
+      <p>注册即送 ¥10 体验金，无需绑卡。邀请好友双方各得 ¥5，无上限。</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-card">
+    <h2>开始使用 TokUp</h2>
+    <p>注册即送 ¥10 体验金，无需绑卡。OpenAI SDK 兼容，改一行代码即刻接入。</p>
+    <a href="#" class="btn-primary">免费注册 →</a>
+  </div>
+</section>
+
+<!-- 粒子提示 -->
+<div class="particle-note">✦ 背景动态粒子流 — 模拟能量/Token 在链路上流动</div>
+
+<script>
+// ── 粒子系统 ──
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [], connections = [];
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 粒子类
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = -Math.random() * 0.3 - 0.1;  // 向上缓慢流动
+    this.radius = Math.random() * 2 + 0.5;
+    this.life = Math.random() * 200 + 100;
+    this.maxLife = this.life;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.hue = 150 + Math.random() * 20;  // 翡翠绿偏
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life--;
+    this.opacity = (this.life / this.maxLife) * 0.4;
+    if (this.life <= 0 || this.y < -10) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(16,185,129,${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+// 能量弧线粒子（在能量环位置生成）
+class ArcParticle extends Particle {
+  reset() {
+    super.reset();
+    this.x = W * 0.3 + Math.random() * W * 0.4;
+    this.y = H * 0.35 + Math.random() * H * 0.05;
+    this.vy = -Math.random() * 0.2 - 0.05;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.radius = Math.random() * 1.5 + 0.5;
+    this.opacity = Math.random() * 0.6 + 0.2;
+  }
+}
+
+// 初始化粒子
+for (let i = 0; i < 80; i++) {
+  const p = Math.random() > 0.3 ? new Particle() : new ArcParticle();
+  particles.push(p);
+}
+
+// 连接线
+function drawConnections() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(16,185,129,${0.05 * (1 - dist / 120)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// 动画循环
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // 连接线
+  drawConnections();
+  
+  // 粒子
+  for (const p of particles) {
+    p.update();
+    p.draw();
+  }
+  
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>

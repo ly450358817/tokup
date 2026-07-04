@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokUp · 脉充 — 设计稿 v3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=Playfair+Display:ital@0;1&display=swap');
+  
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:#06060B;
+    color:#fff;
+    font-family:'Inter',-apple-system,sans-serif;
+    overflow:hidden;
+    height:100vh;
+    width:100vw;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── 极细腻的纹理背景 ── */
+  .bg-texture{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(16,185,129,0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(13,148,136,0.02) 0%, transparent 50%);
+  }
+  /* 极细的网格（比头发丝还淡） */
+  .bg-grid{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.008) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px);
+    background-size:80px 80px;
+    mask-image:radial-gradient(ellipse at 50% 35%, black 25%, transparent 65%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 35%, black 25%, transparent 65%);
+  }
+
+  /* ── 导航 ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:28px 56px;
+    background:linear-gradient(180deg,rgba(6,6,11,0.9) 0%,transparent 100%);
+  }
+  .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+  .nav-logo .mark{
+    width:7px;height:7px;
+    background:rgba(255,255,255,0.9);
+    border-radius:50%;
+    box-shadow:0 0 20px rgba(16,185,129,0.15);
+  }
+  .nav-logo span{font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);letter-spacing:0.06em;text-transform:uppercase}
+  .nav-links{display:flex;align-items:center;gap:40px}
+  .nav-links a{
+    color:rgba(255,255,255,0.2);text-decoration:none;font-size:11px;font-weight:400;
+    letter-spacing:0.06em;text-transform:uppercase;transition:color 0.6s;
+  }
+  .nav-links a:hover{color:rgba(255,255,255,0.5)}
+  .nav-cta{
+    color:rgba(16,185,129,0.6)!important;font-weight:500!important;
+    transition:color 0.6s!important;
+  }
+  .nav-cta:hover{color:rgba(16,185,129,0.9)!important}
+
+  /* ── Hero ── */
+  .hero{
+    position:relative;z-index:10;
+    height:100vh;width:100vw;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    text-align:center;padding:0 40px;
+  }
+
+  /* ── 能量弧线 ── */
+  .arc-container{
+    position:relative;
+    width:140px;height:70px;
+    margin-bottom:44px;
+  }
+  .arc-svg{width:100%;height:100%;overflow:visible}
+  .arc-line{
+    fill:none;
+    stroke:rgba(255,255,255,0.7);
+    stroke-width:0.5;
+    stroke-linecap:round;
+    stroke-dasharray:200;
+    stroke-dashoffset:200;
+    animation:drawArc 2.5s ease-out forwards, arcPulse 4s ease-in-out 2.5s infinite;
+  }
+  @keyframes drawArc{
+    0%{stroke-dashoffset:200;opacity:0}
+    60%{opacity:1}
+    100%{stroke-dashoffset:0;opacity:0.7}
+  }
+  @keyframes arcPulse{
+    0%,100%{opacity:0.7}
+    50%{opacity:0.4}
+  }
+  .arc-glow{
+    fill:none;
+    stroke:rgba(16,185,129,0.15);
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-dasharray:200;
+    stroke-dashoffset:200;
+    animation:drawGlow 2.5s ease-out 0.3s forwards, glowPulse 4s ease-in-out 2.8s infinite;
+    filter:blur(4px);
+  }
+  @keyframes drawGlow{
+    0%{stroke-dashoffset:200;opacity:0}
+    60%{opacity:1}
+    100%{stroke-dashoffset:0;opacity:1}
+  }
+  @keyframes glowPulse{
+    0%,100%{opacity:0.7}
+    50%{opacity:0.3}
+  }
+  .arc-light{
+    position:absolute;
+    width:2px;height:2px;
+    background:#10B981;
+    border-radius:50%;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 20px rgba(16,185,129,0.3),0 0 60px rgba(16,185,129,0.1);
+    animation:lightTravel 4s ease-in-out 2.5s infinite;
+  }
+  @keyframes lightTravel{
+    0%{transform:translate(-60px,-5px);opacity:0}
+    10%{opacity:1}
+    45%{transform:translate(0,8px);opacity:1}
+    90%{transform:translate(60px,-5px);opacity:1}
+    100%{transform:translate(60px,-5px);opacity:0}
+  }
+
+  /* ── Hero 文字 ── */
+  .hero-tag{
+    font-size:10px;
+    color:rgba(255,255,255,0.15);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-weight:300;
+    margin-bottom:16px;
+  }
+  .hero h1{
+    font-size:clamp(32px,5.5vw,64px);
+    font-weight:300;
+    line-height:1.1;
+    margin-bottom:16px;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 strong{
+    font-weight:500;
+    background:linear-gradient(180deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .hero h1 .sub{
+    display:block;
+    font-size:clamp(14px,1.2vw,18px);
+    font-weight:200;
+    color:rgba(255,255,255,0.2);
+    margin-top:12px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+  }
+  .hero p{
+    font-size:13px;
+    color:rgba(255,255,255,0.12);
+    max-width:340px;
+    line-height:1.8;
+    margin-bottom:44px;
+    font-weight:300;
+    letter-spacing:0.03em;
+  }
+
+  .hero-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 36px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.06);
+    color:rgba(255,255,255,0.4);
+    font-size:12px;
+    font-weight:400;
+    letter-spacing:0.05em;
+    text-decoration:none;
+    transition:all 0.7s cubic-bezier(0.16,1,0.3,1);
+    background:rgba(255,255,255,0.02);
+    backdrop-filter:blur(8px);
+  }
+  .hero-btn:hover{
+    border-color:rgba(16,185,129,0.2);
+    color:rgba(16,185,129,0.7);
+    background:rgba(16,185,129,0.04);
+    transform:translateY(-1px);
+  }
+  .hero-btn .arrow{font-size:14px;transition:transform 0.4s}
+  .hero-btn:hover .arrow{transform:translateX(4px)}
+
+  /* ── 底部提示 ── */
+  .footer-hint{
+    position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+    z-index:10;
+    display:flex;align-items:center;gap:16px;
+    font-size:10px;color:rgba(255,255,255,0.08);
+    letter-spacing:0.08em;font-weight:300;
+    text-transform:uppercase;
+  }
+  .footer-hint .dash{width:12px;height:1px;background:rgba(255,255,255,0.06)}
+  .footer-hint .hl{color:rgba(16,185,129,0.3)}
+
+  /* ── 粒子 Canvas ── */
+  #particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+
+  /* ── 设计标注 ── */
+  .design-lab{
+    position:fixed;top:80px;right:20px;z-index:9999;
+    background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);
+    border-radius:10px;padding:10px 14px;
+    font-size:9px;color:rgba(239,68,68,0.5);
+    backdrop-filter:blur(8px);line-height:1.6;text-align:right;
+    max-width:180px;
+  }
+  .design-lab em{font-style:normal;color:rgba(239,68,68,0.7);font-weight:500}
+  .design-lab .pill{
+    display:inline-block;background:rgba(239,68,68,0.08);
+    padding:1px 5px;border-radius:3px;font-size:7px;
+    letter-spacing:0.03em;
+  }
+
+  #loading{
+    position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;
+    background:#06060B;
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,0.06);font-size:10px;font-weight:300;
+    letter-spacing:0.1em;text-transform:uppercase;
+    transition:opacity 1.5s;
+  }
+  #loading.hidden{opacity:0;pointer-events:none}
+
+  /* ── 模型品牌 ── */
+  .brand-bar{
+    position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+    z-index:10;display:flex;align-items:center;gap:20px;
+    font-size:9px;color:rgba(255,255,255,0.06);letter-spacing:0.06em;
+    text-transform:uppercase;font-weight:300;
+  }
+  .brand-bar span{transition:color 0.6s;cursor:default}
+  .brand-bar span:hover{color:rgba(16,185,129,0.3)}
+  .brand-bar .sep{width:2px;height:2px;border-radius:50%;background:rgba(255,255,255,0.06)}
+</style>
+</head>
+<body>
+
+<div id="loading">Loading</div>
+
+<div class="design-lab">
+  <em>✦ v3 设计稿</em><br>
+  SVG 弧线 · 极致简约<br>
+  <span class="pill">极细线</span>
+  <span class="pill">暖金光点</span>
+  <span class="pill">高级留白</span>
+</div>
+
+<div class="bg-texture"></div>
+<div class="bg-grid"></div>
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="mark"></div>
+    <span>TokUp</span>
+  </a>
+  <div class="nav-links">
+    <a href="#">Models</a>
+    <a href="#">Pricing</a>
+    <a href="#">Docs</a>
+    <a href="#" class="nav-cta">Get Started</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">AI API Gateway</div>
+  
+  <div class="arc-container">
+    <svg class="arc-svg" viewBox="0 0 140 70">
+      <path class="arc-glow" d="M 5,65 A 65,30 0 0,1 135,65"/>
+      <path class="arc-line" d="M 5,65 A 65,30 0 0,1 135,65"/>
+    </svg>
+    <div class="arc-light"></div>
+  </div>
+
+  <h1>
+    <strong>Up Your AI</strong>
+    <span class="sub">Token Gateway</span>
+  </h1>
+  <p>One unified API for every major model.<br>GPT · Claude · DeepSeek · Qwen · and more.</p>
+  
+  <a href="#" class="hero-btn">
+    <span>Begin free</span>
+    <span class="arrow">→</span>
+  </a>
+</section>
+
+<div class="brand-bar">
+  <span>GPT-5.5</span><span class="sep"></span>
+  <span>Claude F5</span><span class="sep"></span>
+  <span>DS V4 Pro</span><span class="sep"></span>
+  <span>Qwen 3.7</span><span class="sep"></span>
+  <span>Kimi K2.6</span>
+</div>
+
+<div class="footer-hint">
+  <span class="dash"></span>
+  <span>19 models · <span class="hl">compliant</span> · transparent</span>
+  <span class="dash"></span>
+</div>
+
+<script>
+// ── 极细腻粒子 ──
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const particles = [];
+for (let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.1,
+    vy: -Math.random() * 0.06 - 0.02,
+    size: Math.random() * 0.8 + 0.3,
+    opacity: Math.random() * 0.08 + 0.02,
+    life: Math.random() * 300 + 100,
+    maxLife: 0,
+  });
+  particles[i].maxLife = particles[i].life;
+}
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    const o = (p.life / p.maxLife) * p.opacity;
+    if (p.life <= 0 || p.y < -10) {
+      p.x = Math.random() * W;
+      p.y = H + 10;
+      p.life = Math.random() * 300 + 100;
+      p.maxLife = p.life;
+    }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(16,185,129,${o})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+setTimeout(() => {
+  document.getElementById('loading').classList.add('hidden');
+}, 600);
+</script>
+</body>
+</html>

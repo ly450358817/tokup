@@ -6,7 +6,7 @@ import { Check, Zap, Shield, CreditCard, Loader2 } from 'lucide-react';
 
 const MODELS = [
   { name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', badge: 'Hot', note: '最新旗舰' },
-  { name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', badge: '', note: '快速推理' },
+    { name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', badge: '', note: '快速推理' },
   { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: 'Hot', note: '通用主力' },
   { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '', note: '轻量高效' },
   { name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24', badge: '', note: '轻量推理' },
@@ -18,6 +18,7 @@ const MODELS = [
   { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', badge: '', note: '极致性价比' },
   { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
   { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '', note: '深度推理' },
+  { name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥15', output: '¥45', badge: 'New', note: '谷歌旗舰' },
   { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', badge: '', note: '通义旗舰' },
   { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
   { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
@@ -179,7 +180,7 @@ export default function PricingPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] text-white/40">{m.provider}</span>
                     {m.badge && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">{m.badge}</span>
+                      <span className={"text-[10px] px-1.5 py-0.5 rounded-full border " + (m.badge === 'New' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400')}>{m.badge}</span>
                     )}
                   </div>
                 </td>
