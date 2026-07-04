@@ -6,6 +6,7 @@ import { RechargeProvider } from './contexts/RechargeContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import AppLayout from './components/Layout/AppLayout';
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import KeysPage from './pages/KeysPage';
 import TransactionsPage from './pages/TransactionsPage';
@@ -48,7 +49,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuth, loading } = useAuth();
   if (loading) return <div style={{color:'#fff',padding:40}}>Loading...</div>;
-  if (isAuth) return <Navigate to="/" replace />;
+  if (isAuth) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -56,7 +57,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/keys" element={<ProtectedRoute><KeysPage /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
