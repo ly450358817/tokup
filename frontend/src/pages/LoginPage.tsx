@@ -1,13 +1,17 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
 
 export default function LoginPage() {
+  const [searchParams] = [new URLSearchParams(window.location.search)];
+  const inviteCode = searchParams.get('code') || '';
     const { login, register } = useAuth();
   const { t } = useLang();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +23,7 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(email, password);
+        await register(email, password, turnstileToken, inviteCode);
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Something went wrong');
@@ -49,7 +53,7 @@ export default function LoginPage() {
       </div>
 
       {/* Auth card */}
-      <div className="relative w-full max-w-lg">
+      <div className="relative w-full max-w-xl">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-4">
@@ -105,15 +109,24 @@ export default function LoginPage() {
               />
             </div>
             <div>
+              <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder={t.auth.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="glass-input"
+                className="glass-input pr-10"
                 required
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-xs"
+              >
+                {showPassword ? "🙈" : "👁"}
+              </button>
+              </div>
             </div>
 
             {error && (
@@ -126,6 +139,7 @@ export default function LoginPage() {
               </p>
             )}
 
+            <div className="cf-turnstile mb-3 flex justify-center" data-sitekey="0x4AAAAAADvk_9V0AN5HmbHc" data-theme="dark" data-size="normal" />
             <button
               type="submit"
               disabled={loading}
