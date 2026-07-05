@@ -21,17 +21,23 @@ class ChatReq(BaseModel):
     stream: bool = False
 
 
-from fastapi import Header as FastAPIHeader
-
 def authenticate_api_key(
-    authorization: str = FastAPIHeader(None, alias="authorization"),
-    x_api_key: str = FastAPIHeader(None, alias="x-api-key"),
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    # Try x-api-key first, then Authorization header
-    api_key_str = x_api_key
-    if not api_key_str and authorization:
-        api_key_str = authorization.replace("Bearer ", "")
+    # Read raw headers from ASGI scope to bypass Starlette header parsing bug
+    raw_headers = request.scope.get("headers", [])
+    api_key_str = ""
+    for name, value in raw_headers:
+        name_str = name.decode("utf-8").lower()
+        if name_str == "x-api-key":
+            api_key_str = value.decode("utf-8")
+            break
+        elif name_str == "authorization":
+            auth_val = value.decode("utf-8")
+            if auth_val.startswith("Bearer "):
+                api_key_str = auth_val[7:]
+    
     if not api_key_str:
         raise HTTPException(status_code=401, detail="Missing API key")
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
