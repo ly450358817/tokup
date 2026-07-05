@@ -9,6 +9,89 @@ from datetime import datetime, timezone
 from routers.auth import get_current_user
 from services.token_service import deduct_token
 
+import secrets
+import time
+
+
+class ResponseReq(BaseModel):
+    model: str = "deepseek-v4-flash"
+    input: str | list = "hello"
+    max_output_tokens: int = 1024
+    stream: bool = False
+    reasoning_effort: str | None = None
+
+
+def resolve_model(model: str) -> str:
+    """Resolve model name with or without provider prefix"""
+    if model in MODEL_ROUTES:
+        return model
+    for prefix in ["deepseek/", "anthropic/", "openai/", "qwen/", "moonshotai/"]:
+        prefixed = prefix + model
+        if prefixed in MODEL_ROUTES:
+            return prefixed
+    return model
+
+
+@router.post("/responses")
+async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
+    """兼容 OpenAI Responses API 格式"""
+    if isinstance(req.input, str):
+        messages = [{"role": "user", "content": req.input}]
+    else:
+        messages = req.input if isinstance(req.input, list) else [{"role": "user", "content": str(req.input)}]
+
+    model = resolve_model(req.model)
+    if model not in MODEL_ROUTES:
+        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
+
+    result = await proxy_request(model, messages, req.stream)
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+
+    usage_data = result.get("usage", {})
+    cost = usage_data.get("cost", 0.01)
+    token_cost = round(cost * 100)
+    if token_cost < 1:
+        token_cost = 1
+
+    usage_record = UsageRecord(
+        user_id=api_key.user_id,
+        api_key_id=api_key.id,
+        model=model,
+        provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+        input_tokens=usage_data.get("input", 0),
+        output_tokens=usage_data.get("output", 0),
+        cost_cny=cost,
+        status="success",
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(usage_record)
+    db.commit()
+
+    deduct = deduct_token(api_key.user_id, token_cost, db, f"API: {model}")
+    if not deduct["success"]:
+        raise HTTPException(status_code=402, detail="余额不足")
+
+    chat_data = result["data"]
+    content_text = ""
+    if chat_data.get("choices"):
+        content_text = chat_data["choices"][0]["message"].get("content", "")
+
+    return {
+        "id": chat_data.get("id", f"resp_{secrets.token_hex(12)}"),
+        "object": "response",
+        "created": chat_data.get("created", int(time.time())),
+        "model": req.model,
+        "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": content_text}]}],
+        "usage": {
+            "input_tokens": usage_data.get("input", 0),
+            "output_tokens": usage_data.get("output", 0),
+            "total_tokens": usage_data.get("input", 0) + usage_data.get("output", 0),
+        },
+    }
+
+
+
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
 
@@ -32,7 +115,8 @@ def authenticate_api_key(request: Request, db: Session = Depends(get_db)):
 @router.post("/chat/completions")
 async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
     """兼容 OpenAI SDK 格式的聊天接口"""
-    result = await proxy_request(req.model, req.messages, req.stream)
+    model = resolve_model(req.model)
+    result = await proxy_request(model, req.messages, req.stream)
     if "error" in result:
         raise HTTPException(status_code=502, detail=result["error"])
 
@@ -61,12 +145,11 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if not deduct["success"]:
         raise HTTPException(status_code=402, detail="Insufficient balance")
 
-    return {
-        "success": True,
-        "data": result["data"],
-        "cost": cost,
-        "balance_remaining": deduct["balance"],
-    }
+    # Return standard OpenAI format (no wrapper)
+    resp = result["data"]
+    resp["usage"]["prompt_tokens"] = usage_data.get("input", resp["usage"].get("prompt_tokens", 0))
+    resp["usage"]["completion_tokens"] = usage_data.get("output", resp["usage"].get("completion_tokens", 0))
+    return resp
 
 
 @router.get("/models")
