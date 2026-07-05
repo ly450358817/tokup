@@ -76,6 +76,7 @@ class LoginReq(BaseModel):
 
 
 class UserResp(BaseModel):
+    is_admin: bool = False
     id: str
     email: str
     nickname: str
@@ -157,4 +158,5 @@ def get_me(user: User = Depends(get_current_user)):
         token_balance=round(user.token_balance / 100, 2),
         total_recharged=round(user.total_recharged / 100, 2),
         is_active=user.is_active,
+        is_admin=user.is_admin,
     )
