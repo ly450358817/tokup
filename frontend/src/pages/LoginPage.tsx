@@ -125,12 +125,12 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="h-screen w-screen bg-[#0A0A0F] flex items-center justify-center p-4" style={{ minHeight: '100vh', minWidth: '100vw' }}>
+    <div className="fixed inset-0 bg-[#0A0A0F] flex items-center justify-center p-4" style={{ zIndex: 10 }}>
       {/* Animated particle background */}
       <canvas
         ref={canvasRef}
         className="fixed inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 0 }}
+        style={{ zIndex: 0, position: "fixed", inset: 0, width: "100vw", height: "100vh" }}
       />
 
       {/* Auth card */}
