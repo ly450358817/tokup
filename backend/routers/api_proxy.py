@@ -25,18 +25,23 @@ def authenticate_api_key(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    # Read raw headers from ASGI scope to bypass Starlette header parsing bug
+    # Try X-Auth-Token first (set by nginx from Authorization header)
+    # Then try raw Authorization header from ASGI scope
+    # Starlette has a known bug parsing Authorization header with h11
     raw_headers = request.scope.get("headers", [])
     api_key_str = ""
     for name, value in raw_headers:
-        name_str = name.decode("utf-8").lower()
-        if name_str == "x-api-key":
-            api_key_str = value.decode("utf-8")
-            break
-        elif name_str == "authorization":
-            auth_val = value.decode("utf-8")
+        name_str = name.decode("utf-8", errors="replace").lower()
+        if name_str == "x-auth-token":
+            auth_val = value.decode("utf-8", errors="replace")
             if auth_val.startswith("Bearer "):
                 api_key_str = auth_val[7:]
+            else:
+                api_key_str = auth_val
+            break
+        elif name_str == "x-api-key":
+            api_key_str = value.decode("utf-8", errors="replace")
+            break
     
     if not api_key_str:
         raise HTTPException(status_code=401, detail="Missing API key")
