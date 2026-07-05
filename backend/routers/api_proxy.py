@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -21,28 +21,16 @@ class ChatReq(BaseModel):
     stream: bool = False
 
 
+from fastapi import Header as FastAPIHeader
+
 def authenticate_api_key(
-    request: Request,
+    x_auth_token: str = FastAPIHeader(None, alias="x-auth-token"),
+    x_api_key: str = FastAPIHeader(None, alias="x-api-key"),
     db: Session = Depends(get_db),
 ):
-    # Try X-Auth-Token first (set by nginx from Authorization header)
-    # Then try raw Authorization header from ASGI scope
-    # Starlette has a known bug parsing Authorization header with h11
-    raw_headers = request.scope.get("headers", [])
-    api_key_str = ""
-    for name, value in raw_headers:
-        name_str = name.decode("utf-8", errors="replace").lower()
-        if name_str == "x-auth-token":
-            auth_val = value.decode("utf-8", errors="replace")
-            if auth_val.startswith("Bearer "):
-                api_key_str = auth_val[7:]
-            else:
-                api_key_str = auth_val
-            break
-        elif name_str == "x-api-key":
-            api_key_str = value.decode("utf-8", errors="replace")
-            break
-    
+    api_key_str = x_api_key or x_auth_token or ""
+    if api_key_str.startswith("Bearer "):
+        api_key_str = api_key_str[7:]
     if not api_key_str:
         raise HTTPException(status_code=401, detail="Missing API key")
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
