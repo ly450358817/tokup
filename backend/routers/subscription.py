@@ -12,9 +12,9 @@ router = APIRouter(prefix="/subscription", tags=["subscription"])
 
 # ── 套餐定义 ──
 PLANS = {
-    "monthly": {"label": "月卡", "price": 9900, "tokens": 990000, "days": 30},
-    "quarterly": {"label": "季卡", "price": 19900, "tokens": 3000000, "days": 90},
-    "yearly": {"label": "年卡", "price": 59900, "tokens": 12000000, "days": 365},
+    "monthly": {"label": "月卡", "price": 9900, "tokens": 990000, "days": 30, "daily_limit": 33000, "desc": "适合轻度使用"},
+    "quarterly": {"label": "季卡", "price": 19900, "tokens": 3000000, "days": 90, "daily_limit": 100000, "desc": "适合日常开发"},
+    "yearly": {"label": "年卡", "price": 59900, "tokens": 12000000, "days": 365, "daily_limit": 400000, "desc": "适合高频调用"},
 }
 
 
