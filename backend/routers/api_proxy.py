@@ -23,10 +23,15 @@ class ChatReq(BaseModel):
 
 from fastapi import Header as FastAPIHeader
 
-def authenticate_api_key(authorization: str = FastAPIHeader(None, alias="authorization"), db: Session = Depends(get_db)):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Missing API key")
-    api_key_str = authorization.replace("Bearer ", "")
+def authenticate_api_key(
+    authorization: str = FastAPIHeader(None, alias="authorization"),
+    x_api_key: str = FastAPIHeader(None, alias="x-api-key"),
+    db: Session = Depends(get_db),
+):
+    # Try x-api-key first, then Authorization header
+    api_key_str = x_api_key
+    if not api_key_str and authorization:
+        api_key_str = authorization.replace("Bearer ", "")
     if not api_key_str:
         raise HTTPException(status_code=401, detail="Missing API key")
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
