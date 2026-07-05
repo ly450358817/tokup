@@ -145,10 +145,14 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if not deduct["success"]:
         raise HTTPException(status_code=402, detail="Insufficient balance")
 
-    # Return standard OpenAI format (no wrapper)
+    # Return standard OpenAI format directly (CC Switch & Codex compatible)
     resp = result["data"]
-    resp["usage"]["prompt_tokens"] = usage_data.get("input", resp["usage"].get("prompt_tokens", 0))
-    resp["usage"]["completion_tokens"] = usage_data.get("output", resp["usage"].get("completion_tokens", 0))
+    # Fix usage field names to match standard OpenAI format
+    if "usage" in resp:
+        if "prompt_tokens" not in resp["usage"] and "input" in usage_data:
+            resp["usage"]["prompt_tokens"] = usage_data["input"]
+        if "completion_tokens" not in resp["usage"] and "output" in usage_data:
+            resp["usage"]["completion_tokens"] = usage_data["output"]
     return resp
 
 
