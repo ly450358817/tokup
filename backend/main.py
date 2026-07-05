@@ -3,13 +3,17 @@ TokUp · 脉充 — Backend API
 """
 import os
 import secrets
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine, Base, SessionLocal
 from models import User
-from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, ws as ws_router
+from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, ws as ws_router
 from services.security_service import AISecurityMiddleware, ip_tracker
+
+# ── 加载 .env 文件 ──
+load_dotenv()
 
 # ── 环境配置 ──
 SECRET_KEY = os.getenv("TOKUP_SECRET_KEY", secrets.token_hex(32))
@@ -70,6 +74,7 @@ app.include_router(ws_router.router)
 app.include_router(admin.router)
 app.include_router(usage.router)
 app.include_router(invite.router)
+app.include_router(subscription.router)
 
 @app.get("/api/health")
 def health():
