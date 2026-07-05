@@ -13,6 +13,11 @@ import secrets
 import time
 
 
+
+
+router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
+
+
 class ResponseReq(BaseModel):
     model: str = "deepseek-v4-flash"
     input: str | list = "hello"
@@ -89,10 +94,6 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
             "total_tokens": usage_data.get("input", 0) + usage_data.get("output", 0),
         },
     }
-
-
-
-router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
 
 class ChatReq(BaseModel):
