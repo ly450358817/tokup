@@ -18,6 +18,27 @@ import time
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
 
+class ChatReq(BaseModel):
+    model: str = "deepseek-chat"
+    messages: list = []
+    stream: bool = False
+
+
+def authenticate_api_key(request: Request, db: Session = Depends(get_db)):
+    auth_header = request.headers.get("Authorization", "")
+    api_key_str = auth_header.replace("Bearer ", "")
+    if not api_key_str:
+        raise HTTPException(status_code=401, detail="Missing API key")
+    api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
+    if not api_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return api_key
+
+
+@router.post("/chat/completions")
+
+
+
 class ResponseReq(BaseModel):
     model: str = "deepseek-v4-flash"
     input: str | list = "hello"
@@ -96,24 +117,6 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
     }
 
 
-class ChatReq(BaseModel):
-    model: str = "deepseek-chat"
-    messages: list = []
-    stream: bool = False
-
-
-def authenticate_api_key(request: Request, db: Session = Depends(get_db)):
-    auth_header = request.headers.get("Authorization", "")
-    api_key_str = auth_header.replace("Bearer ", "")
-    if not api_key_str:
-        raise HTTPException(status_code=401, detail="Missing API key")
-    api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
-    if not api_key:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    return api_key
-
-
-@router.post("/chat/completions")
 async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
     """兼容 OpenAI SDK 格式的聊天接口"""
     model = resolve_model(req.model)
