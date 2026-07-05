@@ -12,9 +12,6 @@ from services.token_service import deduct_token
 import secrets
 import time
 
-
-
-
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
 
@@ -35,8 +32,15 @@ def authenticate_api_key(request: Request, db: Session = Depends(get_db)):
     return api_key
 
 
-@router.post("/chat/completions")
-
+def resolve_model(model: str) -> str:
+    """Resolve model name with or without provider prefix"""
+    if model in MODEL_ROUTES:
+        return model
+    for prefix in ["deepseek/", "anthropic/", "openai/", "qwen/", "moonshotai/"]:
+        prefixed = prefix + model
+        if prefixed in MODEL_ROUTES:
+            return prefixed
+    return model
 
 
 class ResponseReq(BaseModel):
@@ -47,15 +51,46 @@ class ResponseReq(BaseModel):
     reasoning_effort: str | None = None
 
 
-def resolve_model(model: str) -> str:
-    """Resolve model name with or without provider prefix"""
-    if model in MODEL_ROUTES:
-        return model
-    for prefix in ["deepseek/", "anthropic/", "openai/", "qwen/", "moonshotai/"]:
-        prefixed = prefix + model
-        if prefixed in MODEL_ROUTES:
-            return prefixed
-    return model
+@router.post("/chat/completions")
+async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
+    """兼容 OpenAI SDK 格式的聊天接口 — 返回标准 OpenAI 格式"""
+    model = resolve_model(req.model)
+    result = await proxy_request(model, req.messages, req.stream)
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+
+    usage_data = result.get("usage", {})
+    cost = usage_data.get("cost", 0.01)
+    token_cost = round(cost * 100)
+    if token_cost < 1:
+        token_cost = 1
+
+    usage_record = UsageRecord(
+        user_id=api_key.user_id,
+        api_key_id=api_key.id,
+        model=model,
+        provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+        input_tokens=usage_data.get("input", 0),
+        output_tokens=usage_data.get("output", 0),
+        cost_cny=cost,
+        status="success",
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(usage_record)
+    db.commit()
+
+    deduct = deduct_token(api_key.user_id, token_cost, db, f"API: {model}")
+    if not deduct["success"]:
+        raise HTTPException(status_code=402, detail="余额不足")
+
+    # Return standard OpenAI format directly (CC Switch & Codex compatible)
+    resp = result["data"]
+    if "usage" in resp:
+        if "prompt_tokens" not in resp["usage"] and "input" in usage_data:
+            resp["usage"]["prompt_tokens"] = usage_data["input"]
+        if "completion_tokens" not in resp["usage"] and "output" in usage_data:
+            resp["usage"]["completion_tokens"] = usage_data["output"]
+    return resp
 
 
 @router.post("/responses")
@@ -117,49 +152,6 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
     }
 
 
-async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
-    """兼容 OpenAI SDK 格式的聊天接口"""
-    model = resolve_model(req.model)
-    result = await proxy_request(model, req.messages, req.stream)
-    if "error" in result:
-        raise HTTPException(status_code=502, detail=result["error"])
-
-    usage_data = result.get("usage", {})
-    cost = usage_data.get("cost", 0.01)
-    token_cost = round(cost * 100)
-    if token_cost < 1:
-        token_cost = 1
-
-    # ── 记录使用明细（合规审计）──
-    usage_record = UsageRecord(
-        user_id=api_key.user_id,
-        api_key_id=api_key.id,
-        model=req.model,
-        provider=MODEL_ROUTES.get(req.model, ("unknown", ""))[0],
-        input_tokens=usage_data.get("input", 0),
-        output_tokens=usage_data.get("output", 0),
-        cost_cny=cost,
-        status="success",
-        created_at=datetime.now(timezone.utc),
-    )
-    db.add(usage_record)
-    db.commit()
-
-    deduct = deduct_token(api_key.user_id, token_cost, db, f"API: {req.model}")
-    if not deduct["success"]:
-        raise HTTPException(status_code=402, detail="Insufficient balance")
-
-    # Return standard OpenAI format directly (CC Switch & Codex compatible)
-    resp = result["data"]
-    # Fix usage field names to match standard OpenAI format
-    if "usage" in resp:
-        if "prompt_tokens" not in resp["usage"] and "input" in usage_data:
-            resp["usage"]["prompt_tokens"] = usage_data["input"]
-        if "completion_tokens" not in resp["usage"] and "output" in usage_data:
-            resp["usage"]["completion_tokens"] = usage_data["output"]
-    return resp
-
-
 @router.get("/models")
 def list_models():
     """返回可用模型列表"""
@@ -198,7 +190,6 @@ async def test_chat(req: TestChatReq, user: User = Depends(get_current_user), db
     if not deduct["success"]:
         raise HTTPException(status_code=402, detail="余额不足")
 
-    # ── 记录使用明细 ——
     usage_data = result.get("usage", {})
     usage_record = UsageRecord(
         user_id=user.id,
