@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
 
 export default function LoginPage() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [searchParams] = [new URLSearchParams(window.location.search)];
   const inviteCode = searchParams.get('code') || '';
-    const { login, register } = useAuth();
+  const { login, register } = useAuth();
   const { t } = useLang();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -23,7 +25,12 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(email, password, turnstileToken, inviteCode);
+        const turnstileWidget = document.querySelector('.cf-turnstile');
+        let token = '';
+        if (turnstileWidget && (window as any).turnstile) {
+          token = (window as any).turnstile.getResponse(turnstileWidget);
+        }
+        await register(email, password, token, inviteCode);
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Something went wrong');
@@ -32,28 +39,102 @@ export default function LoginPage() {
     }
   };
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let dots: { x: number; y: number; vx: number; vy: number; r: number; alpha: number }[] = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Create particles
+    const count = Math.min(80, Math.floor((canvas.width * canvas.height) / 12000));
+    for (let i = 0; i < count; i++) {
+      dots.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        r: Math.random() * 2 + 0.5,
+        alpha: Math.random() * 0.4 + 0.1,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw connections
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.06)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          const dx = dots[i].x - dots[j].x;
+          const dy = dots[i].y - dots[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 180) {
+            ctx.globalAlpha = (1 - dist / 180) * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x, dots[i].y);
+            ctx.lineTo(dots[j].x, dots[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw dots
+      ctx.globalAlpha = 1;
+      for (const dot of dots) {
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(16, 185, 129, ${dot.alpha})`;
+        ctx.fill();
+        
+        dot.x += dot.vx;
+        dot.y += dot.vy;
+        if (dot.x < 0 || dot.x > canvas.width) dot.vx *= -1;
+        if (dot.y < 0 || dot.y > canvas.height) dot.vy *= -1;
+      }
+
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Load Turnstile if not already loaded
+    if (!(window as any).turnstile) {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-4">
-      {/* Background energy ring */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <svg width="600" height="600" viewBox="0 0 600 600" className="opacity-[0.08]">
-          <circle cx="300" cy="300" r="240" fill="none" stroke="url(#bg_grad)" strokeWidth="1"
-            strokeDasharray="1500" strokeDashoffset="600" />
-          <circle cx="300" cy="300" r="200" fill="none" stroke="url(#bg_grad)" strokeWidth="0.5"
-            strokeDasharray="1200" strokeDashoffset="400" />
-          <circle cx="300" cy="300" r="160" fill="none" stroke="url(#bg_grad)" strokeWidth="0.3"
-            strokeDasharray="1000" strokeDashoffset="300" />
-          <defs>
-            <radialGradient id="bg_grad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-        </svg>
-      </div>
+    <div className="h-screen w-screen bg-[#0A0A0F] flex items-center justify-center p-4" style={{ minHeight: '100vh', minWidth: '100vw' }}>
+      {/* Animated particle background */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 0 }}
+      />
 
       {/* Auth card */}
-      <div className="relative w-full max-w-xl">
+      <div className="relative w-full max-w-2xl">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-4">

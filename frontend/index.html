@@ -46,6 +46,7 @@
         opacity: 0.6;
       }
     </style>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   </head>
   <body>
     <canvas id="bg-canvas"></canvas>
@@ -56,8 +57,7 @@
 window.onerror = function(m,u,l,c,e) {
   var el = document.getElementById('err');
   el.style.display = 'block';
-  el.textContent = m + '
-' + (e ? e.stack : (u + ':' + l));
+  el.textContent = (m || '') + '\n' + (e ? e.stack : (u + ':' + l));
 };
 window.addEventListener('unhandledrejection', function(e) {
   document.getElementById('err').style.display = 'block';
