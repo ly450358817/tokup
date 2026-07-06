@@ -20,7 +20,7 @@ load_dotenv()
 router = APIRouter(prefix="/api/payment", tags=["payment"])
 
 PACKAGES = {
-    "monthly": {"price": 99.0,  "tokens": 9900,  "label": "月卡"},
+    "monthly": {"price": 99.0,  "tokens": 9900,  "label": "月卡 (新用户特惠)"},
     "quarterly": {"price": 199.0, "tokens": 30000, "label": "季卡"},
     "yearly":  {"price": 499.0, "tokens": 120000, "label": "年卡"},
 }

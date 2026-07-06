@@ -14,7 +14,7 @@ function AlipayIcon({ size = 16 }: { size?: number }) {
 }
 
 const PACKAGES = [
-  { id: 'monthly', label: '月卡', tokens: 9900, price: 99.0, desc: '新用户首月特惠 · 限时', popular: false },
+  { id: 'monthly', label: '月卡', tokens: 9900, price: 99.0, originalPrice: 129.0, desc: '新用户特惠', popular: false },
   { id: 'quarterly', label: '季卡', tokens: 30000, price: 199.0, desc: '日均¥2.2 · 最受欢迎', popular: true },
   { id: 'yearly', label: '年卡', tokens: 120000, price: 499.0, desc: '日均¥1.4 · 超值长享', popular: false },
 ];
