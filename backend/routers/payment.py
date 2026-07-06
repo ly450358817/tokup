@@ -221,7 +221,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                             pay_url = f"/assets/qr/{order_id}.png"
                         except (ImportError, Exception):
                             # Proxy QR through our backend to avoid mixed content
-                            pay_url = f"/api/payment/qr_proxy/{order_id}?url={qr_content}
+                            pay_url = f"/api/payment/qr_proxy/{order_id}?url={qr_content}"
 
                     return {
                         "success": True,
