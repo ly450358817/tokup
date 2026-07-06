@@ -8,7 +8,7 @@ from models import User, Transaction
 from routers.auth import get_current_user
 from datetime import datetime, timezone
 
-router = APIRouter(prefix="/subscription", tags=["subscription"])
+router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
 # ── 套餐定义 ──
 PLANS = {
