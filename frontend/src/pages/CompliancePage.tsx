@@ -1,4 +1,4 @@
-import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink, ShieldCheck, X } from 'lucide-react';
 
 const COMMITMENTS = [
   {
@@ -66,6 +66,17 @@ export default function CompliancePage() {
           我们致力于构建透明、可审计、数据安全的 AI API 服务平台。
           以下是 TokUp 在「清朗 AI」行动 6 项合规基线中的实际落地情况。
         </p>
+      </div>
+
+      {/* Close button */}
+      <div className="flex justify-end -mt-4 mb-2">
+        <a
+          href="/dashboard"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/30 hover:text-white/60 hover:bg-white/[0.06] text-[11px] transition-all"
+        >
+          <X size={14} />
+          返回
+        </a>
       </div>
 
       {/* Compliance Items */}
