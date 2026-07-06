@@ -15,7 +15,7 @@ export default function LandingPage() {
   if (loading) return null;
 
   return (
-    <div style={{ background: '#06060B', minHeight: '100vh', color: '#fff', fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+    <div style={{ background: '#06060B', minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', color: '#fff', fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
       {/* Background layers */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0,
         background: 'radial-gradient(ellipse at 50% 30%, rgba(5,150,105,0.04) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(13,148,136,0.02) 0%, transparent 50%)'
@@ -53,9 +53,31 @@ export default function LandingPage() {
                 <stop offset="50%" stopColor="#10B981" stopOpacity="0.95"/>
                 <stop offset="100%" stopColor="#10B981" stopOpacity="0.1"/>
               </linearGradient>
+              <linearGradient id="archGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10B981" stopOpacity="0"/>
+                <stop offset="50%" stopColor="#10B981" stopOpacity="0.3"/>
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0"/>
+              </linearGradient>
+              <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#10B981" stopOpacity="0.6"/>
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0"/>
+              </radialGradient>
+              <animateMotion id="dotMove" dur="4s" repeatCount="indefinite">
+                <mpath href="#archPath"/>
+              </animateMotion>
             </defs>
-            <path d="M 20,110 C 160,5 540,5 680,110" fill="none" stroke="url(#archGrad)" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
-            <path d="M 20,110 C 160,5 540,5 680,110" fill="none" stroke="rgba(16,185,129,0.12)" strokeWidth="8" strokeLinecap="round" opacity="0.6" style={{filter:'blur(6px)', WebkitFilter:'blur(6px)'}}/>
+            <path id="archPath" d="M 20,110 C 160,5 540,5 680,110" fill="none" stroke="url(#archGrad)" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
+            <path d="M 20,110 C 160,5 540,5 680,110" fill="none" stroke="url(#archGlow)" strokeWidth="14" strokeLinecap="round" opacity="0.3" style={{filter:'blur(6px)', WebkitFilter:'blur(6px)'}}/>
+            <circle r="3" fill="#10B981" opacity="0.95" style={{filter:'blur(1px)'}}>
+              <animateMotion dur="3.5s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#archPath"/>
+              </animateMotion>
+            </circle>
+            <circle r="8" fill="url(#dotGlow)" opacity="0.5">
+              <animateMotion dur="3.5s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#archPath"/>
+              </animateMotion>
+            </circle>
           </svg>
         </div>
 
@@ -74,9 +96,14 @@ export default function LandingPage() {
           <div style={{ fontSize: 'clamp(9px,0.9vw,11px)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', marginBottom: 24, lineHeight: 1.6 }}>
             统一接入 GPT、Claude、DeepSeek 等主流模型。一个余额，零锁定。
           </div>
-          <a onClick={() => navigate('/login')} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 32px', borderRadius: 10, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', color: 'rgba(16,185,129,0.7)', fontSize: 12, fontWeight: 500, letterSpacing: '0.03em', textDecoration: 'none', cursor: 'pointer' }}>
-            开始使用 <span style={{ fontSize: 14 }}>→</span>
-          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+            <a onClick={() => navigate('/login')} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 32px', borderRadius: 10, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', color: 'rgba(16,185,129,0.7)', fontSize: 12, fontWeight: 500, letterSpacing: '0.03em', textDecoration: 'none', cursor: 'pointer' }}>
+              开始使用 <span style={{ fontSize: 14 }}>→</span>
+            </a>
+            <a onClick={() => navigate('/login')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '12px 24px', borderRadius: 10, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#10B981', fontSize: 12, fontWeight: 500, letterSpacing: '0.03em', textDecoration: 'none', cursor: 'pointer' }}>
+              🎁 免费注册送 ¥10
+            </a>
+          </div>
         </div>
 
         {/* Model bar */}
@@ -103,7 +130,7 @@ export default function LandingPage() {
             {icon: '▦', title: '逐笔审计', desc: '每次 API 调用的模型、Token、费用均记录在案，支持 CSV 导出。'},
             {icon: '◈', title: '数据不落地', desc: 'API 只做透传转发，消息内容不留存数据库，调用完即丢弃。'},
             {icon: '⇄', title: 'OpenAI 兼容', desc: '改一行代码即可接入。同一套 SDK，同一种格式，零迁移成本。'},
-            {icon: '△', title: 'AI 安全护盾', desc: '9 层防护：SQL 注入、XSS、速率限制、IP 封禁、异常检测全覆盖。'},
+            {icon: '△', title: 'AI 安全护盾', desc: '12 层防护：SQL 注入、XSS、速率限制、IP 封禁、异常检测、人机验证、会话管理、Key 异常检测全覆盖。'},
             {icon: '☆', title: '免费体验', desc: '注册送 ¥10 体验金，无需绑卡。邀请好友双方各得 ¥5。'},
           ].map((f, i) => (
             <div key={i} style={{ padding: '24px 22px', background: '#06060B' }}>
