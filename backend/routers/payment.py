@@ -220,7 +220,9 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                             _qr.make(qr_content, box_size=8, border=2).save(qr_path)
                             pay_url = f"/assets/qr/{order_id}.png"
                         except (ImportError, Exception):
-                            pay_url = qr_content
+                            # Force HTTPS for QR images
+                            qr_fixed = qr_content.replace("http://", "https://") if qr_content.startswith("http://") else qr_content
+                            pay_url = qr_fixed
 
                     return {
                         "success": True,
