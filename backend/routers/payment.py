@@ -14,6 +14,8 @@ import base64
 from database import get_db
 from models import User, Transaction
 from routers.auth import get_current_user
+from dotenv import load_dotenv
+load_dotenv()
 
 router = APIRouter(prefix="/api/payment", tags=["payment"])
 
