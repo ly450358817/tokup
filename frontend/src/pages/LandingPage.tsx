@@ -137,7 +137,7 @@ export default function LandingPage() {
       {/* Features */}
       <section style={{ position: 'relative', zIndex: 10, maxWidth: 1000, margin: '0 auto', padding: '30px 24px 40px' }}>
         <h2 style={{ textAlign: 'center', fontSize: 24, fontWeight: 500, color: 'rgba(255,255,255,0.85)', marginBottom: 6 }}>Why TokUp</h2>
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.08)', marginBottom: 32, fontWeight: 300 }}>Built for developers who demand transparency and reliability.</p>
+        <p style={{ textAlign: 'center', fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 32, fontWeight: 300 }}>Built for developers who demand transparency and reliability.</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 14, overflow: 'hidden' }}>
           {[
             {icon: '⬡', title: '合规上游', desc: 'DeepSeek 等模型通过七牛云合规链路接入，通过「清朗 AI」行动要求。'},
@@ -162,7 +162,7 @@ export default function LandingPage() {
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 10, lineHeight: 1.6 }}>
             注册即送 <span style={{ color: '#10B981', fontWeight: 500 }}>¥10 体验金</span>，无需绑卡。<br />OpenAI 兼容 SDK，改一行代码即可接入。
           </p>
-          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.08)', fontWeight: 300, letterSpacing: '0.03em' }}>稳定、透明、合规，开发者信赖的 AI API 入口。</p>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", fontWeight: 300, letterSpacing: '0.03em' }}>稳定、透明、合规，开发者信赖的 AI API 入口。</p>
         </div>
       </section>
     </div>
