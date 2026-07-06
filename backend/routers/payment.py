@@ -209,7 +209,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                     qr_content = result["info"].get("qr", "")
                     aoid = result["info"].get("aoid", "")
 
-                    # Save QR image as file
+                    # Save QR image as local file
                     pay_url = ""
                     if qr_content:
                         try:
@@ -219,9 +219,9 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                             qr_path = os.path.join(qr_dir, f"{order_id}.png")
                             _qr.make(qr_content, box_size=8, border=2).save(qr_path)
                             pay_url = f"/assets/qr/{order_id}.png"
-                        except (ImportError, Exception):
-                            # Proxy QR through our backend to avoid mixed content
-                            pay_url = f"/api/payment/qr_proxy/{order_id}?url={qr_content}"
+                        except:
+                            # Fallback: return raw QR content URL
+                            pay_url = qr_content
 
                     return {
                         "success": True,
@@ -473,15 +473,3 @@ def get_order_status(
     }
 
 
-@router.get("/qr_proxy/{order_id}")
-async def proxy_qr(order_id: str, url: str):
-    """Proxy QR image through our backend (avoid mixed content)"""
-    from fastapi.responses import Response
-    import httpx
-    try:
-        fixed_url = url.replace("http://", "https://") if url.startswith("http://") else url
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(fixed_url)
-            return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/png"))
-    except Exception:
-        raise HTTPException(status_code=502, detail="QR proxy failed")
