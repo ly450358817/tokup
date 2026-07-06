@@ -41,28 +41,6 @@ def _validate_email(email: str):
     if "@" not in email or "." not in email.split("@")[-1]:
         raise HTTPException(status_code=400, detail="Invalid email address")
 
-ALGORITHM = "HS256"
-
-# --- Rate limiter (in-memory, per IP) ---
-_rate_limit_store: dict = {}
-
-def _rate_limit(key: str, max_attempts: int = 50, window: int = 60):
-    now = time.time()
-    timestamps = _rate_limit_store.get(key, [])
-    timestamps = [t for t in timestamps if now - t < window]
-    if len(timestamps) >= max_attempts:
-        raise HTTPException(status_code=429, detail="Too many attempts")
-    timestamps.append(now)
-    _rate_limit_store[key] = timestamps
-
-def _validate_password(password: str):
-    if len(password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-
-def _validate_email(email: str):
-    if "@" not in email or "." not in email.split("@")[-1]:
-        raise HTTPException(status_code=400, detail="Invalid email address")
-
 
 
 class RegisterReq(BaseModel):
@@ -117,7 +95,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         email=req.email,
         password_hash=pwd.hash(req.password),
         nickname=req.email.split("@")[0],
-        token_balance=1000,  # 注册送 ¥10 体验金
+        token_balance=10000,  # 注册送 ¥1 体验金 (10000 token)
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
     db.add(user)
@@ -128,11 +106,12 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         referrer = db.query(User).filter(User.invite_code == req.invite_code).first()
         if referrer and referrer.id != user.id:
             user.referred_by = referrer.id
-            # 邀请人 +¥5 (500 分)
-            referrer.token_balance += 500
-            referrer.invite_count += 1
-            # 被邀请人额外 +¥5 (500 分)
-            user.token_balance += 500
+            # 邀请人 +5000 token
+            if hasattr(referrer, 'invite_count'):
+                referrer.invite_count = (referrer.invite_count or 0) + 1
+            referrer.token_balance += 5000
+            # 被邀请人额外 +5000 token
+            user.token_balance += 5000
     
     db.commit()
     db.refresh(user)
