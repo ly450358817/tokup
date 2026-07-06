@@ -81,7 +81,7 @@ export const zh = {
     transactions: '交易记录',
     settings: '设置',
     monitor: '实时监控',
-   integration: '接入指南',
+   integration: 'API文档',
    transferStation: '中转站',
    docs: '接入指南',
     pricing: '订阅',
