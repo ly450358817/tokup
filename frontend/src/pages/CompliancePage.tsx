@@ -1,4 +1,4 @@
-import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink } from 'lucide-react';
+import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink, ShieldCheck } from 'lucide-react';
 
 const COMMITMENTS = [
   {
@@ -25,7 +25,7 @@ const COMMITMENTS = [
   {
     icon: Shield,
     title: '数据保护',
-    desc: '9 层 AI 安全护盾：IP 封禁、速率限制、SQL/XSS/命令注入扫描、NoSQL 注入检测、启发式异常评分、认证失败追踪。所有传输经 Cloudflare HTTPS 加密。',
+    desc: '12 层 AI 安全护盾：IP 封禁、速率限制、SQL/XSS/命令注入扫描、NoSQL 注入检测、启发式异常评分、认证失败追踪、人机验证、会话管理、Key 异常检测。所有传输经 Cloudflare HTTPS 加密。',
     status: '✅ 已实现',
     detail: 'security_service.py 作为全局中间件运行',
   },
@@ -35,6 +35,13 @@ const COMMITMENTS = [
     desc: '每条 API 调用的模型、Token 用量、费用、响应时间、状态均记录在案。支持 CSV 导出，满足企业内部审计和数据流向追溯需求。',
     status: '✅ 已实现',
     detail: 'GET /api/usage/records + /api/usage/export',
+  },
+  {
+    icon: ShieldCheck,
+    title: '账户安全',
+    desc: '3 层额外账户保护：Turnstile 人机验证防批量注册、Refresh Token 会话管理（最多 5 个并发）、API Key 异地调用检测（10 分钟内 >3 个 IP 自动告警）。',
+    status: '✅ 已实现',
+    detail: 'frontend + backend: Turnstile + Sessions + Key Abuse Detection',
   },
   {
     icon: Lock,
@@ -62,7 +69,7 @@ export default function CompliancePage() {
       </div>
 
       {/* Compliance Items */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {COMMITMENTS.map((item, i) => (
           <div key={i} className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.03] transition-all">
             <div className="flex items-start gap-4">

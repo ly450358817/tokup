@@ -83,7 +83,7 @@ export const en = {
     monitor: 'Monitor',
     integration: 'Integration',
     transferStation: 'Transfer Station',
-    docs: 'API Docs',
+    docs: '接入指南',
   },
   auth: {
     signIn: 'Sign In',

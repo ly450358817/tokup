@@ -83,7 +83,7 @@ export const zh = {
     monitor: '实时监控',
    integration: '接入指南',
    transferStation: '中转站',
-   docs: 'API文档',
+   docs: '接入指南',
     pricing: '订阅',
     analytics: '分析',
   },
