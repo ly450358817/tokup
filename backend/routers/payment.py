@@ -211,18 +211,19 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                     qr_content = result["info"].get("qr", "")
                     aoid = result["info"].get("aoid", "")
 
-                    # Save QR image as local file
+                    # Generate QR as base64 data URL (no file system dependency)
                     pay_url = ""
                     if qr_content:
                         try:
                             import qrcode as _qr
-                            qr_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist", "assets", "qr")
-                            os.makedirs(qr_dir, exist_ok=True)
-                            qr_path = os.path.join(qr_dir, f"{order_id}.png")
-                            _qr.make(qr_content, box_size=8, border=2).save(qr_path)
-                            pay_url = f"/assets/qr/{order_id}.png"
+                            import io as _io
+                            import base64 as _b64
+                            img = _qr.make(qr_content, box_size=8, border=2)
+                            buf = _io.BytesIO()
+                            img.save(buf, format="PNG")
+                            b64 = _b64.b64encode(buf.getvalue()).decode()
+                            pay_url = f"data:image/png;base64,{b64}"
                         except:
-                            # Fallback: return raw QR content URL
                             pay_url = qr_content
 
                     return {
