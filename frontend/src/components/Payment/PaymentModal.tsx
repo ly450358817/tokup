@@ -14,10 +14,9 @@ function AlipayIcon({ size = 16 }: { size?: number }) {
 }
 
 const PACKAGES = [
-  { id: 'trial', label: '体验包', tokens: 990, price: 9.9, desc: '适合轻度体验' },
-  { id: 'light', label: '轻量包', tokens: 2990, price: 29.9, desc: '日常轻度使用', popular: false },
-  { id: 'standard', label: '标准包', tokens: 9900, price: 99.0, desc: '中度使用推荐', popular: true },
-  { id: 'pro', label: '专业包', tokens: 29900, price: 299.0, desc: '重度用户首选' },
+  { id: 'monthly', label: '月卡', tokens: 9900, price: 99.0, desc: '入门首选 · 新用户特惠', popular: false },
+  { id: 'quarterly', label: '季卡', tokens: 30000, price: 199.0, desc: '日均¥2.2 · 最受欢迎', popular: true },
+  { id: 'yearly', label: '年卡', tokens: 120000, price: 499.0, desc: '日均¥1.4 · 超值长享', popular: false },
 ];
 
 interface Props {
