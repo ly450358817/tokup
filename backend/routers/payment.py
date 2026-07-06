@@ -198,7 +198,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                 "sign": sign,
             }
 
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=5.0)) as client:
                 resp = await client.post(
                     f"{XORPAY_API_URL}/{XORPAY_AID}",
                     data=pay_data,
