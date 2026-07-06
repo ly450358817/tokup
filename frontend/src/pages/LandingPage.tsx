@@ -1,9 +1,23 @@
 import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const root = document.getElementById('root');
+    if (root) {
+      const origOverflow = root.style.overflow;
+      root.style.overflow = 'visible';
+      root.style.height = 'auto';
+      return () => {
+        root.style.overflow = origOverflow || '';
+        root.style.height = '';
+      };
+    }
+  }, []);
   const { isAuth, loading } = useAuth();
 
   useEffect(() => {
@@ -15,7 +29,7 @@ export default function LandingPage() {
   if (loading) return null;
 
   return (
-    <div style={{ background: '#06060B', minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', color: '#fff', fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+    <div style={{ background: '#06060B', minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, color: '#fff', fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
       {/* Background layers */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0,
         background: 'radial-gradient(ellipse at 50% 30%, rgba(5,150,105,0.04) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(13,148,136,0.02) 0%, transparent 50%)'
