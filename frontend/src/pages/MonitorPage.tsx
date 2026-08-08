@@ -90,7 +90,7 @@ export default function MonitorPage() {
             <Gauge size={14} className="text-purple-400" />
             <span className="text-[10px] text-white/30 tracking-wider uppercase">Avg Response</span>
           </div>
-          <p className="text-[28px] font-bold text-white">{data?.avg_response_ms || 0}<span className="text-[14px] text-white/30">ms</span></p>
+          <p className="text-[28px] font-bold text-white">{data?.avg_response_ms ? <>{data.avg_response_ms}<span className="text-[14px] text-white/30">ms</span></> : '—'}</p>
           <p className="text-[10px] text-white/20 mt-1">Across all models</p>
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
@@ -133,10 +133,16 @@ export default function MonitorPage() {
                   <td className="py-3 px-4 text-right text-white/60">{m.requests.toLocaleString()}</td>
                   <td className="py-3 px-4 text-right text-white/60">{(m.tokens || 0).toLocaleString()}</td>
                   <td className="py-3 px-4 text-right">
-                    <span className="text-white/60">{m.avg_latency_ms}ms</span>
-                    <span className={`ml-2 text-[10px] ${m.avg_latency_ms < 400 ? 'text-emerald-400' : m.avg_latency_ms < 700 ? 'text-yellow-400' : 'text-red-400'}`}>
-                      {m.avg_latency_ms < 400 ? tr("monitor.fast") : m.avg_latency_ms < 700 ? tr("monitor.moderate") : tr("monitor.slow")}
-                    </span>
+                    {m.avg_latency_ms ? (
+                      <>
+                        <span className="text-white/60">{m.avg_latency_ms}ms</span>
+                        <span className={`ml-2 text-[10px] ${m.avg_latency_ms < 400 ? 'text-emerald-400' : m.avg_latency_ms < 700 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {m.avg_latency_ms < 400 ? tr("monitor.fast") : m.avg_latency_ms < 700 ? tr("monitor.moderate") : tr("monitor.slow")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-white/30">—</span>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-right">
                     <span className={`${m.error_rate < 0.5 ? 'text-emerald-400' : m.error_rate < 1.5 ? 'text-yellow-400' : 'text-red-400'}`}>
