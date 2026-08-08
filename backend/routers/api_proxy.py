@@ -162,12 +162,14 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                 _fwd_content = ""
                 _settled = False
                 _balance_after = None
+                _t0 = time.monotonic()
 
                 def _settle():
                     nonlocal _settled, _balance_after
                     if _settled:
                         return
                     _settled = True
+                    _latency = int((time.monotonic() - _t0) * 1000)
                     if _usage_data:
                         _cost = _usage_data.get("cost", 0.01)
                         _input_tok = _usage_data.get("input", 0)
@@ -185,6 +187,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                                 input_tokens=_input_tok,
                                 output_tokens=_output_tok,
                                 cost_cny=_cost, status="success",
+                                latency_ms=_latency,
                                 created_at=datetime.now(timezone.utc),
                             )
                             db.add(_record)
@@ -251,7 +254,9 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if not _res["success"]:
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
     _max_tokens = req.max_tokens or req.max_completion_tokens
+    _t0 = time.monotonic()
     result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens)
+    _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
         settle_reserved(_uid, _need, 0, db, f"API退回: {model}")
         raise HTTPException(status_code=502, detail=result["error"])
@@ -263,7 +268,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
         provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
         input_tokens=usage_data.get("input", 0),
         output_tokens=usage_data.get("output", 0),
-        cost_cny=cost, status="success", created_at=datetime.now(timezone.utc),
+        cost_cny=cost, status="success", latency_ms=_latency,
+        created_at=datetime.now(timezone.utc),
     )
     db.add(usage_record)
     _deduct = settle_reserved(_uid, _need, token_cost, db, f"API: {model}")
@@ -295,7 +301,9 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if not _res["success"]:
         return {"success": False, "detail": "余额不足"}
     model = _model_t
+    _t0 = time.monotonic()
     result = await proxy_request(model, req.messages, False)
+    _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
         settle_reserved(user.id, _need, 0, db, f"API退回: {model}")
         return {"success": False, "detail": result["error"]}
@@ -307,7 +315,8 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
         provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
         input_tokens=usage_data.get("input", 0),
         output_tokens=usage_data.get("output", 0),
-        cost_cny=cost, status="success", created_at=datetime.now(timezone.utc),
+        cost_cny=cost, status="success", latency_ms=_latency,
+        created_at=datetime.now(timezone.utc),
     )
     db.add(usage_record)
     _deduct = settle_reserved(user.id, _need, token_cost, db, f"API: {model}")
@@ -340,7 +349,9 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         yield f"event: response.created\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'in_progress'})}\n\n"
         yield f"event: response.in_progress\ndata: {json.dumps({'id': resp_id, 'status': 'in_progress'})}\n\n"
 
+        _t0 = time.monotonic()
         result = await proxy_request(model, messages, False, max_tokens=req.max_output_tokens)
+        _latency = int((time.monotonic() - _t0) * 1000)
 
         if "error" in result:
             settle_reserved(_uid, _need, 0, db, f"API退回: {model}")
@@ -369,6 +380,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
             output_tokens=usage_data.get("output", 0),
             cost_cny=cost,
             status="success",
+            latency_ms=_latency,
             created_at=datetime.now(timezone.utc),
         )
         db.add(usage_record)

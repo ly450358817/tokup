@@ -57,6 +57,11 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
         .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= today_start)
         .scalar() or 0
     )
+    today_avg_latency = (
+        db.query(func.avg(case((UsageRecord.latency_ms > 0, UsageRecord.latency_ms), else_=None)))
+        .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= today_start)
+        .scalar()
+    )
     today_success = (
         db.query(func.count(UsageRecord.id))
         .filter(
@@ -85,6 +90,7 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
             func.count(UsageRecord.id),
             func.sum(UsageRecord.input_tokens + UsageRecord.output_tokens),
             func.sum(case((UsageRecord.status != "success", 1), else_=0)),
+            func.avg(case((UsageRecord.latency_ms > 0, UsageRecord.latency_ms), else_=None)),
         )
         .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= day_start)
         .group_by(UsageRecord.model)
@@ -92,7 +98,7 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
         .all()
     )
     models_data = []
-    for model, cnt, tokens, errs in model_rows:
+    for model, cnt, tokens, errs, avg_lat in model_rows:
         cnt = int(cnt or 0)
         tokens = int(tokens or 0)
         errs = int(errs or 0)
@@ -102,7 +108,7 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
             "label": MODEL_LABELS.get(model, model),
             "requests": cnt,
             "tokens": tokens,
-            "avg_latency_ms": 0,
+            "avg_latency_ms": int(avg_lat or 0),
             "error_rate": error_rate,
             "status": "healthy" if error_rate < 1.5 else "degraded",
         })
@@ -132,7 +138,7 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
         "today_requests": today_total,
         "total_tokens_today": total_tokens_today,
         "total_tokens_all": total_tokens_all,
-        "avg_response_ms": 0,
+        "avg_response_ms": int(today_avg_latency or 0),
         "success_rate": round((today_success / max(today_total, 1)) * 100, 1),
         "models": models_data,
         "hourly_trend": hourly,
