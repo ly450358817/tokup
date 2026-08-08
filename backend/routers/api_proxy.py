@@ -87,10 +87,13 @@ def resolve_model(model: str) -> str:
 class ResponseReq(BaseModel):
     model: str = "deepseek-v4-flash"
     input: str | list = "hello"
-    max_output_tokens: int = 1024
+    max_output_tokens: int | None = None
     stream: bool = False
     reasoning_effort: str | None = None
     instructions: str | None = None
+    tools: list | None = None
+    tool_choice: str | dict | None = None
+    parallel_tool_calls: bool | None = None
 
 
 def _content_part_to_text(part) -> str:
@@ -106,7 +109,7 @@ def _content_part_to_text(part) -> str:
 
 
 def _normalize_responses_input(input_data, instructions=None) -> list:
-    """把 OpenAI Responses 的 input 转换成 chat messages（content 统一为字符串）。"""
+    """把 OpenAI Responses 的 input 转换成 chat messages，支持消息、历史工具调用(tool_calls)与工具结果。"""
     messages = []
     if instructions:
         messages.append({"role": "system", "content": instructions})
@@ -122,21 +125,96 @@ def _normalize_responses_input(input_data, instructions=None) -> list:
             continue
         if not isinstance(item, dict):
             continue
-        # 取 role：Responses 消息可能是 {type:"message", role:...} 或直接 {role:...}
-        role = item.get("role") or "user"
-        content = item.get("content")
-        if content is None:
-            continue
-        if isinstance(content, list):
-            text = "".join(_content_part_to_text(p) for p in content).strip()
+        t = item.get("type")
+        if t == "message" or "role" in item:
+            role = item.get("role") or "user"
+            if role == "developer":
+                role = "system"
+            content = item.get("content")
+            text = ""
+            if isinstance(content, list):
+                for part in content:
+                    text += _content_part_to_text(part)
+            elif content is not None:
+                text = str(content)
+            text = text.strip()
             if not text:
                 continue
             messages.append({"role": role, "content": text})
-        else:
-            messages.append({"role": role, "content": str(content)})
+        elif t in ("function_call", "custom_tool_call"):
+            # 助手历史里的工具调用 -> assistant.tool_calls
+            name = item.get("name") or ""
+            if not name:
+                continue
+            raw_args = item.get("arguments")
+            if raw_args is None:
+                raw_args = item.get("input") or ""
+            if not isinstance(raw_args, str):
+                raw_args = json.dumps(raw_args, ensure_ascii=False)
+            call_id = item.get("call_id") or item.get("id") or f"call_{len(messages)}"
+            messages.append({
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": call_id,
+                    "type": "function",
+                    "function": {"name": name, "arguments": raw_args},
+                }],
+            })
+        elif t in ("function_call_output", "custom_tool_call_output"):
+            # 工具执行结果 -> tool message
+            call_id = item.get("call_id") or ""
+            output = item.get("output")
+            if isinstance(output, dict):
+                output = output.get("output") or output.get("content") or json.dumps(output, ensure_ascii=False)
+            elif isinstance(output, list):
+                parts = []
+                for part in output:
+                    if isinstance(part, dict):
+                        parts.append(_content_part_to_text(part) or part.get("text", ""))
+                    else:
+                        parts.append(str(part))
+                output = "\n".join(p for p in parts if p)
+            else:
+                output = str(output or "")
+            messages.append({"role": "tool", "tool_call_id": call_id, "content": output})
     if not messages:
         messages.append({"role": "user", "content": ""})
     return messages
+
+
+def _convert_tools(tools) -> list | None:
+    """把 Codex 的 Responses tools 转成 chat/completions 的 legacy function tools。
+    namespace / custom 类工具暂时不支持（跳过），保证核心 shell/文件等 function 工具可用。"""
+    if not tools:
+        return None
+    out = []
+    for t in tools:
+        if not isinstance(t, dict):
+            continue
+        if t.get("type") != "function":
+            continue
+        out.append({
+            "type": "function",
+            "function": {
+                "name": t.get("name", ""),
+                "description": t.get("description") or "",
+                "parameters": t.get("parameters") or {"type": "object", "properties": {}},
+            },
+        })
+    return out or None
+
+
+def _convert_tool_choice(tool_choice):
+    """把 Responses 的 tool_choice 转成 chat/completions 格式。"""
+    if not tool_choice:
+        return "auto"
+    if isinstance(tool_choice, str):
+        return tool_choice  # auto / none / required
+    if isinstance(tool_choice, dict):
+        name = tool_choice.get("name") or (tool_choice.get("function") or {}).get("name")
+        if name:
+            return {"type": "function", "function": {"name": name}}
+    return "auto"
 
 
 @router.post("/chat/completions")
@@ -327,9 +405,11 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
 
 @router.post("/responses")
 async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
-    """SSE 流式返回（真流式 + 心跳保活 + OpenAI Responses 标准事件格式，兼容 Codex 客户端）"""
+    """SSE 流式返回：真流式 + 心跳保活 + OpenAI Responses 标准事件格式，支持工具调用（function_call）"""
     _uid, _kid = _capture_key_identity(api_key)
     messages = _normalize_responses_input(req.input, req.instructions)
+    _tools_legacy = _convert_tools(req.tools)
+    _tool_choice = _convert_tool_choice(req.tool_choice)
 
     model = resolve_model(req.model)
     if model not in MODEL_ROUTES:
@@ -374,6 +454,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         _rs_added = False
         _rs_idx = 0
         _msg_idx = 0
+        _tool_items = []   # 完成的 function_call item（按输出顺序）
 
         def _settle(ok: bool):
             nonlocal _settled
@@ -408,9 +489,11 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         q: asyncio.Queue = asyncio.Queue()
 
         async def _consume():
-            nonlocal _usage_data, _content_text, _reasoning_text, _msg_added, _rs_added, _rs_idx, _msg_idx
+            nonlocal _usage_data, _content_text, _reasoning_text, _msg_added, _rs_added, _rs_idx, _msg_idx, _tool_items
+            _tool_state = {}   # index -> {fc_id, call_id, name, args, added, out_idx}
             try:
-                async for _chunk in _psr(model, messages, max_tokens=req.max_output_tokens):
+                async for _chunk in _psr(model, messages, max_tokens=req.max_output_tokens,
+                                         tools=_tools_legacy, tool_choice=_tool_choice):
                     if isinstance(_chunk, bytes):
                         if _chunk.startswith(b"__USAGE__:"):
                             try:
@@ -455,6 +538,60 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                                 await q.put(("sse", _sse("response.output_text.delta", {
                                     "item_id": _msg_item_id, "output_index": _msg_idx, "delta": _dc,
                                 })))
+                            # 工具调用：上游 chat/completions 的 delta.tool_calls 逐块到达
+                            for _tc in (_delta.get("tool_calls") or []):
+                                if not isinstance(_tc, dict):
+                                    continue
+                                _tidx = _tc.get("index", 0)
+                                _st = _tool_state.get(_tidx)
+                                _f = _tc.get("function") or {}
+                                if _st is None:
+                                    _st = {"fc_id": f"fc_{int(time.time()*1000)}_{_tidx}",
+                                           "call_id": _tc.get("id") or "",
+                                           "name": _f.get("name") or "",
+                                           "args": "", "added": False, "out_idx": None}
+                                    _tool_state[_tidx] = _st
+                                if _f.get("name"):
+                                    _st["name"] = _f["name"]
+                                if _tc.get("id") and not _st["call_id"]:
+                                    _st["call_id"] = _tc["id"]
+                                _args_chunk = _f.get("arguments") or ""
+                                if _args_chunk:
+                                    _st["args"] += _args_chunk
+                                if not _st["added"] and (_st["name"] or _args_chunk):
+                                    _st["added"] = True
+                                    _st["out_idx"] = _next_idx()
+                                    await q.put(("sse", _sse("response.output_item.added", {
+                                        "output_index": _st["out_idx"],
+                                        "item": {"type": "function_call", "id": _st["fc_id"],
+                                                 "call_id": _st["call_id"], "name": _st["name"],
+                                                 "arguments": _st["args"]},
+                                    })))
+                                if _args_chunk:
+                                    await q.put(("sse", _sse("response.function_call_arguments.delta", {
+                                        "item_id": _st["fc_id"], "output_index": _st["out_idx"], "delta": _args_chunk,
+                                    })))
+                # 流结束：收尾所有工具调用
+                for _tidx in sorted(_tool_state):
+                    _st = _tool_state[_tidx]
+                    if not _st["added"]:
+                        _st["added"] = True
+                        _st["out_idx"] = _next_idx()
+                        await q.put(("sse", _sse("response.output_item.added", {
+                            "output_index": _st["out_idx"],
+                            "item": {"type": "function_call", "id": _st["fc_id"],
+                                     "call_id": _st["call_id"], "name": _st["name"],
+                                     "arguments": _st["args"]},
+                        })))
+                    await q.put(("sse", _sse("response.function_call_arguments.done", {
+                        "item_id": _st["fc_id"], "output_index": _st["out_idx"], "arguments": _st["args"],
+                    })))
+                    _item = {"type": "function_call", "id": _st["fc_id"], "call_id": _st["call_id"],
+                             "name": _st["name"], "arguments": _st["args"]}
+                    _tool_items.append(_item)
+                    await q.put(("sse", _sse("response.output_item.done", {
+                        "output_index": _st["out_idx"], "item": _item,
+                    })))
             except Exception as _e:
                 await q.put(("error", str(_e)))
             finally:
@@ -516,11 +653,17 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 
         _out_usage = _usage_data or {}
         completed_output = []
+        if _rs_added:
+            completed_output.append({"type": "reasoning", "id": _rs_item_id,
+                                     "summary": [{"type": "summary_text", "text": _reasoning_text}]})
         if _msg_added:
             completed_output.append({"type": "message", "role": "assistant",
                                      "content": [{"type": "output_text", "text": _content_text}]})
+        completed_output.extend(_tool_items)
+        # 有未执行的工具调用时 turn 未结束（Codex 会执行工具后继续请求）
+        end_turn = not bool(_tool_items)
         completed = {
-            "id": resp_id, "object": "response", "status": "completed", "end_turn": True,
+            "id": resp_id, "object": "response", "status": "completed", "end_turn": end_turn,
             "output": completed_output,
             "usage": {
                 "input_tokens": _out_usage.get("input", 0),

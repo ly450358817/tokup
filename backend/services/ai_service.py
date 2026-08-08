@@ -150,7 +150,8 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
 
 
 
-async def proxy_stream_request(model: str, messages: list, max_tokens: int | None = None):
+async def proxy_stream_request(model: str, messages: list, max_tokens: int | None = None,
+                        tools: list | None = None, tool_choice=None):
     """
     真流式转发：用 stream=True 请求上游，按字节读取 SSE 并实时原样转发。
     - 上游的 reasoning_content（思考过程）也立即转发，客户端不会长时间静默（避免被
@@ -173,6 +174,10 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
     payload = {"model": model, "messages": messages, "stream": True}
     if max_tokens:
         payload["max_tokens"] = max_tokens
+    if tools:
+        payload["tools"] = tools
+    if tool_choice:
+        payload["tool_choice"] = tool_choice
     if provider == "anthropic":
         payload = {"model": model, "messages": messages, "max_tokens": max_tokens or 4096, "stream": True}
 
@@ -203,11 +208,13 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                                     delta = data.get("choices", [{}])[0].get("delta", {}) or {}
                                     rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
                                     dc = delta.get("content") or ""
+                                    has_tc = bool(delta.get("tool_calls"))
                                     if rc:
                                         full_reasoning += rc
                                     if dc:
                                         full_content += dc
-                                    if (rc or dc) and not started:
+                                    # 工具调用也是有效输出：立即开始转发，避免被当成空流
+                                    if (rc or dc or has_tc) and not started:
                                         started = True
                                     if data.get("choices", [{}])[0].get("finish_reason"):
                                         cost_val = calculate_cost(model, input_tok, output_tok)
