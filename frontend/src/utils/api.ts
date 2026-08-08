@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 15000,
+  timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {
@@ -50,6 +50,10 @@ export const keysApi = {
   list: () => api.get('/keys').then((r) => r.data),
   create: (name = '', monthly_cap = 0, daily_cap = 0) => api.post('/keys', { name, monthly_cap, daily_cap }).then((r) => r.data),
   delete: (id: string) => api.delete(`/keys/${id}`).then((r) => r.data),
+};
+
+export const monitorApi = {
+  stats: () => api.get('/monitor/stats').then((r) => r.data),
 };
 
 export const subscriptionApi = {

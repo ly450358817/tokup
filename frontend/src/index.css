@@ -1,13 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
 
 /* Theme variables */
 :root {
-  --bg-primary: #0A0A0F;
-  --bg-secondary: #0E0E16;
+  --bg-primary: #13131D;
+  --bg-secondary: #1C1C26;
   --text-primary: #ffffff;
   --text-secondary: rgba(255,255,255,0.7);
-  --text-muted: rgba(255,255,255,0.3);
-  --border-color: rgba(255,255,255,0.06);
-  --card-bg: rgba(255,255,255,0.02);
+  --text-muted: rgba(255,255,255,0.35);
+  --border-color: rgba(255,255,255,0.08);
+  --card-bg: rgba(255,255,255,0.04);
 }
 
 [data-theme="light"] {
@@ -19,8 +21,6 @@
   --border-color: rgba(0,0,0,0.08);
   --card-bg: rgba(255,255,255,0.8);
 }
- @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
- 
  @tailwind base;
  @tailwind components;
  @tailwind utilities;
@@ -40,7 +40,7 @@ html, body, #root {
  
  body {
    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-   background: #0A0A0F;
+   background: #13131D;
    color: #F8FAFC;
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
@@ -48,9 +48,9 @@ html, body, #root {
  
  .bg-depth {
    background: 
-     radial-gradient(ellipse 80% 60% at 50% 40%, rgba(16, 185, 129, 0.03) 0%, transparent 70%),
-     radial-gradient(ellipse 50% 40% at 50% 60%, rgba(59, 130, 246, 0.02) 0%, transparent 60%),
-     #0A0A0F;
+     radial-gradient(ellipse 80% 60% at 50% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 70%),
+     radial-gradient(ellipse 50% 40% at 50% 60%, rgba(59, 130, 246, 0.03) 0%, transparent 60%),
+     #13131D;
  }
  
  @keyframes breathe {
@@ -183,7 +183,7 @@ html, body, #root {
   height: 800px;
   border-radius: 50%;
   filter: blur(150px);
-  opacity: 0.025;
+  opacity: 0.04;
   animation: aurora-float 25s ease-in-out infinite alternate;
 }
 .aurora-bg::before {

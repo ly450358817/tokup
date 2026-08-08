@@ -46,13 +46,34 @@
         opacity: 0.6;
       }
     </style>
-      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      
+      <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TokUp · 脉充",
+      "description": "AI API Token 一站式充值管理平台。支持 GPT-5.6、DeepSeek V4、Claude Fable 5 多模型，统一余额、按量计费。",
+      "url": "https://tokup.net/",
+      "applicationCategory": "API Management",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "TokUp AI API Token",
+      "description": "AI API Token 充值管理，支持多模型统一余额、按量计费。",
+      "url": "https://tokup.net/"
+    }
+    </script>
   </head>
   <body>
     <canvas id="bg-canvas"></canvas>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-  <div id="err" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0A0A0F;color:#EF4444;padding:40px;font-family:monospace;font-size:14px;z-index:9999;overflow:auto;"></div>
+  <div id="err" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#13131D;color:#EF4444;padding:40px;font-family:monospace;font-size:14px;z-index:9999;overflow:auto;"></div>
 <script>
 window.onerror = function(m,u,l,c,e) {
   var el = document.getElementById('err');

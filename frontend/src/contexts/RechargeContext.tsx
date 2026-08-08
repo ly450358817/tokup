@@ -12,7 +12,7 @@ function Toast({ message, type, visible }: { message: string; type: 'success' | 
   if (!visible) return null;
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
-      <div className="backdrop-blur-xl bg-[#16161E]/95 border border-white/[0.06] rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3 min-w-[280px]">
+      <div className="backdrop-blur-xl bg-[#22222C]/95 border border-white/[0.06] rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3 min-w-[280px]">
         {type === 'success' ? (
           <CheckCircle size={18} className="text-emerald-400 shrink-0" />
         ) : (

@@ -21,7 +21,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/v1/test/chat', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + (token || ''), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'gpt-4o', messages: [{role:'user', content: msg}] })
+        body: JSON.stringify({ model: 'gpt-5.5', messages: [{role:'user', content: msg}] })
       });
       const data = await res.json();
       if (data.success) {
@@ -158,7 +158,7 @@ export default function SettingsPage() {
       {/* Help modal (inside return) */}
       {showHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
-          <div className="bg-[#16161E] border border-white/[0.06] rounded-2xl w-[420px] max-w-[90vw] h-[540px] max-h-[80vh] flex flex-col shadow-2xl animate-slide-up overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#22222C] border border-white/[0.06] rounded-2xl w-[420px] max-w-[90vw] h-[540px] max-h-[80vh] flex flex-col shadow-2xl animate-slide-up overflow-hidden" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06] shrink-0">
               <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center">
@@ -205,7 +205,7 @@ export default function SettingsPage() {
             </div>
             {/* Input */}
             <div className="p-4 border-t border-white/[0.06] shrink-0">
-              <div className="flex items-center gap-2 bg-[#0A0A0F] rounded-xl px-4 py-2 border border-white/[0.06]">
+              <div className="flex items-center gap-2 bg-[#13131D] rounded-xl px-4 py-2 border border-white/[0.06]">
                 <input
                   type="text"
                   value={chatInput}

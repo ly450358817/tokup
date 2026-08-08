@@ -76,7 +76,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex w-full h-screen bg-[#0A0A0F] relative overflow-hidden">
+    <div className="flex w-full h-screen bg-[#13131D] relative overflow-hidden">
       <div className="aurora-bg" />
       {sidebarOpen && (
         <div
@@ -86,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 flex flex-col bg-[#0A0A0F] border-r border-white/[0.04] transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 flex flex-col bg-[#13131D] border-r border-white/[0.04] transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -175,7 +175,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Profile popover */}
             {showUserMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#16161E] border border-white/[0.06] rounded-xl p-4 shadow-2xl animate-slide-up">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#22222C] border border-white/[0.06] rounded-xl p-4 shadow-2xl animate-slide-up">
                 <div className="space-y-3">
                   {/* Avatar & Name */}
                   <div className="flex items-center gap-3 pb-3 border-b border-white/[0.04]">

@@ -11,7 +11,7 @@ const COMMITMENTS = [
   {
     icon: Database,
     title: '模型不缩水',
-    desc: '用户选择的模型与实际调用的上游模型严格一致。GPT-4o 就是 OpenAI 的 gpt-4o，Claude 4 Sonnet 就是 Anthropic 的 claude-4-sonnet，不搞狸猫换太子。',
+    desc: '用户选择的模型与实际调用的上游模型严格一致。GPT-5.6 系列就是真正的 OpenAI GPT-5.6，不搞狸猫换太子。',
     status: '✅ 已实现',
     detail: 'MODEL_ROUTES 显式映射，每条路由可公开审计',
   },
@@ -46,9 +46,9 @@ const COMMITMENTS = [
   {
     icon: Lock,
     title: '合规上游',
-    desc: 'TokUp 对接具有正规授权的 AI 云厂商作为上游（七牛云 Modelink），继承上游的合规授权协议。用户数据经合规链路流转，规避灰色中转风险。',
+    desc: 'TokUp 对接具有正规授权的 AI 云厂商作为上游，继承上游的合规授权协议。用户数据经合规链路流转，规避灰色中转风险。',
     status: '🔜 接入中',
-    detail: '直连 OpenAI → 切换至七牛云 Modelink API',
+    detail: '直连 OpenAI → 切换至合规上游 API',
   },
 ];
 

@@ -20,6 +20,8 @@ import CompliancePage from './pages/CompliancePage';
 import UsagePage from './pages/UsagePage';
 import InvitePage from './pages/InvitePage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import OnboardingPage from './pages/OnboardingPage';
+import AnnouncementPopup from './components/AnnouncementPopup';
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: any}> {
   constructor(props: any) {
@@ -32,7 +34,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error:
   render() {
     if (this.state.error) {
       return React.createElement('div', {
-        style: {background:'#0A0A0F', color: '#EF4444', padding: 40, fontFamily: 'monospace', fontSize: 14, whiteSpace: 'pre-wrap', height: '100vh', overflow: 'auto'}
+        style: {background:'#13131D', color: '#EF4444', padding: 40, fontFamily: 'monospace', fontSize: 14, whiteSpace: 'pre-wrap', height: '100vh', overflow: 'auto'}
       }, String(this.state.error?.stack || this.state.error?.message || this.state.error));
     }
     return this.props.children;
@@ -49,7 +51,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuth, loading } = useAuth();
   if (loading) return <div style={{color:'#fff',padding:40}}>Loading...</div>;
-  if (isAuth) return <Navigate to="/dashboard" replace />;
+  const isNewUser = localStorage.getItem('tokup_new_registration') === 'true';
+  if (isAuth) return <Navigate to={isNewUser ? "/guide" : "/dashboard"} replace />;
   return <>{children}</>;
 }
 
@@ -58,6 +61,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/" element={<LandingPage />} />
+      <Route path="/register" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/keys" element={<ProtectedRoute><KeysPage /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
@@ -67,6 +71,7 @@ function AppRoutes() {
       <Route path="/integration" element={<ProtectedRoute><IntegrationPage /></ProtectedRoute>} />
       <Route path="/monitor" element={<ProtectedRoute><MonitorPage /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+      <Route path="/guide" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
       <Route path="/transfer-station" element={<ProtectedRoute><TransferStationPage /></ProtectedRoute>} />
       <Route path="/compliance" element={<CompliancePage />} />
       <Route path="/usage" element={<ProtectedRoute><UsagePage /></ProtectedRoute>} />
@@ -84,7 +89,8 @@ export default function App() {
         <AuthProvider>
           <LanguageProvider>
             <ThemeProvider>
-            <RechargeProvider>
+              <AnnouncementPopup />
+              <RechargeProvider>
               <AppRoutes />
             </RechargeProvider>
           </ThemeProvider>

@@ -49,24 +49,87 @@ def deduct_token(user_id: str, amount: float, db: Session, description: str = ""
     if not user:
         return {"success": False, "message": "User not found"}
     if user.token_balance < amount:
-        return {"success": False, "message": "Insufficient balance"}
+        return {"success": False, "message": "余额不足"}
     
     user.token_balance -= amount
     user.updated_at = datetime.now(timezone.utc)
 
     txn = Transaction(
         user_id=user_id,
-        amount=0,
+        amount=round(amount / 100, 2),
         token_amount=amount,
         type="consume",
         status="completed",
         description=description or "API call"
     )
     db.add(txn)
+
+    # 消费分成：消费额的 10% 给邀请人
+    if user.referred_by:
+        referrer = db.query(User).filter(User.id == user.referred_by).first()
+        if referrer:
+            comm_amount = int(amount * 0.1)
+            if comm_amount > 0:
+                referrer.token_balance += comm_amount
+                db.add(Transaction(
+                    user_id=referrer.id,
+                    amount=round(comm_amount / 100, 2),
+                    token_amount=comm_amount,
+                    type="recharge",
+                    status="completed",
+                    description="提成 (" + str(int(amount)) + " 消费 x 10%)"
+                ))
+
     db.commit()
     db.refresh(user)
 
     return {"success": True, "balance": user.token_balance, "deducted": amount}
+
+
+def has_completed_recharge(user_id: str, db: Session) -> bool:
+    """真实充值成功（有支付方式/流水号，排除赠送与邀请提成）"""
+    return (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == "recharge",
+            Transaction.status == "completed",
+            Transaction.payment_method != "",
+            Transaction.amount > 0,
+        )
+        .first()
+        is not None
+    )
+
+
+def reserve_token(user_id: str, amount: float, db: Session, description: str = "") -> dict:
+    """预扣 token（冻结余额，不生成 consume 流水），结算时按实际用量记账。"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return {"success": False, "message": "User not found"}
+    if user.token_balance < amount:
+        return {"success": False, "message": "余额不足"}
+    user.token_balance -= amount
+    user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "balance": user.token_balance, "reserved": amount}
+
+
+def settle_reserved(user_id: str, reserved: float, actual: float, db: Session, description: str = "") -> dict:
+    """结算预扣：恢复冻结金额后按实际用量扣费，退回差额或补扣超支。"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return {"success": False, "message": "User not found"}
+    user.token_balance += reserved
+    user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    if actual <= 0:
+        return {"success": True, "balance": user.token_balance, "refunded": reserved, "deducted": 0}
+    if actual > user.token_balance:
+        actual = max(user.token_balance, 0)  # 极端超支时收走全部余额，避免倒贴
+    return deduct_token(user_id, actual, db, description)
 
 
 def get_transactions(user_id: str, db: Session, limit: int = 50, type_filter: str = "",

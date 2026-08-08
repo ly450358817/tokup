@@ -40,10 +40,10 @@ export default function UsagePage() {
             ))}
           </div>
           {summary && (
-            <a href={`/api/usage/export?days=${days}`}
+            <button onClick={() => { const t = localStorage.getItem("tokup_token"); if (!t) return; const a = document.createElement("a"); a.href = `/api/usage/export?days=${days}`; fetch(a.href, { headers: { Authorization: "Bearer " + t } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const d = document.createElement("a"); d.href = u; d.download = "tokup-usage-export.csv"; d.click(); URL.revokeObjectURL(u); }); }}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-xs hover:text-white/70 transition-all">
               <Download size={14} /> CSV导出
-            </a>
+            </button>
           )}
         </div>
       </div>

@@ -18,15 +18,27 @@ import {
 } from 'recharts';
 
 const MODELS = [
+  { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'OpenAI', cost: '¥20/1M input' },
   { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '¥30/1M input' },
-  { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '¥20/1M input' },
-  { id: 'claude-4-sonnet', label: 'Claude 4 Sonnet', provider: 'Anthropic', cost: '¥20/1M input' },
+  { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', cost: '¥35/1M input' },
+  { id: 'openai/gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', cost: '¥20/1M input' },
+  { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '¥20/1M input', status: '上游未接入' },
+  { id: 'gpt-4o-mini', label: 'GPT-4o-mini', provider: 'OpenAI', cost: '¥1.5/1M input', status: '上游未接入' },
+  { id: 'anthropic/claude-fable-5', label: 'Claude Fable 5', provider: 'Anthropic', cost: '¥25/1M input' },
+  { id: 'moonshotai/kimi-k3', label: 'Kimi K3', provider: '月之暗面', cost: '¥5.0/1M input' },
+  { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥0.8/1M input' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥0.3/1M input' },
-  { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥0.5/1M input' },
+  { id: 'deepseek/deepseek-v4-flash-20260731', label: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', cost: '¥0.5/1M input' },
+  { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥0.5/1M input', status: '已下线' },
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥1.2/1M input' },
+  { id: 'deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek', cost: '¥1.0/1M input', status: '暂不可用' },
   { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '通义千问', cost: '¥5.0/1M input' },
   { id: 'qwen3-max', label: 'Qwen3 Max', provider: '通义千问', cost: '¥3.0/1M input' },
-  { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },
+  { id: 'qwen/qwen3.8-max', label: 'Qwen3.8 Max', provider: '通义千问', cost: '¥6.0/1M input' },
+  { id: 'qwen3-coder-480b-a35b-instruct', label: 'Qwen3 Coder 480B', provider: '通义千问', cost: '¥4.0/1M input', status: '暂不可用' },
+  { id: 'glm-4.5', label: 'GLM-4.5', provider: '智谱AI', cost: '¥3.0/1M input', status: '暂不可用' },
+  { id: 'glm-5.2', label: 'GLM-5.2', provider: '智谱AI', cost: '¥4.0/1M input' },
 ];
 
 const TIME_RANGES = [
@@ -44,6 +56,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [lastSync, setLastSync] = useState('');
+  const [showAllModels, setShowAllModels] = useState(false);
 
   const tr = (key: string): string => {
     const ks = key.split('.');
@@ -112,7 +125,17 @@ export default function DashboardPage() {
         />
 
 
-        {/* Recharge pill - moved further down to not overlap */}
+        {/* New user hint — inline after ring */}
+        {(!stats?.today_usage && stats?.active_keys === 0) && (
+          <div className="flex items-center justify-center gap-2 mt-4 text-[12px] text-white/40">
+            <span className="text-emerald-400/80">{stats?.balance?.toLocaleString()} Token</span>
+            <span className="text-white/20">·</span>
+            <a href="/keys" className="text-emerald-400/80 hover:text-emerald-300 underline underline-offset-2 transition-colors">
+              创建 Key 开始使用 →
+            </a>
+          </div>
+        )}
+        {/* Recharge pill */}
         <div className="absolute -bottom-2">
           <button
             onClick={openRecharge}
@@ -129,17 +152,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Low balance alert */}
-      {stats?.balance_yuan < 10 && stats?.balance_yuan > 0 && (
+      {stats?.balance_yuan < 20 && stats?.balance_yuan > 0 && (
         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
           <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
             <span className="text-amber-400 text-sm font-bold">!</span>
           </div>
           <div className="flex-1">
-            <p className="text-[13px] text-amber-400/90 font-medium">Low Balance</p>
-            <p className="text-[11px] text-white/40">Your balance is ¥{stats.balance_yuan?.toFixed(2)}. Consider recharging to avoid service interruption.</p>
+            <p className="text-[13px] text-amber-400/90 font-medium">余额告急</p>
+            <p className="text-[11px] text-white/40">当前余额 {stats.balance?.toLocaleString()} Token，建议充值避免服务中断</p>
           </div>
           <button onClick={openRecharge} className="px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 text-xs font-medium hover:bg-amber-500/25 transition-all shrink-0">
-            Recharge Now
+            去充能
           </button>
         </div>
       )}
@@ -149,13 +172,13 @@ export default function DashboardPage() {
         <StatCard
           icon={Activity}
           label={tr('dashboard.todayUsage')}
-          value={`${todayUsageYuan.toFixed(4)}`}
+          value={`${todayUsage.toLocaleString()}`}
           suffix={tr('dashboard.cny')}
         />
         <StatCard
           icon={TrendingUp}
           label={tr('dashboard.totalRecharged')}
-          value={`${(stats?.total_recharged || 0).toFixed(2)}`}
+          value={`${(stats?.total_recharged || 0).toLocaleString()}`}
           suffix={tr('dashboard.cny')}
         />
         <StatCard
@@ -173,13 +196,13 @@ export default function DashboardPage() {
         />
         <StatCard
           icon={Activity}
-          label="Today Requests"
+          label="今日请求"
           value={String(stats?.today_requests || '—')}
           suffix="API calls today"
         />
         <StatCard
           icon={TrendingUp}
-          label="Avg Response"
+          label="平均响应"
           value={String(stats?.avg_response_ms || '—')}
           suffix="ms across all models"
         />
@@ -233,7 +256,7 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#16161E',
+                    background: '#22222C',
                     border: '1px solid rgba(255,255,255,0.06)',
                     borderRadius: 12,
                     fontSize: 12,
@@ -248,7 +271,7 @@ export default function DashboardPage() {
                   strokeWidth={2}
                   fill="url(#usage_grad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: '#10B981', stroke: '#0A0A0F', strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: '#10B981', stroke: '#13131D', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -259,8 +282,8 @@ export default function DashboardPage() {
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
           <h3 className="text-[13px] font-medium text-white/70 mb-1">{tr('dashboard.supportedModels')}</h3>
           <p className="text-[10px] text-white/20 mb-4">{tr('dashboard.modelsDesc')}</p>
-          <div className="space-y-2">
-            {MODELS.map((m) => {
+                    <div className="space-y-2">
+            {(showAllModels ? MODELS : MODELS.slice(0, 5)).map((m) => {
               const isOnline = stats?.models?.[m.id] !== false;
               return (
                 <div key={m.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.02]">
@@ -269,14 +292,28 @@ export default function DashboardPage() {
                     <p className="text-[10px] text-white/30">{m.provider} · {m.cost}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {m.status ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-red-500/10 border-red-500/20 text-red-400">{m.status}</span>
+                    ) : (
+                      <>
                     <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]' : 'bg-gray-500'}`} />
                     <span className={`text-[10px] ${isOnline ? 'text-emerald-400' : 'text-gray-500'}`}>
                       {isOnline ? tr('dashboard.available') : 'Unavailable'}
                     </span>
+                    </>
+                    )}
                   </div>
                 </div>
               );
             })}
+            {MODELS.length > 5 && (
+              <button
+                onClick={() => setShowAllModels(!showAllModels)}
+                className="w-full py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[10px] text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all mt-1"
+              >
+                {showAllModels ? '收起' : '查看全部 ' + MODELS.length + ' 个模型'}
+              </button>
+            )}
           </div>
         </div>
       </div>

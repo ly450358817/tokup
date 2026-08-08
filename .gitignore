@@ -42,3 +42,21 @@ logs/
 
 # Token
 tokup_token.txt
+
+# Backup / old copies (never push to git)
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak*
+*.stream_bak
+backups/
+backend_old/
+.local_backups/
+.local_backups*
+._*
+
+# 含服务器/管理员密码，不入库
+deploy_tokup_fix.sh
+memories/
+*.backup*

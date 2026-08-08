@@ -7,10 +7,10 @@ import { useLang } from '../contexts/LanguageContext';
 export default function LoginPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [searchParams] = [new URLSearchParams(window.location.search)];
-  const inviteCode = searchParams.get('code') || '';
+  const [inviteCode, setInviteCode] = useState(searchParams.get('code') || '');
   const { login, register } = useAuth();
   const { t } = useLang();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(searchParams.get('mode') === 'register' ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,15 +25,10 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        const turnstileWidget = document.querySelector('.cf-turnstile');
-        let token = '';
-        if (turnstileWidget && (window as any).turnstile) {
-          token = (window as any).turnstile.getResponse(turnstileWidget);
-        }
-        await register(email, password, token, inviteCode);
+        await register(email, password, inviteCode);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Something went wrong');
+      setError(err?.response?.data?.detail || err?.message || '网络错误，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -113,19 +108,9 @@ export default function LoginPage() {
     };
   }, []);
 
-  useEffect(() => {
-    // Load Turnstile if not already loaded
-    if (!(window as any).turnstile) {
-      const script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-  }, []);
 
   return (
-    <div className="fixed inset-0 bg-[#0A0A0F] flex items-center justify-center p-4" style={{ zIndex: 10 }}>
+    <div className="fixed inset-0 bg-[#13131D] flex items-center justify-center p-4" style={{ zIndex: 10 }}>
       {/* Animated particle background */}
       <canvas
         ref={canvasRef}
@@ -210,6 +195,23 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {mode === 'register' && (
+              <div>
+                <input
+                  type="text"
+                  placeholder="邀请码（选填）"
+                  value={inviteCode}
+                  onChange={(e) => {
+                    const sp = new URLSearchParams(window.location.search);
+                    sp.set("code", e.target.value);
+                    window.history.replaceState({}, "", "?" + sp.toString());
+                    setInviteCode(e.target.value);
+                  }}
+                  className="glass-input"
+                />
+              </div>
+            )}
+
             {error && (
               <p className="text-[12px] text-red-400 text-center">{error}</p>
             )}
@@ -220,7 +222,6 @@ export default function LoginPage() {
               </p>
             )}
 
-            <div className="cf-turnstile mb-3 flex justify-center" data-sitekey="0x4AAAAAADvk_9V0AN5HmbHc" data-theme="dark" data-size="normal" />
             <button
               type="submit"
               disabled={loading}

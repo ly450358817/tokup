@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await authApi.register(email, password, invite_code);
     localStorage.setItem('tokup_token', data.token);
     await refreshUser();
+    localStorage.setItem('tokup_new_registration', 'true');
   };
 
   const logout = () => {

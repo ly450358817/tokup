@@ -1,4 +1,54 @@
+import { useEffect, useState, useCallback } from 'react';
+import { keysApi } from '../utils/api';
+
+const CC_SWITCH_RELEASES = 'https://github.com/farion1231/cc-switch/releases';
+const CC_SWITCH_DMG = 'https://github.com/farion1231/cc-switch/releases/download/v3.19.2/CC-Switch-v3.19.2-macOS.dmg';
+const CC_SWITCH_MSI = 'https://github.com/farion1231/cc-switch/releases/download/v3.19.2/CC-Switch-v3.19.2-Windows.msi';
+const CC_SWITCH_APPIMAGE = 'https://github.com/farion1231/cc-switch/releases/download/v3.19.2/CC-Switch-v3.19.2-Linux-x86_64.AppImage';
+
 export default function DocsPage() {
+  const [firstKey, setFirstKey] = useState('');
+  const [showDownload, setShowDownload] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+
+  useEffect(() => {
+    keysApi
+      .list()
+      .then((keys) => setFirstKey(keys.length ? keys[0].key : ''))
+      .catch(() => setFirstKey(''));
+  }, []);
+
+  const buildImportLink = (key: string) => {
+    const params = new URLSearchParams({
+      resource: 'provider',
+      app: 'codex',
+      name: 'TokUp',
+      homepage: 'https://tokup.net',
+      endpoint: 'https://tokup.net/api/v1',
+      model: 'gpt-5.5',
+      apiKey: key,
+    });
+    return `ccswitch://v1/import?${params.toString()}`;
+  };
+
+  const openImportLink = useCallback(() => {
+    if (!firstKey) return;
+    const link = buildImportLink(firstKey);
+    let wentHidden = false;
+    const onVis = () => {
+      if (document.hidden) wentHidden = true;
+    };
+    document.addEventListener('visibilitychange', onVis);
+    // 触发 CC Switch 深链；如果 4 秒内页面从未隐藏过，大概率没装 CC Switch
+    window.location.href = link;
+    setDetecting(true);
+    window.setTimeout(() => {
+      document.removeEventListener('visibilitychange', onVis);
+      setDetecting(false);
+      if (!wentHidden) setShowDownload(true);
+    }, 4000);
+  }, [firstKey]);
+
   return (
     <div className="w-full page-container space-y-8">
       {/* 标题 */}
@@ -21,7 +71,7 @@ export default function DocsPage() {
         <p className="text-[12px] text-white/40 mb-4">所有兼容 OpenAI 的软件，按下面填就行：</p>
 
         {/* 配置表 */}
-        <div className="bg-[#0A0A0F] rounded-xl overflow-hidden mb-5">
+        <div className="bg-[#13131D] rounded-xl overflow-hidden mb-5">
           <table className="w-full text-[12px]">
             <thead>
               <tr className="border-b border-white/[0.04]">
@@ -40,25 +90,121 @@ export default function DocsPage() {
               </tr>
               <tr>
                 <td className="px-4 py-2.5 text-white/60">模型选择</td>
-                <td className="px-4 py-2.5 font-mono text-emerald-400/80">gpt-5.5、deepseek-v4-flash 等</td>
+                <td className="px-4 py-2.5 font-mono text-emerald-400/80">gpt-5.5、deepseek-v4-pro / v4-flash、claude-fable-5、kimi-k2.6 等</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* Codex */}
-        <div className="bg-[#0A0A0F] rounded-xl p-4 mb-3">
-          <h4 className="text-[12px] font-medium text-white/60 mb-2">Codex 用户</h4>
+        {/* Codex 桌面版 / CLI（用 CC Switch） */}
+        <div className="bg-[#13131D] rounded-xl p-4 mb-3">
+          <h4 className="text-[12px] font-medium text-white/60 mb-2">Codex 桌面版 / CLI</h4>
+          <p className="text-[12px] text-white/40 leading-relaxed mb-2">
+            Codex 设置里没有“自定义 API”入口，推荐用免费的{" "}
+            <a
+              href={CC_SWITCH_RELEASES}
+              target="_blank"
+              rel="noreferrer"
+              className="text-emerald-400 hover:text-emerald-300"
+            >
+              CC Switch
+            </a>{" "}
+            一键配置（TokUp 原生直连，不需要任何本地路由 / 中转）：
+          </p>
+          {firstKey ? (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 mb-4">
+              <p className="text-[12px] text-white/70 mb-2">
+                最快方式：用你最近创建的 API Key 一键导入
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={openImportLink}
+                  disabled={detecting}
+                  className="inline-flex items-center rounded-lg bg-emerald-500 px-4 py-2 text-[12px] font-semibold text-black hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {detecting ? '正在唤起 CC Switch…' : '一键导入 CC Switch'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDownload(true)}
+                  className="inline-flex items-center rounded-lg border border-white/15 px-3 py-2 text-[12px] font-medium text-white/70 hover:bg-white/5"
+                >
+                  还没装 CC Switch？先下载
+                </button>
+              </div>
+              <p className="text-[11px] text-white/40 mt-1 mb-3">
+                点击后 CC Switch 会弹出确认窗口，检查无误点「导入」；
+                如果没反应，说明还没安装 CC Switch，会自动弹出下载窗口
+              </p>
+              <img
+                src="/assets/cc-switch/cc-switch-import-confirm.png"
+                alt="CC Switch 一键导入 TokUp 确认窗口"
+                className="w-full max-w-xl rounded-lg border border-white/10"
+              />
+            </div>
+          ) : (
+            <p className="text-[12px] text-white/40 leading-relaxed mb-3">
+              先在后台创建 API Key，再回到这里就会出现一键导入按钮
+            </p>
+          )}
+          <h5 className="text-[12px] font-medium text-white/60 mb-2">手动添加也行：</h5>
+          <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-1 mb-3">
+            <li>
+              下载安装 CC Switch（macOS 也可执行{" "}
+              <code className="font-mono text-emerald-400">brew install --cask cc-switch</code>）
+            </li>
+            <li>打开 CC Switch → 选 <strong className="text-white/70">Codex</strong> → 点右上角 <strong className="text-white/70">+ 添加供应商</strong></li>
+            <li>供应商类型选 <strong className="text-white/70">自定义 / OpenAI 兼容</strong>，按下图填：</li>
+          </ol>
+          <img
+            src="/assets/cc-switch/cc-switch-tokup-edit.png"
+            alt="CC Switch 添加 TokUp 供应商配置"
+            className="w-full max-w-xl rounded-lg border border-white/10 mb-3"
+          />
+          <p className="text-[12px] text-white/40 leading-relaxed mb-2">
+            名称填 <strong className="text-white/70">TokUp</strong>，请求地址填{" "}
+            <code className="font-mono text-emerald-400">https://tokup.net/api/v1</code>，API Key 填刚才复制的 Key；
+            上游格式选 <strong className="text-white/70">Responses（原生直连）</strong>，默认模型可以先填{" "}
+            <code className="font-mono text-emerald-400">gpt-5.5</code>
+          </p>
+          <p className="text-[12px] text-white/40 leading-relaxed mb-2">
+            <strong className="text-white/70">想换模型：</strong>在模型输入框右侧点{" "}
+            <strong className="text-emerald-400">「获取模型列表」</strong>，会自动拉取 TokUp 全部模型
+            （gpt-5.5、deepseek-v4-pro / v4-flash、claude-fable-5、kimi-k2.6、qwen3、glm-5.2 等 20+ 个），
+            然后从下拉里选一个就行
+          </p>
+          <img
+            src="/assets/cc-switch/cc-switch-tokup-card.png"
+            alt="CC Switch Codex 供应商列表中的 TokUp"
+            className="w-full max-w-xl rounded-lg border border-white/10 mb-3"
+          />
           <p className="text-[12px] text-white/40 leading-relaxed">
-            打开 CC Switch → 添加供应商 → 服务器地址填 <code className="font-mono text-emerald-400">https://tokup.net/api/v1</code> → API Key 填你的 Key → 选择 <code className="font-mono text-emerald-400">gpt-5.5</code> 模型 → 保存即可使用
+            回到列表点 TokUp 右侧的 <strong className="text-white/70">启用</strong>，然后完全退出并重启 Codex 就能用了；
+            TokUp 是 <strong className="text-white/70">Responses 原生直连</strong>，不需要开启本地路由，也不会走任何中转
+          </p>
+          <p className="text-[12px] text-white/40 leading-relaxed mt-2">
+            如果桌面端模型列表没显示 TokUp 模型：在 CC Switch 设置里开启{" "}
+            <strong className="text-white/70">保留官方登录</strong>，或命令行启动 Codex 后在{" "}
+            <code className="font-mono text-emerald-400">/model</code> 里选择
           </p>
         </div>
 
         {/* 其他客户端 */}
-        <div className="bg-[#0A0A0F] rounded-xl p-4">
-          <h4 className="text-[12px] font-medium text-white/60 mb-2">其他客户端（Chatbox、LobeChat、OpenCat 等）</h4>
+        <div className="bg-[#13131D] rounded-xl p-4 mb-3">
+          <h4 className="text-[12px] font-medium text-white/60 mb-2">其他客户端</h4>
           <p className="text-[12px] text-white/40 leading-relaxed">
-            设置 → 自定义 API → 填上面三个配置项 → 保存
+            Cursor / Chatbox / LobeChat / OpenCat / CC Switch 等<br />
+            设置 → 自定义 API / 添加供应商 → 填上面三个配置项 → 保存
+          </p>
+        </div>
+
+        {/* 说明 */}
+        <div className="bg-[#13131D] rounded-xl p-4">
+          <h4 className="text-[12px] font-medium text-white/60 mb-2">TokUp 就是 API，原生直连</h4>
+          <p className="text-[12px] text-white/40 leading-relaxed">
+            TokUp 本身就是 OpenAI 兼容接口，支持 Responses 原生直连，任何支持自定义 API 的客户端都能直接配，
+            不用经过任何中转，也不需要本地路由。
           </p>
         </div>
       </div>
@@ -84,11 +230,82 @@ export default function DocsPage() {
             <p className="text-[12px] text-white/40">GPT-5.5、DeepSeek V4、Claude Fable 5、Qwen3、Kimi K2.6…</p>
           </div>
           <div>
+            <p className="text-[12px] font-medium text-white/60 mb-1">为什么 CC Switch 里只看到 gpt-5.5？</p>
+            <p className="text-[12px] text-white/40">
+              一键导入默认填的是 gpt-5.5。想用其他模型，在供应商编辑页的模型输入框右侧点「获取模型列表」，
+              会自动拉取 TokUp 全部模型，从下拉里选一个即可
+            </p>
+          </div>
+          <div>
             <p className="text-[12px] font-medium text-white/60 mb-1">没用完能退吗？</p>
             <p className="text-[12px] text-white/40">不支持退款，但 Token 长期有效不过期</p>
           </div>
         </div>
       </div>
+
+      {/* 未检测到 CC Switch 的下载弹窗 */}
+      {showDownload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#13131D] p-6">
+            <h3 className="text-[15px] font-semibold text-white mb-1">还没安装 CC Switch？</h3>
+            <p className="text-[12px] text-white/40 leading-relaxed mb-4">
+              需要先安装免费的 CC Switch，才能一键导入 TokUp。按你的系统选一个下载（都是官方渠道）：
+            </p>
+            <div className="space-y-2 mb-4">
+              <a
+                href={CC_SWITCH_DMG}
+                className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/5"
+              >
+                <span>macOS（Intel / Apple 芯片）</span>
+                <span className="text-emerald-400">下载 .dmg</span>
+              </a>
+              <a
+                href={CC_SWITCH_MSI}
+                className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/5"
+              >
+                <span>Windows</span>
+                <span className="text-emerald-400">下载 .msi</span>
+              </a>
+              <a
+                href={CC_SWITCH_APPIMAGE}
+                className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/5"
+              >
+                <span>Linux</span>
+                <span className="text-emerald-400">下载 .AppImage</span>
+              </a>
+              <a
+                href={CC_SWITCH_RELEASES}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/5"
+              >
+                <span>其他版本 / 更新日志</span>
+                <span className="text-emerald-400">GitHub Releases ↗</span>
+              </a>
+              <div className="rounded-lg border border-white/10 px-4 py-2.5 text-[12px] text-white/70">
+                <div className="mb-1">macOS 也可以用 Homebrew 一行装：</div>
+                <code className="font-mono text-emerald-400">brew install --cask cc-switch</code>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openImportLink}
+                className="flex-1 rounded-lg bg-emerald-500 px-4 py-2.5 text-[12px] font-semibold text-black hover:bg-emerald-400"
+              >
+                我已安装，重新导入
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDownload(false)}
+                className="rounded-lg border border-white/15 px-4 py-2.5 text-[12px] text-white/70 hover:bg-white/5"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -26,6 +26,8 @@ import { useLang } from '../contexts/LanguageContext';
   const [newDailyCap, setNewDailyCap] = useState<string>("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+    const [newlyCreatedKey, setNewlyCreatedKey] = useState('');
+    const [showQuickstart, setShowQuickstart] = useState(false);
  
    useEffect(() => {
      loadKeys();
@@ -45,7 +47,9 @@ import { useLang } from '../contexts/LanguageContext';
    const handleCreate = async () => {
      setCreating(true);
      try {
-      await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0);
+      const result = await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0);
+        setNewlyCreatedKey(result.key);
+        setShowQuickstart(true);
       setNewName('');
       setNewMonthlyCap('');
       setNewDailyCap('');
@@ -58,7 +62,7 @@ import { useLang } from '../contexts/LanguageContext';
    };
  
    const handleDelete = async (id: string) => {
-     if (!confirm('Delete this API key? This action cannot be undone.')) return;
+     if (!confirm('确定删除此密钥？此操作不可撤销。')) return;
      try {
        await keysApi.delete(id);
        await loadKeys();
@@ -101,7 +105,7 @@ import { useLang } from '../contexts/LanguageContext';
            <div className="flex-1 space-y-2">
              <input
                type="text"
-               placeholder="Key name (optional)"
+               placeholder="密钥名称（选填）"
                value={newName}
                onChange={(e) => setNewName(e.target.value)}
                className="glass-input w-full"
@@ -110,14 +114,14 @@ import { useLang } from '../contexts/LanguageContext';
              <div className="flex gap-2">
                <input
                  type="number"
-                 placeholder="Monthly cap (tokens, 0=unlimited)"
+                 placeholder="月配额（Token，0=不限）"
                  value={newMonthlyCap}
                  onChange={(e) => setNewMonthlyCap(e.target.value)}
                  className="glass-input w-1/2 text-[11px]"
                />
                <input
                  type="number"
-                 placeholder="Daily cap (tokens, 0=unlimited)"
+                 placeholder="日配额（Token，0=不限）"
                  value={newDailyCap}
                  onChange={(e) => setNewDailyCap(e.target.value)}
                  className="glass-input w-1/2 text-[11px]"
@@ -130,11 +134,38 @@ import { useLang } from '../contexts/LanguageContext';
              className="glass-btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm text-emerald-400 shrink-0"
            >
              <Plus size={16} />
-             {creating ? 'Creating...' : 'Create'}
+             {creating ? '创建中...' : '创建'}
            </button>
          </div>
        </div>
  
+        {showQuickstart && newlyCreatedKey && (
+          <div className="backdrop-blur-xl bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[13px] font-medium text-emerald-400">快速开始 — 配置你的客户端</h3>
+              <button onClick={() => setShowQuickstart(false)} className="text-white/30 hover:text-white/70 text-[11px] transition-all">关闭 ×</button>
+            </div>
+            <div className="space-y-2 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="text-white/40 w-16 shrink-0">接入地址：</span>
+                <code className="font-mono text-emerald-400 bg-black/20 px-2 py-1 rounded flex-1">https://tokup.net/api/v1</code>
+                <button onClick={() => { navigator.clipboard.writeText('https://tokup.net/api/v1'); }} className="text-white/30 hover:text-emerald-400 shrink-0 transition-all px-2 py-1 rounded bg-white/5">复制</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white/40 w-16 shrink-0">API 密钥：</span>
+                <code className="font-mono text-emerald-400 bg-black/20 px-2 py-1 rounded flex-1 truncate">{newlyCreatedKey}</code>
+                <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey); }} className="text-white/30 hover:text-emerald-400 shrink-0 transition-all px-2 py-1 rounded bg-white/5">复制</button>
+              </div>
+            </div>
+            <div className="text-[11px] text-white/40 space-y-1">
+              <p>配置方法：</p>
+              <p className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">❶</span> Codex / CC Switch：供应商地址填上述地址，API Key 填上述密钥</p>
+              <p className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">❷</span> OpenAI SDK：设置 <code className="font-mono text-white/60 bg-black/20 px-1 rounded">base_url</code> 和 <code className="font-mono text-white/60 bg-black/20 px-1 rounded">api_key</code></p>
+              <p className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">❸</span> 其他客户端：直接填入上述地址和密钥即可</p>
+            </div>
+            <p className="text-[10px] text-white/20">提示：密钥只显示一次，建议立即复制保存</p>
+          </div>
+        )}
        {/* Batch toolbar */}
        {selectedKeys.size > 0 && (
          <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
@@ -149,7 +180,7 @@ import { useLang } from '../contexts/LanguageContext';
              }}
              className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] hover:bg-red-500/20 transition-all"
            >
-             Delete selected
+             删除选中
            </button>
          </div>
        )}
@@ -179,7 +210,7 @@ import { useLang } from '../contexts/LanguageContext';
                      <div>
                        <p className="text-[13px] font-medium text-white">{k.name}</p>
                        <p className="text-[10px] text-white/30">
-                         Created {new Date(k.created_at).toLocaleDateString()}
+                         创建于 {new Date(k.created_at).toLocaleDateString()}
                        </p>
                      </div>
                    </div>
@@ -187,21 +218,21 @@ import { useLang } from '../contexts/LanguageContext';
                      <button
                        onClick={() => setShowKeys({ ...showKeys, [k.id]: !visible })}
                        className="p-2 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-white/70 transition-all"
-                       title={visible ? 'Hide key' : 'Show key'}
+                       title={visible ? '隐藏密钥' : '显示密钥'}
                      >
                        {visible ? <EyeOff size={14} /> : <Eye size={14} />}
                      </button>
                      <button
                        onClick={() => copyToClipboard(k.key, k.id)}
                        className="p-2 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-emerald-400 transition-all"
-                       title="Copy key"
+                       title="复制密钥"
                      >
                        {copiedId === k.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                      </button>
                      <button
                        onClick={() => handleDelete(k.id)}
                        className="p-2 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-red-400 transition-all"
-                       title="Delete key"
+                       title="删除密钥"
                      >
                        <Trash2 size={14} />
                      </button>
@@ -209,19 +240,19 @@ import { useLang } from '../contexts/LanguageContext';
                  </div>
  
                  {/* Key display */}
-                 <div className="bg-[#0A0A0F] rounded-xl px-4 py-3 font-mono text-[12px]">
+                 <div className="bg-[#13131D] rounded-xl px-4 py-3 font-mono text-[12px]">
                    <code className="text-white/60">
                      {visible ? k.key : truncated}
                    </code>
                  </div>
  
                  <div className="flex items-center gap-4 mt-3 text-[10px] text-white/20">
-                   <span>Rate limit: {k.rate_limit} req/min</span>
-                   {(k.monthly_cap || 0) > 0 && <span className="text-white/30">Month: {(k.monthly_cap || 0).toLocaleString()} tok</span>}
-                   {(k.daily_cap || 0) > 0 && <span className="text-white/30">Day: {(k.daily_cap || 0).toLocaleString()} tok</span>}
+                   <span>速率限制：{k.rate_limit} 次/分钟</span>
+                   {(k.monthly_cap || 0) > 0 && <span className="text-white/30">月：{(k.monthly_cap || 0).toLocaleString()} Token</span>}
+                   {(k.daily_cap || 0) > 0 && <span className="text-white/30">日：{(k.daily_cap || 0).toLocaleString()} Token</span>}
                    <span>|</span>
                    <span className={k.is_active ? 'text-emerald-400' : 'text-red-400'}>
-                     {k.is_active ? 'Active' : 'Inactive'}
+                     {k.is_active ? '正常' : '停用'}
                    </span>
                  </div>
                </div>

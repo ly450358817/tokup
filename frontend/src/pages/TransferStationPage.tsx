@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useRecharge } from '../contexts/RechargeContext';
 import { useLang } from '../contexts/LanguageContext';
 import { keysApi } from '../utils/api';
 import {
@@ -27,29 +28,48 @@ interface ModelPrice {
 }
 
 const models: ModelPrice[] = [
+  { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥20', output: '¥80', note: '旗舰 Terra', badge: 'New' },
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', note: '最新旗舰', badge: 'Hot' },
-    { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', note: '快速推理' },
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: '通用主力', badge: 'Hot' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: '轻量高效' },
-  { id: 'o4-mini', name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24', note: '轻量推理' },
+  { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥35', output: '¥100', note: '最新旗舰 Luna', badge: 'New' },
+  { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥20', output: '¥80', note: '高效推理 Sol', badge: 'New' },
+  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: '通用主力', badge: '上游未接入' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: '轻量高效', badge: '上游未接入' },
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', note: '最新 Claude', badge: 'New' },
-  { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', note: '最强推理', badge: 'Hot' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', note: '稳定可靠' },
-  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', note: '快速响应' },
+  { id: 'moonshotai/kimi-k3', name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', note: '最新旗舰 · 中国开源', badge: 'New' },
+  { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: '稳定可靠' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', note: '旗舰模型', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', note: '极致性价比' },
-  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型' },
-  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', note: '深度推理' },
-  { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥15', output: '¥45', note: '谷歌旗舰', badge: 'New' },
-  { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', note: '通义旗舰' },
+  { id: 'deepseek/deepseek-v4-flash-20260731', name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥0.5', output: '¥2.5', note: 'Agent增强 · 适配Codex', badge: 'Hot' },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型', badge: '已下线' },
+  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', note: '达GPT-5水平', badge: 'New' },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', note: '深度推理', badge: '暂不可用' },
   { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', note: '通义旗舰' },
-  { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用' },
-  { id: 'glm-4.5', name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', note: '智谱旗舰' },
-  { id: 'doubao-seed-1.6', name: 'Doubao Seed 1.6', provider: '字节跳动', input: '¥1.5', output: '¥4.5', note: '豆包旗舰' },
-  { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: 'Kimi 最新', badge: 'New' },
+  { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', note: '通义旗舰' },
+  { id: 'qwen/qwen3.8-max', name: 'Qwen3.8 Max', provider: '通义千问', input: '¥6.0', output: '¥45.0', note: '2.4T参数新旗舰', badge: 'New' },
+  { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用', badge: '暂不可用' },
+  { id: 'glm-4.5', name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', note: '智谱旗舰', badge: '暂不可用' },
+  { id: 'glm-5.2', name: 'GLM-5.2', provider: '智谱AI', input: '¥4.0', output: '¥35.0', note: '1M上下文旗舰', badge: 'New' },
 ];
 
+// Format model ID for display with proper casing
+const formatModelId = (id: string, name: string): string => {
+  const parts = id.split('/');
+  if (parts.length === 1) return name;
+  const providerMap: Record<string, string> = {
+    openai: 'OpenAI',
+    anthropic: 'Anthropic',
+    deepseek: 'DeepSeek',
+    moonshotai: 'MoonshotAI',
+    google: 'Google',
+    qwen: 'Qwen',
+  };
+  const provider = providerMap[parts[0]] || parts[0];
+  const modelName = name.replace(/ /g, '-');
+  return `${provider}/${modelName}`;
+};
+
 export default function TransferStationPage() {
+  const { openRecharge } = useRecharge();
   const { user } = useAuth();
   const { t, lang } = useLang();
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -57,7 +77,7 @@ export default function TransferStationPage() {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeKey, setActiveKey] = useState('');
-  const [testModel, setTestModel] = useState('gpt-4o');
+  const [testModel, setTestModel] = useState('gpt-5.5');
   const [testInput, setTestInput] = useState('');
   const [testResponse, setTestResponse] = useState('');
   const [testError, setTestError] = useState('');
@@ -79,8 +99,18 @@ export default function TransferStationPage() {
       if (data.success) {
         const msg = data.data?.choices?.[0]?.message?.content || JSON.stringify(data.data, null, 2);
         setTestResponse(msg);
+        // 检查余额：低于最低充值档 (2990 token) 时提示
+        if (user?.token_balance != null && user.token_balance < 2990 && user.token_balance > 0) {
+          setTimeout(() => {
+            const el = document.getElementById('low-balance-prompt');
+            if (el) el.classList.remove('hidden');
+          }, 300);
+        }
       } else {
         setTestError(data.detail || '请求失败');
+        if (data.detail?.includes('余额不足')) {
+          setTimeout(() => openRecharge(), 500);
+        }
       }
     } catch (e: any) {
       setTestError(e?.message || '网络错误');
@@ -137,7 +167,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-5.5",
     messages=[{"role": "user", "content": "Hello"}]
 )
 print(response.choices[0].message.content)`;
@@ -151,7 +181,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: 'gpt-4o',
+  model: 'gpt-5.5',
   messages: [{ role: 'user', content: 'Hello' }],
 });
 
@@ -165,7 +195,7 @@ console.log(response.choices[0].message.content);`;
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-          <span className="text-[12px] text-white/30">Loading transfer station...</span>
+          <span className="text-[12px] text-white/30">{tr('transfer.loading')}</span>
         </div>
       </div>
     );
@@ -183,7 +213,7 @@ console.log(response.choices[0].message.content);`;
         <div>
           <h1 className="text-[20px] font-semibold text-white flex items-center gap-3">
             <Globe size={22} className="text-emerald-400" />
-            中转站
+            API 工作台
             <span className="text-[11px] text-white/20 font-normal">{tr("transfer.proxySubtitle")}</span>
           </h1>
           <p className="text-[12px] text-white/30 mt-1">{tr("transfer.description")}</p>
@@ -202,7 +232,7 @@ console.log(response.choices[0].message.content);`;
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3"><Zap size={14} className="text-blue-400" /><span className="text-[10px] text-white/30 uppercase">{tr("monitor.tokensToday")}</span></div>
           <p className="text-[28px] font-bold text-white">{tokensToday.toLocaleString()}</p>
-          <p className="text-[10px] text-white/20 mt-1">{tokensAll.toLocaleString()} total</p>
+          <p className="text-[10px] text-white/20 mt-1">{tokensAll.toLocaleString()} {tr('transfer.total')}</p>
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3"><Gauge size={14} className="text-purple-400" /><span className="text-[10px] text-white/30 uppercase">{tr("monitor.avgResponse")}</span></div>
@@ -210,7 +240,7 @@ console.log(response.choices[0].message.content);`;
         </div>
         <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3"><Server size={14} className="text-emerald-400" /><span className="text-[10px] text-white/30 uppercase">{tr("monitor.balance")}</span></div>
-          <p className="text-[28px] font-bold text-white">¥{user?.token_balance?.toFixed?.(1) || '0'}</p>
+          <p className="text-[28px] font-bold text-white">{user?.token_balance?.toLocaleString() || '0'}</p>
         </div>
       </div>
 
@@ -228,7 +258,7 @@ console.log(response.choices[0].message.content);`;
               <select
                 value={activeKey}
                 onChange={(e) => setActiveKey(e.target.value)}
-                className="flex-1 bg-[#0A0A0F] border border-white/[0.08] rounded-xl px-4 py-3 text-[12px] font-mono text-emerald-400 outline-none"
+                className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-4 py-3 text-[12px] font-mono text-emerald-400 outline-none"
               >
                 {keys.map((k) => (
                   <option key={k.id} value={k.key} className="text-white">{k.key.substring(0, 20)}... — {k.name}</option>
@@ -250,6 +280,71 @@ console.log(response.choices[0].message.content);`;
         )}
       </div>
 
+      {/* Chat Test */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Zap size={16} className="text-emerald-400" />
+          <h3 className="text-[13px] font-medium text-white/70">快速体验 — 试试对话</h3>
+          <span className="text-[10px] text-white/20 ml-auto">余额: ¥{(user?.token_balance || 0).toFixed(1)}</span>
+        </div>
+        <div className="space-y-3">
+          {/* Model selector */}
+          <div className="flex gap-3">
+            <select
+              value={testModel}
+              onChange={(e) => setTestModel(e.target.value)}
+              className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[12px] text-white/60 outline-none"
+            >
+              {models.filter(m => !m.id.includes('coming-soon')).map((m) => (
+                <option key={m.id} value={m.id}>{m.name} — {m.provider}</option>
+              ))}
+            </select>
+          </div>
+          {/* Input + Send */}
+          <div className="flex gap-3">
+            <textarea
+              value={testInput}
+              onChange={(e) => setTestInput(e.target.value)}
+              placeholder="输入你想问的问题，按 Enter 发送..."
+              rows={2}
+              className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-4 py-3 text-[12px] text-white/60 outline-none resize-none"
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTestSend(); } }}
+            />
+            <button
+              onClick={handleTestSend}
+              disabled={testLoading || !testInput.trim()}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[12px] hover:bg-emerald-500/15 disabled:opacity-30 disabled:cursor-not-allowed transition-all self-end"
+            >
+              {testLoading ? '发送中...' : '发送'}
+            </button>
+          </div>
+          {/* Response */}
+          {testResponse && (
+            <div className="bg-[#13131D] rounded-xl p-4 max-h-64 overflow-y-auto">
+              <pre className="text-[11px] text-white/60 font-mono whitespace-pre-wrap break-all leading-relaxed">{testResponse}</pre>
+            </div>
+          )}
+          {/* Low balance prompt after test */}
+          <div id="low-balance-prompt" className="hidden flex items-center justify-between px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mt-2">
+            <div>
+              <p className="text-[12px] text-amber-400/90 font-medium">余额告急</p>
+              <p className="text-[10px] text-white/40">当前余额 {user?.token_balance?.toLocaleString() || 0} Token，体验完可去充值</p>
+            </div>
+            <button
+              onClick={openRecharge}
+              className="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-[11px] font-medium hover:bg-amber-500/25 transition-all shrink-0"
+            >
+              去充能
+            </button>
+          </div>
+          {testError && (
+            <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
+              <p className="text-[11px] text-red-300">{testError}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* {tr("transfer.modelPricing")} */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-[13px] font-medium text-white/70 mb-4 flex items-center gap-2"><BarChart3 size={14} /> {tr("transfer.modelPricing")}</h3>
@@ -258,23 +353,32 @@ console.log(response.choices[0].message.content);`;
           <table className="w-full text-[12px]">
             <thead>
               <tr className="border-b border-white/[0.04]">
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Model</th>
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Name</th>
-                <th className="text-left text-white/30 font-medium pb-3 pr-3">Provider</th>
-                <th className="text-right text-white/30 font-medium pb-3 pr-3">Input</th>
-                <th className="text-right text-white/30 font-medium pb-3">Output</th>
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">{tr('transfer.tableModel')}</th>
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">{tr('transfer.tableName')}</th>
+                <th className="text-left text-white/30 font-medium pb-3 pr-3">{tr('transfer.tableProvider')}</th>
+                <th className="text-right text-white/30 font-medium pb-3 pr-3">{tr('transfer.tableInput')}</th>
+                <th className="text-right text-white/30 font-medium pb-3">{tr('transfer.tableOutput')}</th>
                 <th className="text-right text-white/30 font-medium pb-3 pl-3"></th>
               </tr>
             </thead>
             <tbody>
               {models.map((m) => (
                 <tr key={m.id} className="border-b border-white/[0.02] last:border-0">
-                  <td className="py-3 pr-3 font-mono text-[11px] text-emerald-400">{m.id}</td>
+                  <td className="py-3 pr-3 font-mono text-[11px] text-white/50">{formatModelId(m.id, m.name)}</td>
                   <td className="py-3 pr-3 text-white/70">{m.name}</td>
                   <td className="py-3 pr-3 text-white/40">{m.provider}</td>
                   <td className="py-3 pr-3 text-right text-white/60">{m.input}/1M</td>
                   <td className="py-3 text-right text-white/60">{m.output}/1M</td>
-                  <td className="py-3 pl-3 text-right">{m.badge && (<span className={"text-[10px] px-1.5 py-0.5 rounded-full border " + (m.badge === "New" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400")}>{m.badge}</span>)}</td>
+                  <td className="py-3 pl-3 text-right">{m.badge && (() => {
+  const badgeColors: Record<string, string> = {
+    'New': 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    'Hot': 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    '上游未接入': 'bg-red-500/10 border-red-500/20 text-red-400',
+    '暂不可用': 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+  };
+  const cls = badgeColors[m.badge] || 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+  return <span className={'text-[10px] px-1.5 py-0.5 rounded-full border ' + cls}>{m.badge}</span>;
+})()}</td>
                 </tr>
               ))}
             </tbody>
@@ -282,27 +386,8 @@ console.log(response.choices[0].message.content);`;
         </div>
       </div>
 
-      {/* {tr("transfer.quickStart")} with Code Examples */}
-      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-        <h3 className="text-[13px] font-medium text-white/70 mb-4 flex items-center gap-2"><Code size={14} /> {tr("transfer.quickStart")}</h3>
-        <div className="mb-4 px-4 py-3 rounded-xl bg-blue-500/5 border border-blue-500/10 text-blue-300 text-[11px]">
-          {tr("transfer.baseUrl")}: <code className="font-mono text-emerald-400 select-all">https://tokup.net/v1</code>
-        </div>
-        {['curl', 'Python', 'Node.js'].map((lang) => (
-          <div key={lang} className="mb-3 last:mb-0 rounded-xl overflow-hidden border border-white/[0.06]">
-            <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border-b border-white/[0.04]">
-              <span className="flex items-center gap-2 text-[11px] text-white/50 font-mono">
-                {lang === 'curl' ? <Terminal size={11} /> : <Code size={11} />} {lang}
-              </span>
-              <button onClick={() => handleCopy(getCodeExample(lang))}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] text-white/40 hover:text-white/70 transition-all">
-                <Copy size={11} /> {tr("common.copy")}
-              </button>
-            </div>
-            <pre className="p-4 text-[11px] text-white/50 font-mono leading-relaxed overflow-x-auto bg-[#0A0A0F]">{getCodeExample(lang)}</pre>
-          </div>
-        ))}
-        <a href="/integration" className="inline-flex items-center gap-1.5 mt-3 text-[11px] text-emerald-400 hover:underline">
+      <div className="text-center pt-4">
+        <a href="/docs" className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 hover:underline">
           <BookOpen size={12} /> {tr("transfer.viewGuide")}
         </a>
       </div>

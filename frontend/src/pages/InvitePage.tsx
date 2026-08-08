@@ -26,7 +26,7 @@ export default function InvitePage() {
     <div className="w-full space-y-6">
       <div>
         <h1 className="text-[20px] font-semibold text-white">邀请好友</h1>
-        <p className="text-[12px] text-white/30 mt-1">邀请好友注册，双方各得 ¥5 体验金</p>
+        <p className="text-[12px] text-white/30 mt-1">邀请好友注册，最高得 2500 Token 奖励</p>
       </div>
 
       {/* 邀请奖励规则 */}
@@ -51,10 +51,18 @@ export default function InvitePage() {
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
               <Gift size={18} className="text-emerald-400" />
             </div>
-            <p className="text-[13px] text-white/70 font-medium">双方得 ¥5</p>
-            <p className="text-[11px] text-white/40 mt-1">你和好友各得 ¥5 体验金</p>
+            <p className="text-[13px] text-white/70 font-medium">双方得 Token</p>
+            <p className="text-[11px] text-white/40 mt-1">好友注册成功，你得 500</p>
           </div>
         </div>
+      </div>
+
+      {/* 提示信息 */}
+      <div className="relative z-10 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
+        <p className="text-[11px] text-amber-400/70 leading-relaxed">
+          💡 邀请奖励规则：
+          你需至少充值一次，才可获得邀请奖励（每人最多 5 次固定奖励，每次 +500 Token）。好友消费时，你额外获得其消费额 10% 的 Token 分成，不限次数。
+        </p>
       </div>
 
       {/* 我的邀请 */}

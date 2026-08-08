@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LanguageContext';
-import { dashboardApi } from '../utils/api';
+import { monitorApi } from '../utils/api';
 import {
   Activity, AlertTriangle, CheckCircle, Clock, RefreshCw, Server,
   TrendingUp, BarChart3, Zap, Gauge, ExternalLink,
@@ -13,14 +13,6 @@ export default function MonitorPage() {
   const { t } = useLang();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  const monitorApi = {
-    stats: async () => {
-      const r = await fetch('/api/monitor/stats', { credentials: 'include' });
-      if (!r.ok) throw new Error('Failed');
-      return r.json();
-    },
-  };
 
   const loadStats = async () => {
     setLoading(true);
@@ -176,7 +168,7 @@ export default function MonitorPage() {
               <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: '#16161E', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
+                contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
                 labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
               />
               <Line type="monotone" dataKey="requests" stroke="#10B981" strokeWidth={2} dot={false} />

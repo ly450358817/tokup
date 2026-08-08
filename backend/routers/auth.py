@@ -6,13 +6,14 @@ import time
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from database import get_db
-from models import User
+from models import User, Transaction
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 pwd = CryptContext(schemes=["bcrypt"])
@@ -24,7 +25,7 @@ ALGORITHM = "HS256"
 # --- Rate limiter (in-memory, per IP) ---
 _rate_limit_store: dict = {}
 
-def _rate_limit(key: str, max_attempts: int = 50, window: int = 60):
+def _rate_limit(key: str, max_attempts: int = 200, window: int = 60):
     now = time.time()
     timestamps = _rate_limit_store.get(key, [])
     timestamps = [t for t in timestamps if now - t < window]
@@ -33,6 +34,16 @@ def _rate_limit(key: str, max_attempts: int = 50, window: int = 60):
     timestamps.append(now)
     _rate_limit_store[key] = timestamps
 
+def _get_client_ip(request):
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip
+    if request.client:
+        return request.client.host or "unknown"
+    return "unknown"
 def _validate_password(password: str):
     if len(password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
@@ -86,32 +97,42 @@ def get_current_user(token: HTTPAuthorizationCredentials = Depends(security), db
 
 @router.post("/register")
 def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
-    _rate_limit("register:" + request.client.host)
+    _rate_limit("register:" + _get_client_ip(request))
     _validate_password(req.password)
     _validate_email(req.email)
     if db.query(User).filter(User.email == req.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="该邮箱已被注册，请直接登录")
     user = User(
         email=req.email,
         password_hash=pwd.hash(req.password),
         nickname=req.email.split("@")[0],
-        token_balance=10000,  # 注册送 ¥1 体验金 (10000 token)
+        token_balance=0,  # 注册不再赠送 token
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
-    db.add(user)
-    db.flush()  # 获取 user.id
+    try:
+        db.add(user)
+        db.flush()  # 获取 user.id
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="该邮箱已被注册，请直接登录")
     
     # 处理邀请奖励
     if req.invite_code:
         referrer = db.query(User).filter(User.invite_code == req.invite_code).first()
         if referrer and referrer.id != user.id:
             user.referred_by = referrer.id
-            # 邀请人 +5000 token
-            if hasattr(referrer, 'invite_count'):
-                referrer.invite_count = (referrer.invite_count or 0) + 1
-            referrer.token_balance += 5000
-            # 被邀请人额外 +5000 token
-            user.token_balance += 5000
+            # 仅充值过的用户获得邀请奖励（防刷小号）
+            if db.query(db.query(Transaction).filter(
+                Transaction.user_id == referrer.id,
+                Transaction.type == 'recharge',
+                Transaction.status == 'completed'
+            ).exists()).scalar():
+                if hasattr(referrer, 'invite_count'):
+                    referrer.invite_count = (referrer.invite_count or 0) + 1
+                if (referrer.paid_invite_count or 0) < 5:
+                    referrer.token_balance += 500
+                    referrer.paid_invite_count = (referrer.paid_invite_count or 0) + 1
+            # 被邀请人注册不再赠送 token（避免白嫖）
     
     db.commit()
     db.refresh(user)
@@ -121,7 +142,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(req: LoginReq, request: Request, db: Session = Depends(get_db)):
-    _rate_limit("login:" + request.client.host)
+    _rate_limit("login:" + _get_client_ip(request))
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not pwd.verify(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -135,8 +156,8 @@ def get_me(user: User = Depends(get_current_user)):
         id=user.id,
         email=user.email,
         nickname=user.nickname,
-        token_balance=round(user.token_balance / 100, 2),
-        total_recharged=round(user.total_recharged / 100, 2),
+        token_balance=user.token_balance,
+        total_recharged=round(user.total_recharged, 2),
         is_active=user.is_active,
         is_admin=user.is_admin,
     )

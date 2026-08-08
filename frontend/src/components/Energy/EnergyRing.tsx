@@ -17,27 +17,40 @@ export default function EnergyRing({
   activeKeys,
 }: Props) {
   const [filled, setFilled] = useState(0);
+  const [entryFlash, setEntryFlash] = useState(false);
   const { t } = useLang();
   const radius = 120;
   const strokeWidth = 6;
   const circumference = 2 * Math.PI * radius;
 
-  const maxBalance = 500 * 100;
-  const ratio = Math.min(balance / maxBalance, 1);
+  const maxToken = 500 * 100;
+  const ratio = Math.min(balance / maxToken, 1);
   const offset = circumference * (1 - ratio);
 
-  // Color progression: green -> yellow -> orange -> red (battery gauge style)
+  // Color thresholds based on recharge packages (token):
+  // ¥499+   (≥49900 token) → Gold   → 充足
+  // ¥199-498 (≥19900)      → Green  → 充裕
+  // ¥99-198  (≥9900)       → Teal   → 良好
+  // ¥29.9-98 (≥2990)       → Amber  → 一般
+  // ¥20-29.8 (≥2000)       → Orange → 不足
+  // <¥20     (<2000)       → Red    → 告急
   const colors = useMemo(() => {
-    const pct = balance / maxBalance;
-    if (pct > 0.6)  return { start: '#10B981', mid: '#34D399', end: '#059669', label: t.dashboard.abundant };
-    if (pct > 0.3)  return { start: '#F59E0B', mid: '#FBBF24', end: '#D97706', label: t.dashboard.moderate };
-    if (pct > 0.1)  return { start: '#F97316', mid: '#FB923C', end: '#EA580C', label: t.dashboard.low };
-    return { start: '#EF4444', mid: '#F87171', end: '#DC2626', label: t.dashboard.critical };
-  }, [balance, maxBalance]);
+    const token = balance;
+    if (token >= 49900)  return { start: "#10B981", mid: "#34D399", end: "#059669", label: "充足" };
+    if (token >= 19900)  return { start: '#10B981', mid: '#34D399', end: '#059669', label: '充裕' };
+    if (token >= 9900)   return { start: '#14B8A6', mid: '#2DD4BF', end: '#0D9488', label: '良好' };
+    if (token >= 2990)   return { start: "#F59E0B", mid: "#FBBF24", end: "#D97706", label: "适中" };
+    if (token >= 2000)   return { start: '#F97316', mid: '#FB923C', end: '#EA580C', label: '不足' };
+    return { start: '#EF4444', mid: '#F87171', end: '#DC2626', label: '告急' };
+  }, [balance]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setFilled(1), 200);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setFilled(1);
+      setEntryFlash(true);
+    }, 200);
+    const flashTimer = setTimeout(() => setEntryFlash(false), 1200);
+    return () => { clearTimeout(timer); clearTimeout(flashTimer); };
   }, []);
 
   return (
@@ -49,7 +62,6 @@ export default function EnergyRing({
           width: radius * 2 + 60,
           height: radius * 2 + 60,
           boxShadow: `0 0 ${ratio < 0.1 ? 80 : 40}px ${colors.start}15, 0 0 ${ratio < 0.1 ? 120 : 80}px ${colors.start}08`,
-          
         }}
       />
 
@@ -115,13 +127,13 @@ export default function EnergyRing({
       {/* Center content */}
       <div className="absolute flex flex-col items-center animate-slide-up">
         <span className="text-[11px] tracking-[0.15em] text-white/30 uppercase font-medium">
-          Balance
+          Token
         </span>
         <span
           className="text-[42px] font-bold tracking-tight mt-1"
           style={{ color: colors.start }}
         >
-          ¥{balanceYuan.toFixed(2)}
+          {balance.toLocaleString()}
         </span>
         <div className="flex items-center gap-3 mt-3">
           <div className="flex items-center gap-1.5">

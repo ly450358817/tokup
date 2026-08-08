@@ -5,26 +5,27 @@ import { subscriptionApi } from '../utils/api';
 import { Check, Zap, Shield, CreditCard, Loader2 } from 'lucide-react';
 
 const MODELS = [
+  { name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥20', output: '¥80', badge: 'New', note: '旗舰 Terra' },
   { name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', badge: 'Hot', note: '最新旗舰' },
-    { name: 'GPT-4.1', provider: 'OpenAI', input: '¥15', output: '¥45', badge: '', note: '快速推理' },
-  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: 'Hot', note: '通用主力' },
-  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '', note: '轻量高效' },
-  { name: 'o4-mini', provider: 'OpenAI', input: '¥8', output: '¥24', badge: '', note: '轻量推理' },
+  { name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥35', output: '¥100', badge: 'New', note: '最新旗舰 Luna' },
+  { name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥20', output: '¥80', badge: 'New', note: '高效推理 Sol' },
+  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: '上游未接入', note: '通用主力' },
+  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '上游未接入', note: '轻量高效' },
   { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', badge: 'New', note: '最新 Claude' },
-  { name: 'Claude 4 Sonnet', provider: 'Anthropic', input: '¥20', output: '¥80', badge: 'Hot', note: '最强推理' },
-  { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: '¥15', output: '¥75', badge: '', note: '稳定可靠' },
-  { name: 'Claude 3.5 Haiku', provider: 'Anthropic', input: '¥1.5', output: '¥6', badge: '', note: '快速响应' },
+  { name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', badge: 'Hot', note: '中国开源 · 最新旗舰' },
+  { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: '', note: '稳定可靠' },
   { name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', badge: 'Hot', note: '旗舰模型' },
   { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', badge: '', note: '极致性价比' },
-  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
-  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '', note: '深度推理' },
-  { name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥15', output: '¥45', badge: 'New', note: '谷歌旗舰' },
+  { name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥0.5', output: '¥2.5', badge: 'Hot', note: 'Agent增强 · 适配Codex' },
+  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '已下线', note: '通用模型' },
+  { name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', badge: 'New', note: '达GPT-5水平' },
+  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '暂不可用', note: '深度推理' },
   { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', badge: '', note: '通义旗舰' },
   { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
-  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
-  { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '', note: '智谱旗舰' },
-  { name: 'Doubao Seed 1.6', provider: '字节跳动', input: '¥1.5', output: '¥4.5', badge: '', note: '豆包旗舰' },
-  { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: 'New', note: 'Kimi 最新' },
+  { name: 'Qwen3.8 Max', provider: '通义千问', input: '¥6.0', output: '¥45.0', badge: 'New', note: '2.4T参数新旗舰' },
+  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '暂不可用', note: '代码专用' },
+  { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '暂不可用', note: '智谱旗舰' },
+  { name: 'GLM-5.2', provider: '智谱AI', input: '¥4.0', output: '¥35.0', badge: 'New', note: '1M上下文旗舰' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -63,7 +64,7 @@ export default function PricingPage() {
       } else {
         if (res.message?.includes('余额不足')) {
           setMsg({ type: 'error', text: '余额不足，请先充值' });
-          setTimeout(() => openRecharge(), 1500);
+          setTimeout(() => openRecharge(), 500);
         } else {
           setMsg({ type: 'error', text: res.message || '开通失败' });
         }
@@ -113,7 +114,7 @@ export default function PricingPage() {
       {!loading && plans.length > 0 && (
         <div>
           <h2 className="text-[15px] font-semibold text-white mb-5">订阅套餐（每日 Token 配额）</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {plans.map((plan) => (
               <div
                 key={plan.id}
@@ -128,9 +129,9 @@ export default function PricingPage() {
                 )}
                 <h3 className="text-[16px] font-semibold text-white">{plan.label}</h3>
                 <div className="mt-3">
-                  <span className="text-[28px] font-bold text-white">¥{((plan.price || 0) / 100).toFixed(0)}</span>
+                  <span className="text-[28px] font-bold text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
                   <span className="text-[11px] text-white/30 ml-1">
-                    {plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
+                    {plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
                   </span>
                 </div>
                 <p className="text-[12px] text-white/50 mt-1">{plan.desc}</p>
@@ -175,12 +176,15 @@ export default function PricingPage() {
           <tbody className="divide-y divide-white/[0.04]">
             {MODELS.map((m, i) => (
               <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-               <td className="px-6 py-4 text-[13px] text-white/80">{m.name}</td>
+               <td className="px-6 py-4 text-[13px] text-white/80">{m.name}{m.note ? <span className="ml-2 text-[10px] text-white/30">{m.note}</span> : null}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] text-white/40">{m.provider}</span>
                     {m.badge && (
-                      <span className={"text-[10px] px-1.5 py-0.5 rounded-full border " + (m.badge === 'New' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400')}>{m.badge}</span>
+                      <span className={"text-[10px] px-1.5 py-0.5 rounded-full border " + (() => {
+  const bc = { 'New': 'bg-blue-500/10 border-blue-500/20 text-blue-400', 'Hot': 'bg-amber-500/10 border-amber-500/20 text-amber-400', '上游未接入': 'bg-red-500/10 border-red-500/20 text-red-400', '暂不可用': 'bg-amber-500/10 border-amber-500/20 text-amber-400' };
+  return bc[m.badge] || 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+})()}>{m.badge}</span>
                     )}
                   </div>
                 </td>

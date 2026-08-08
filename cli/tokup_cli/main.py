@@ -9,15 +9,29 @@ TOKUP_API = os.getenv("TOKUP_API", "https://tokup.net")
 
 def cmd_switch(args):
     """Print switch instructions"""
+    api_url = f"{TOKUP_API}/api/v1"
     if args.provider == "openai":
-        print(f"export OPENAI_BASE_URL=\"{TOKUP_API}/v1\"")
+        print(f"export OPENAI_BASE_URL=\"{api_url}\"")
         print(f"export OPENAI_API_KEY=\"your_tokup_api_key\"")
         print()
         print("# Python OpenAI SDK:")
         print("from openai import OpenAI")
-        print(f'client = OpenAI(base_url="{TOKUP_API}/v1", api_key="your_key")')
+        print(f'client = OpenAI(base_url="{api_url}", api_key="your_key")')
+    elif args.provider == "codex":
+        print("# 桌面版推荐用 CC Switch 一键配置：https://github.com/farion1231/cc-switch/releases")
+        print("# 命令行用户可直接写入 ~/.codex/config.toml，保存后完全退出并重启 Codex")
+        print('model_provider = "tokup"')
+        print('model = "gpt-5.5"')
+        print()
+        print("[model_providers.tokup]")
+        print('name = "TokUp"')
+        print(f'base_url = "{api_url}"')
+        print('wire_api = "responses"')
+        print('env_key = "TOKUP_API_KEY"')
+        print()
+        print("export TOKUP_API_KEY=\"your_tokup_api_key\"")
     else:
-        print(f"export TOKUP_BASE_URL=\"{TOKUP_API}/v1\"")
+        print(f"export TOKUP_BASE_URL=\"{api_url}\"")
         print(f"export TOKUP_API_KEY=\"your_tokup_api_key\"")
 
 def cmd_balance(args):
@@ -57,7 +71,7 @@ def main():
     sub = parser.add_subparsers(dest="command")
     
     p_switch = sub.add_parser("switch", help="获取切换配置")
-    p_switch.add_argument("provider", nargs="?", default="openai", help="openai | tokup")
+    p_switch.add_argument("provider", nargs="?", default="openai", help="openai | tokup | codex")
     
     p_balance = sub.add_parser("balance", help="查询余额")
     p_balance.add_argument("--token", "-t", help="API Token")
