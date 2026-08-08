@@ -327,7 +327,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
 
 @router.post("/responses")
 async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
-    """SSE 流式返回（真流式：实时转发上游 thinking/content，心跳保活，避免长思考断流）"""
+    """SSE 流式返回（真流式 + 心跳保活 + OpenAI Responses 标准事件格式，兼容 Codex 客户端）"""
     _uid, _kid = _capture_key_identity(api_key)
     messages = _normalize_responses_input(req.input, req.instructions)
 
@@ -351,12 +351,17 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         item_seq["n"] += 1
         return i
 
+    def _sse(event_name: str, payload: dict) -> str:
+        payload = dict(payload)
+        payload.setdefault("type", event_name)
+        return f"event: {event_name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
     async def generate_sse():
         from services.ai_service import proxy_stream_request as _psr
 
         # 基础事件：立即发出，客户端马上能收到首字节（避开 60s first-byte timeout）
-        yield f"event: response.created\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'in_progress'})}\n\n"
-        yield f"event: response.in_progress\ndata: {json.dumps({'id': resp_id, 'status': 'in_progress'})}\n\n"
+        yield _sse("response.created", {"response": {"id": resp_id, "object": "response", "status": "in_progress"}})
+        yield _sse("response.in_progress", {"response": {"id": resp_id, "object": "response", "status": "in_progress"}})
 
         _t0 = time.monotonic()
         _usage_data = None
@@ -430,16 +435,26 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                                 if not _rs_added:
                                     _rs_added = True
                                     _rs_idx = _next_idx()
-                                    await q.put(("sse", f"event: response.output_item.added\ndata: {json.dumps({'output_index': _rs_idx, 'item': {'type': 'reasoning', 'id': _rs_item_id, 'status': 'in_progress', 'summary': []}})}\n\n"))
+                                    await q.put(("sse", _sse("response.output_item.added", {
+                                        "output_index": _rs_idx,
+                                        "item": {"type": "reasoning", "id": _rs_item_id, "summary": []},
+                                    })))
                                 _reasoning_text += _rc
-                                await q.put(("sse", f"event: response.reasoning_summary_text.delta\ndata: {json.dumps({'response_id': resp_id, 'item_id': _rs_item_id, 'output_index': _rs_idx, 'delta': _rc})}\n\n"))
+                                await q.put(("sse", _sse("response.reasoning_summary_text.delta", {
+                                    "item_id": _rs_item_id, "output_index": _rs_idx, "summary_index": 0, "delta": _rc,
+                                })))
                             if _dc:
                                 if not _msg_added:
                                     _msg_added = True
                                     _msg_idx = _next_idx()
-                                    await q.put(("sse", f"event: response.output_item.added\ndata: {json.dumps({'output_index': _msg_idx, 'item': {'type': 'message', 'id': _msg_item_id, 'status': 'in_progress', 'content': []}})}\n\n"))
+                                    await q.put(("sse", _sse("response.output_item.added", {
+                                        "output_index": _msg_idx,
+                                        "item": {"type": "message", "id": _msg_item_id, "role": "assistant", "content": []},
+                                    })))
                                 _content_text += _dc
-                                await q.put(("sse", f"event: response.output_text.delta\ndata: {json.dumps({'response_id': resp_id, 'item_id': _msg_item_id, 'output_index': _msg_idx, 'delta': _dc})}\n\n"))
+                                await q.put(("sse", _sse("response.output_text.delta", {
+                                    "item_id": _msg_item_id, "output_index": _msg_idx, "delta": _dc,
+                                })))
             except Exception as _e:
                 await q.put(("error", str(_e)))
             finally:
@@ -461,8 +476,13 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         except Exception as _e:
             _settle(False)
             _err = str(_e)
-            yield f"event: response.failed\ndata: {json.dumps({'type': 'error', 'code': 'upstream_error', 'message': _err, 'response_id': resp_id})}\n\n"
-            yield f"event: response.completed\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'failed', 'error': {'code': 'upstream_error', 'message': _err}, 'output': []})}\n\n"
+            yield _sse("response.failed", {
+                "response": {
+                    "id": resp_id, "object": "response", "status": "failed",
+                    "error": {"code": "upstream_error", "message": _err},
+                    "output": [],
+                }
+            })
             return
         finally:
             _consumer.cancel()
@@ -475,34 +495,46 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         _settle(True)
 
         if _rs_added:
-            yield f"event: response.reasoning_summary_text.done\ndata: {json.dumps({'response_id': resp_id, 'item_id': _rs_item_id, 'output_index': _rs_idx, 'summary': _reasoning_text})}\n\n"
-            yield f"event: response.output_item.done\ndata: {json.dumps({'output_index': _rs_idx, 'item': {'type': 'reasoning', 'id': _rs_item_id, 'status': 'completed', 'summary': [{'type': 'summary_text', 'text': _reasoning_text}]}})}\n\n"
+            yield _sse("response.reasoning_summary_text.done", {
+                "item_id": _rs_item_id, "output_index": _rs_idx, "summary_index": 0, "text": _reasoning_text,
+            })
+            yield _sse("response.output_item.done", {
+                "output_index": _rs_idx,
+                "item": {"type": "reasoning", "id": _rs_item_id,
+                         "summary": [{"type": "summary_text", "text": _reasoning_text}]},
+            })
 
         if _msg_added:
-            yield f"event: response.output_text.done\ndata: {json.dumps({'response_id': resp_id, 'item_id': _msg_item_id, 'output_index': _msg_idx, 'text': _content_text})}\n\n"
-            yield f"event: response.output_item.done\ndata: {json.dumps({'output_index': _msg_idx, 'item': {'type': 'message', 'id': _msg_item_id, 'status': 'completed', 'content': [{'type': 'output_text', 'text': _content_text}]}})}\n\n"
+            yield _sse("response.output_text.done", {
+                "item_id": _msg_item_id, "output_index": _msg_idx, "text": _content_text,
+            })
+            yield _sse("response.output_item.done", {
+                "output_index": _msg_idx,
+                "item": {"type": "message", "id": _msg_item_id, "role": "assistant",
+                         "content": [{"type": "output_text", "text": _content_text}]},
+            })
 
         _out_usage = _usage_data or {}
-        completed = {
-            'id': resp_id, 'object': 'response', 'status': 'completed',
-            'output': [],
-        }
+        completed_output = []
         if _msg_added:
-            completed['output'].append({'type': 'message', 'status': 'completed',
-                                        'content': [{'type': 'output_text', 'text': _content_text}]})
-        completed['usage'] = {
-            'input_tokens': _out_usage.get("input", 0),
-            'output_tokens': _out_usage.get("output", 0),
-            'total_tokens': _out_usage.get("input", 0) + _out_usage.get("output", 0),
+            completed_output.append({"type": "message", "role": "assistant",
+                                     "content": [{"type": "output_text", "text": _content_text}]})
+        completed = {
+            "id": resp_id, "object": "response", "status": "completed", "end_turn": True,
+            "output": completed_output,
+            "usage": {
+                "input_tokens": _out_usage.get("input", 0),
+                "output_tokens": _out_usage.get("output", 0),
+                "total_tokens": _out_usage.get("input", 0) + _out_usage.get("output", 0),
+            },
         }
-        yield f"event: response.completed\ndata: {json.dumps(completed)}\n\n"
+        yield _sse("response.completed", {"response": completed})
 
     return StreamingResponse(
         generate_sse(),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-
 
 @router.get("/models")
 def list_models():
