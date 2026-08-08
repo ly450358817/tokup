@@ -124,7 +124,7 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
 
     for attempt in range(MAX_RETRIES + 1):
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=30.0)) as client:
                 resp = await client.post(url, headers=headers, json=payload)
                 result = resp.json()
                 usage = result.get("usage", {})
@@ -150,10 +150,13 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
 
 
 
-async def proxy_stream_request(model: str, messages: list):
+async def proxy_stream_request(model: str, messages: list, max_tokens: int | None = None):
     """
-    真流式转发：用 stream=True 请求七牛，按字节读取 SSE 并实时原样转发。
-    遇到 usage chunk 时补充 __USAGE__ 标记。
+    真流式转发：用 stream=True 请求上游，按字节读取 SSE 并实时原样转发。
+    - 上游的 reasoning_content（思考过程）也立即转发，客户端不会长时间静默（避免被
+      CC Switch / nginx / Cloudflare 的 idle timeout 断流）
+    - 遇到 usage chunk 时补充 __USAGE__ 标记（含 reasoning）
+    - 整段流既无 reasoning 也无 content 时视为空流，触发一次重试
     """
     import json as _json
     import logging
@@ -168,20 +171,23 @@ async def proxy_stream_request(model: str, messages: list):
         raise ValueError(f"API key not configured for {provider}")
 
     payload = {"model": model, "messages": messages, "stream": True}
+    if max_tokens:
+        payload["max_tokens"] = max_tokens
     if provider == "anthropic":
-        payload = {"model": model, "messages": messages, "max_tokens": 4096, "stream": True}
+        payload = {"model": model, "messages": messages, "max_tokens": max_tokens or 4096, "stream": True}
 
     MAX_RETRIES = 1
 
     for attempt in range(MAX_RETRIES + 1):
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
                 async with client.stream("POST", url, headers=headers, json=payload) as resp:
                     input_tok = 0
                     output_tok = 0
                     full_content = ""
-                    started = False
-                    pending = b""  # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
+                    full_reasoning = ""
+                    started = False      # 出现 reasoning 或 content 即开始转发
+                    pending = b""        # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
                     async for chunk in resp.aiter_bytes():
                         usage_tag = b""
                         try:
@@ -194,12 +200,18 @@ async def proxy_stream_request(model: str, messages: list):
                                     if usage:
                                         input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
                                         output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
-                                    delta = data.get("choices", [{}])[0].get("delta", {})
-                                    if delta.get("content"):
-                                        full_content += delta["content"]
+                                    delta = data.get("choices", [{}])[0].get("delta", {}) or {}
+                                    rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
+                                    dc = delta.get("content") or ""
+                                    if rc:
+                                        full_reasoning += rc
+                                    if dc:
+                                        full_content += dc
+                                    if (rc or dc) and not started:
+                                        started = True
                                     if data.get("choices", [{}])[0].get("finish_reason"):
                                         cost_val = calculate_cost(model, input_tok, output_tok)
-                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content})}\n".encode()
+                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
                         except Exception:
                             pass
                         if started:
@@ -207,18 +219,9 @@ async def proxy_stream_request(model: str, messages: list):
                                 yield usage_tag
                             yield chunk
                         else:
-                            if full_content:
-                                started = True
-                                if pending:
-                                    yield pending
-                                if usage_tag:
-                                    yield usage_tag
-                                yield chunk
-                                pending = b""
-                            else:
-                                pending += chunk
+                            pending += chunk
                     if not started:
-                        # 整段流都没有任何内容 -> 视为空流，触发重试（客户端尚未收到任何字节）
+                        # 整段流既无 reasoning 也无 content -> 视为空流，触发重试（客户端尚未收到任何字节）
                         raise RuntimeError("上游流式返回为空（无内容）")
                     if pending:
                         yield pending
@@ -229,4 +232,3 @@ async def proxy_stream_request(model: str, messages: list):
             )
             if attempt >= MAX_RETRIES:
                 raise RuntimeError(f"流式请求失败（已重试{MAX_RETRIES}次）: {str(e)}")
-

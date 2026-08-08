@@ -327,7 +327,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
 
 @router.post("/responses")
 async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
-    """支持 SSE 流式返回"""
+    """SSE 流式返回（真流式：实时转发上游 thinking/content，心跳保活，避免长思考断流）"""
     _uid, _kid = _capture_key_identity(api_key)
     messages = _normalize_responses_input(req.input, req.instructions)
 
@@ -344,64 +344,156 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
 
     resp_id = f"resp_{int(time.time()*1000)}"
+    item_seq = {"n": 0}
+
+    def _next_idx():
+        i = item_seq["n"]
+        item_seq["n"] += 1
+        return i
 
     async def generate_sse():
+        from services.ai_service import proxy_stream_request as _psr
+
+        # 基础事件：立即发出，客户端马上能收到首字节（避开 60s first-byte timeout）
         yield f"event: response.created\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'in_progress'})}\n\n"
         yield f"event: response.in_progress\ndata: {json.dumps({'id': resp_id, 'status': 'in_progress'})}\n\n"
 
         _t0 = time.monotonic()
-        result = await proxy_request(model, messages, False, max_tokens=req.max_output_tokens)
-        _latency = int((time.monotonic() - _t0) * 1000)
+        _usage_data = None
+        _content_text = ""
+        _reasoning_text = ""
+        _settled = False
+        _msg_item_id = f"msg_{int(time.time()*1000)}"
+        _rs_item_id = f"rs_{int(time.time()*1000)}"
+        _msg_added = False
+        _rs_added = False
+        _rs_idx = 0
+        _msg_idx = 0
 
-        if "error" in result:
-            settle_reserved(_uid, _need, 0, db, f"API退回: {model}")
-            err_msg = str(result["error"])
-            yield f"event: response.failed\ndata: {json.dumps({'type': 'error', 'code': 'upstream_error', 'message': err_msg, 'response_id': resp_id})}\n\n"
-            yield f"event: response.completed\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'failed', 'error': {'code': 'upstream_error', 'message': err_msg}, 'output': []})}\n\n"
-            return
+        def _settle(ok: bool):
+            nonlocal _settled
+            if _settled:
+                return
+            _settled = True
+            _latency = int((time.monotonic() - _t0) * 1000)
+            if ok and _usage_data:
+                _cost = _usage_data.get("cost", 0.01)
+                _in = _usage_data.get("input", 0)
+                _out = _usage_data.get("output", 0)
+            else:
+                _in = sum(len(str(m.get("content", ""))) for m in messages) // 2 or 1
+                _out = max(1, len(_content_text) // 2) if _content_text else 0
+                _cost = calculate_cost(model, _in, _out) if _out else 0.0
+            _tc = max(round(_cost * 100), 1) if _out else 0
+            try:
+                if ok and _tc > 0:
+                    _record = UsageRecord(
+                        user_id=_uid, api_key_id=_kid, model=model,
+                        provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                        input_tokens=_in, output_tokens=_out,
+                        cost_cny=_cost, status="success", latency_ms=_latency,
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    db.add(_record)
+                settle_reserved(_uid, _need, _tc if ok else 0, db, f"API: {model}" if ok else f"API退回: {model}")
+            except Exception:
+                pass
 
-        usage_data = result.get("usage", {})
-        cost = usage_data.get("cost", 0.01)
-        token_cost = max(round(cost * 100), 1)
+        # 后台任务消费上游流并解析成 Responses 事件；主循环负责心跳保活。
+        q: asyncio.Queue = asyncio.Queue()
 
-        chat_data = result["data"]
-        content_text = ""
+        async def _consume():
+            nonlocal _usage_data, _content_text, _reasoning_text, _msg_added, _rs_added, _rs_idx, _msg_idx
+            try:
+                async for _chunk in _psr(model, messages, max_tokens=req.max_output_tokens):
+                    if isinstance(_chunk, bytes):
+                        if _chunk.startswith(b"__USAGE__:"):
+                            try:
+                                _usage_data = json.loads(_chunk[len(b"__USAGE__:"):].decode())
+                            except Exception:
+                                pass
+                            continue
+                        if b"[DONE]" in _chunk:
+                            continue
+                        _text = _chunk.decode("utf-8", errors="replace")
+                        for _ln in _text.split("\n"):
+                            if not _ln.startswith("data: ") or "[DONE]" in _ln:
+                                continue
+                            try:
+                                _obj = json.loads(_ln[6:])
+                            except Exception:
+                                continue
+                            _delta = _obj.get("choices", [{}])[0].get("delta", {}) or {}
+                            _rc = _delta.get("reasoning_content") or _delta.get("reasoning") or ""
+                            _dc = _delta.get("content") or ""
+                            if _rc:
+                                if not _rs_added:
+                                    _rs_added = True
+                                    _rs_idx = _next_idx()
+                                    await q.put(("sse", f"event: response.output_item.added\ndata: {json.dumps({'output_index': _rs_idx, 'item': {'type': 'reasoning', 'id': _rs_item_id, 'status': 'in_progress', 'summary': []}})}\n\n"))
+                                _reasoning_text += _rc
+                                await q.put(("sse", f"event: response.reasoning_summary_text.delta\ndata: {json.dumps({'response_id': resp_id, 'item_id': _rs_item_id, 'output_index': _rs_idx, 'delta': _rc})}\n\n"))
+                            if _dc:
+                                if not _msg_added:
+                                    _msg_added = True
+                                    _msg_idx = _next_idx()
+                                    await q.put(("sse", f"event: response.output_item.added\ndata: {json.dumps({'output_index': _msg_idx, 'item': {'type': 'message', 'id': _msg_item_id, 'status': 'in_progress', 'content': []}})}\n\n"))
+                                _content_text += _dc
+                                await q.put(("sse", f"event: response.output_text.delta\ndata: {json.dumps({'response_id': resp_id, 'item_id': _msg_item_id, 'output_index': _msg_idx, 'delta': _dc})}\n\n"))
+            except Exception as _e:
+                await q.put(("error", str(_e)))
+            finally:
+                await q.put(("done", None))
+
+        _consumer = asyncio.create_task(_consume())
         try:
-            content_text = chat_data["choices"][0]["message"].get("content", "")
-        except (KeyError, IndexError):
-            pass
+            while True:
+                try:
+                    _kind, _data = await asyncio.wait_for(q.get(), timeout=25)
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"   # SSE 注释行：客户端忽略，但能防 CC Switch/nginx/Cloudflare 断流
+                    continue
+                if _kind == "done":
+                    break
+                if _kind == "error":
+                    raise RuntimeError(_data)
+                yield _data
+        except Exception as _e:
+            _settle(False)
+            _err = str(_e)
+            yield f"event: response.failed\ndata: {json.dumps({'type': 'error', 'code': 'upstream_error', 'message': _err, 'response_id': resp_id})}\n\n"
+            yield f"event: response.completed\ndata: {json.dumps({'id': resp_id, 'object': 'response', 'status': 'failed', 'error': {'code': 'upstream_error', 'message': _err}, 'output': []})}\n\n"
+            return
+        finally:
+            _consumer.cancel()
+            try:
+                await _consumer
+            except Exception:
+                pass
 
-        usage_record = UsageRecord(
-            user_id=_uid,
-            api_key_id=_kid,
-            model=model,
-            provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
-            input_tokens=usage_data.get("input", 0),
-            output_tokens=usage_data.get("output", 0),
-            cost_cny=cost,
-            status="success",
-            latency_ms=_latency,
-            created_at=datetime.now(timezone.utc),
-        )
-        db.add(usage_record)
-        _deduct = settle_reserved(_uid, _need, token_cost, db, f"API: {model}")
+        # 正常结束：收尾事件 + 计费
+        _settle(True)
 
-        yield f"event: response.output_item.added\ndata: {json.dumps({'output_index': 0, 'item': {'type': 'message', 'status': 'in_progress', 'response_id': resp_id}})}\n\n"
+        if _rs_added:
+            yield f"event: response.reasoning_summary_text.done\ndata: {json.dumps({'response_id': resp_id, 'item_id': _rs_item_id, 'output_index': _rs_idx, 'summary': _reasoning_text})}\n\n"
+            yield f"event: response.output_item.done\ndata: {json.dumps({'output_index': _rs_idx, 'item': {'type': 'reasoning', 'id': _rs_item_id, 'status': 'completed', 'summary': [{'type': 'summary_text', 'text': _reasoning_text}]}})}\n\n"
 
-        chunk_size = 4
-        for i in range(0, len(content_text), chunk_size):
-            chunk = content_text[i:i+chunk_size]
-            yield f"event: response.output_text.delta\ndata: {json.dumps({'response_id': resp_id, 'delta': chunk})}\n\n"
+        if _msg_added:
+            yield f"event: response.output_text.done\ndata: {json.dumps({'response_id': resp_id, 'item_id': _msg_item_id, 'output_index': _msg_idx, 'text': _content_text})}\n\n"
+            yield f"event: response.output_item.done\ndata: {json.dumps({'output_index': _msg_idx, 'item': {'type': 'message', 'id': _msg_item_id, 'status': 'completed', 'content': [{'type': 'output_text', 'text': _content_text}]}})}\n\n"
 
+        _out_usage = _usage_data or {}
         completed = {
             'id': resp_id, 'object': 'response', 'status': 'completed',
-            'output': [{'type': 'message', 'status': 'completed',
-                       'content': [{'type': 'output_text', 'text': content_text}]}],
-            'usage': {
-                'input_tokens': usage_data.get("input", 0),
-                'output_tokens': usage_data.get("output", 0),
-                'total_tokens': usage_data.get("input", 0) + usage_data.get("output", 0),
-            }
+            'output': [],
+        }
+        if _msg_added:
+            completed['output'].append({'type': 'message', 'status': 'completed',
+                                        'content': [{'type': 'output_text', 'text': _content_text}]})
+        completed['usage'] = {
+            'input_tokens': _out_usage.get("input", 0),
+            'output_tokens': _out_usage.get("output", 0),
+            'total_tokens': _out_usage.get("input", 0) + _out_usage.get("output", 0),
         }
         yield f"event: response.completed\ndata: {json.dumps(completed)}\n\n"
 
