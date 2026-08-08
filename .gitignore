@@ -60,3 +60,4 @@ backend_old/
 deploy_tokup_fix.sh
 memories/
 *.backup*
+scripts/alert-config.env
