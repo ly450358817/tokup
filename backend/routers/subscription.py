@@ -13,10 +13,10 @@ router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
 # ── 套餐定义 ──
 PLANS = {
-    "trial": {"label": "体验订阅", "price": 2990, "days": 7, "daily_limit": 5000, "desc": "低门槛体验 · 每日 5000 Token"},
-    "monthly": {"label": "月卡", "price": 9900, "days": 30, "daily_limit": 33000, "desc": "新用户特惠 · 每日 33000 Token"},
-    "quarterly": {"label": "季卡", "price": 19900, "days": 90, "daily_limit": 100000, "desc": "日均¥2.2 · 每日 100000 Token"},
-    "yearly": {"label": "年卡", "price": 49900, "days": 365, "daily_limit": 400000, "desc": "日均¥1.4 · 每日 400000 Token"},
+    "trial": {"label": "体验订阅", "price": 2990, "days": 7, "daily_limit": 5000, "desc": "低门槛体验 · 7天每日 5000 Token 免费"},
+    "monthly": {"label": "月度订阅", "price": 9900, "days": 30, "daily_limit": 33000, "desc": "新用户特惠 · 30天每日 33000 Token 免费"},
+    "quarterly": {"label": "季度订阅", "price": 19900, "days": 90, "daily_limit": 100000, "desc": "日均¥2.2 · 90天每日 100000 Token 免费"},
+    "yearly": {"label": "年度订阅", "price": 49900, "days": 365, "daily_limit": 400000, "desc": "日均¥1.4 · 365天每日 400000 Token 免费"},
 }
 
 
