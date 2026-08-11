@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRecharge } from '../contexts/RechargeContext';
 import { useLang } from '../contexts/LanguageContext';
-import { dashboardApi } from '../utils/api';
+import { dashboardApi, subscriptionApi } from '../utils/api';
 import EnergyRing from '../components/Energy/EnergyRing';
 import {
   Activity,
@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const { openRecharge } = useRecharge();
   const { t } = useLang();
   const [stats, setStats] = useState<any>(null);
+  const [subStatus, setSubStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [lastSync, setLastSync] = useState('');
@@ -81,6 +82,10 @@ export default function DashboardPage() {
   useEffect(() => {
     loadStats(days);
   }, [days, loadStats]);
+
+  useEffect(() => {
+    subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
+  }, []);
 
   if (loading && !stats) {
     return (
@@ -151,8 +156,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Low balance alert */}
-      {stats?.balance_yuan < 20 && stats?.balance_yuan > 0 && (
+      {/* Low balance alert（订阅用户有免费配额时不提示） */}
+      {!(subStatus?.active && (subStatus.today_remaining || 0) > 0) && stats?.balance_yuan < 20 && stats?.balance_yuan > 0 && (
         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
           <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
             <span className="text-amber-400 text-sm font-bold">!</span>

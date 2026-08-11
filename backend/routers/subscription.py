@@ -101,7 +101,8 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
     if not sub:
         return {"active": False, "plan": None, "expires_at": None}
     daily_limit = sub.daily_limit or 0
-    used = today_usage_tokens(user.id, db, beijing_day_start())
+    used = today_usage_tokens(user.id, db, beijing_day_start(), eligible_only=True)
+    used_all = today_usage_tokens(user.id, db, beijing_day_start())
     return {
         "active": True,
         "plan": sub.plan_id,
@@ -109,5 +110,6 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
         "expires_at": sub.end_date.isoformat(),
         "daily_limit": daily_limit,
         "today_used": used,
+        "today_used_all": used_all,
         "today_remaining": max(0.0, float(daily_limit) - used),
     }

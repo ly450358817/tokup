@@ -82,6 +82,7 @@ export default function TransferStationPage() {
   const [testResponse, setTestResponse] = useState('');
   const [testError, setTestError] = useState('');
   const [testLoading, setTestLoading] = useState(false);
+  const [subStatus, setSubStatus] = useState<any>(null);
 
   const handleTestSend = async () => {
     if (!testInput.trim()) return;
@@ -99,8 +100,9 @@ export default function TransferStationPage() {
       if (data.success) {
         const msg = data.data?.choices?.[0]?.message?.content || JSON.stringify(data.data, null, 2);
         setTestResponse(msg);
-        // 检查余额：低于最低充值档 (2990 token) 时提示
-        if (user?.token_balance != null && user.token_balance < 2990 && user.token_balance > 0) {
+        // 检查余额：低于最低充值档 (2990 token) 时提示（订阅用户有免费配额不提示）
+        const hasQuota = subStatus?.active && (subStatus.today_remaining || 0) > 0;
+        if (!hasQuota && user?.token_balance != null && user.token_balance < 2990 && user.token_balance > 0) {
           setTimeout(() => {
             const el = document.getElementById('low-balance-prompt');
             if (el) el.classList.remove('hidden');
@@ -142,6 +144,16 @@ export default function TransferStationPage() {
 
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('tokup_token');
+    if (token) {
+      fetch('/api/subscription/status', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => r.json())
+        .then(d => setSubStatus(d))
+        .catch(() => {});
+    }
+  }, []);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);

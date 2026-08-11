@@ -294,6 +294,12 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
             db.commit()
             return {"success": False, "message": f"Custom payment error: {str(e)}"}
 
+    # ── 支付渠道未配置：禁止回落到 mock，避免给用户假二维码 ──
+    if PAY_CHANNEL != "mock":
+        txn.status = "failed"
+        db.commit()
+        return {"success": False, "message": f"支付渠道 {PAY_CHANNEL} 未正确配置，请联系管理员"}
+
     # ── Mock 模式 ──
     mock_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=tokup-{order_id}"
     return {

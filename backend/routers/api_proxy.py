@@ -251,13 +251,14 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     _uid, _kid = _capture_key_identity(api_key)
     _initial_balance = _u.token_balance
 
-    # 订阅日配额：当日剩余免费额度内的用量不扣余额
-    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens
+    # 订阅日配额：免费配额仅适用低价模型，配额内用量不扣余额
+    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _sub = get_active_subscription(_u.id, db)
     _day_start = beijing_day_start()
+    _eligible = model_quota_eligible(model)
     _quota_remaining = 0.0
-    if _sub:
-        _quota_used = today_usage_tokens(_u.id, db, _day_start)
+    if _sub and _eligible:
+        _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
     _need = estimate_request_cost(model, req.messages)
     _need_balance = max(0, _need - _quota_remaining)
@@ -295,9 +296,9 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _cost = calculate_cost(model, _input_tok, _output_tok) if _output_tok else 0.0
                     _tc = max(round(_cost * 100), 1) if _output_tok else 0
                     try:
-                        # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣
-                        _q_used_now = today_usage_tokens(_uid, db, _day_start)
-                        _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if _sub else 0.0
+                        # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+                        _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
+                        _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                         _q_covered = min(_tc, _q_rem)
                         _balance_charge = max(0, _tc - _q_covered)
                         if _tc > 0:
@@ -382,9 +383,9 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost", 0.01)
     token_cost = max(round(cost * 100), 1)
-    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣
-    _q_used_now = today_usage_tokens(_uid, db, _day_start)
-    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if _sub else 0.0
+    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+    _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
+    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
     _balance_charge = max(0, token_cost - _q_covered)
     usage_record = UsageRecord(
@@ -417,14 +418,15 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     """AI 客服 / 调试对话测试（余额 > 0 即可体验，订阅用户享受每日免费配额）"""
     if not user.is_admin and (user.token_balance or 0) <= 0:
         return {"success": False, "detail": "余额不足，请先充值"}
-    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens
+    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
+    _model_t = resolve_model(req.model or "deepseek-v3")
     _sub = get_active_subscription(user.id, db)
     _day_start = beijing_day_start()
+    _eligible = model_quota_eligible(_model_t)
     _quota_remaining = 0.0
-    if _sub:
-        _quota_used = today_usage_tokens(user.id, db, _day_start)
+    if _sub and _eligible:
+        _quota_used = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _model_t = resolve_model(req.model or "deepseek-v3")
     _need = estimate_request_cost(_model_t, req.messages)
     _need_balance = max(0, _need - _quota_remaining)
     if user.token_balance < _need_balance:
@@ -442,9 +444,9 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost", 0.01)
     token_cost = max(round(cost * 100), 1)
-    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣
-    _q_used_now = today_usage_tokens(user.id, db, _day_start)
-    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if _sub else 0.0
+    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+    _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
+    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
     _balance_charge = max(0, token_cost - _q_covered)
     usage_record = UsageRecord(
@@ -476,13 +478,14 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
-    # 订阅日配额：当日剩余免费额度内的用量不扣余额
-    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens
+    # 订阅日配额：免费配额仅适用低价模型，配额内用量不扣余额
+    from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _sub = get_active_subscription(_u.id, db)
     _day_start = beijing_day_start()
+    _eligible = model_quota_eligible(model)
     _quota_remaining = 0.0
-    if _sub:
-        _quota_used = today_usage_tokens(_u.id, db, _day_start)
+    if _sub and _eligible:
+        _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
     _need = estimate_request_cost(model, messages)
     _need_balance = max(0, _need - _quota_remaining)
@@ -541,9 +544,9 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                 _cost = calculate_cost(model, _in, _out) if _out else 0.0
             _tc = max(round(_cost * 100), 1) if _out else 0
             try:
-                # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣
-                _q_used_now = today_usage_tokens(_uid, db, _day_start)
-                _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if _sub else 0.0
+                # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+                _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
+                _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                 _q_covered = min(_tc, _q_rem)
                 _balance_charge = max(0, _tc - _q_covered)
                 if ok and _tc > 0:

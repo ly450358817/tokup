@@ -172,7 +172,8 @@ export default function PricingPage() {
       {/* 订阅套餐（每日免费额度） */}
       <div>
         <h2 className="text-[15px] font-semibold text-white mb-1">订阅套餐（每日免费额度）</h2>
-        <p className="text-[12px] text-white/30 mb-5">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
+        <p className="text-[12px] text-white/30 mb-2">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
+        <p className="text-[11px] text-amber-300/60 mb-5">免费配额仅适用低价模型（DeepSeek / Kimi / Qwen / GLM-4.5 等）；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
         {loadingPlans ? (
           <div className="text-[12px] text-white/30">加载中...</div>
         ) : (
