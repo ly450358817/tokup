@@ -176,8 +176,12 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                         "channel": "payjs",
                     }
                 else:
+                    txn.status = "failed"
+                    db.commit()
                     return {"success": False, "message": result.get("return_msg", "PayJS error")}
         except Exception as e:
+            txn.status = "failed"
+            db.commit()
             return {"success": False, "message": f"PayJS error: {str(e)}"}
 
 
@@ -238,8 +242,12 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                 else:
                     status = result.get("status", "XorPay error")
                     msg = result.get("info", "") if isinstance(result.get("info"), str) else ""
+                    txn.status = "failed"
+                    db.commit()
                     return {"success": False, "message": f"{status}: {msg}"}
         except Exception as e:
+            txn.status = "failed"
+            db.commit()
             return {"success": False, "message": f"XorPay error: {str(e)}"}
 
     # ── 自定义支付渠道 ──
@@ -278,8 +286,12 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                         "package": pkg,
                         "channel": "custom",
                     }
+                txn.status = "failed"
+                db.commit()
                 return {"success": False, "message": result.get("msg", "Gateway error")}
         except Exception as e:
+            txn.status = "failed"
+            db.commit()
             return {"success": False, "message": f"Custom payment error: {str(e)}"}
 
     # ── Mock 模式 ──

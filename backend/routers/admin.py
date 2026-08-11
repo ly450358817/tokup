@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
 from models import User, Transaction, ApiKey
+from routers.auth import get_current_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -14,7 +15,9 @@ def get_db():
         db.close()
 
 @router.get("/stats")
-def admin_stats(db: Session = Depends(get_db)):
+def admin_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
     total_users = db.query(func.count(User.id)).scalar() or 0
     total_recharged = db.query(func.coalesce(func.sum(Transaction.amount), 0)).filter(
         Transaction.status == "completed",

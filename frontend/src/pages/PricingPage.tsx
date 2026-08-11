@@ -1,30 +1,28 @@
-import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LanguageContext';
 import { useRecharge } from '../contexts/RechargeContext';
-import { subscriptionApi } from '../utils/api';
-import { Check, Zap, Shield, CreditCard, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const MODELS = [
   { name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥20', output: '¥80', badge: 'New', note: '旗舰 Terra' },
   { name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', badge: 'Hot', note: '最新旗舰' },
   { name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥35', output: '¥100', badge: 'New', note: '最新旗舰 Luna' },
   { name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥20', output: '¥80', badge: 'New', note: '高效推理 Sol' },
-  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: '上游未接入', note: '通用主力' },
-  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '上游未接入', note: '轻量高效' },
+  { name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', badge: '', note: '通用主力' },
+  { name: 'GPT-4o-mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', badge: '', note: '轻量高效' },
   { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', badge: 'New', note: '最新 Claude' },
   { name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', badge: 'Hot', note: '中国开源 · 最新旗舰' },
   { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: '', note: '稳定可靠' },
   { name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', badge: 'Hot', note: '旗舰模型' },
   { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', badge: '', note: '极致性价比' },
   { name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥0.5', output: '¥2.5', badge: 'Hot', note: 'Agent增强 · 适配Codex' },
-  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '已下线', note: '通用模型' },
+  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
   { name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', badge: 'New', note: '达GPT-5水平' },
-  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '暂不可用', note: '深度推理' },
+  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', badge: '', note: '深度推理' },
   { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', badge: '', note: '通义旗舰' },
   { name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', badge: '', note: '通义旗舰' },
   { name: 'Qwen3.8 Max', provider: '通义千问', input: '¥6.0', output: '¥45.0', badge: 'New', note: '2.4T参数新旗舰' },
-  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '暂不可用', note: '代码专用' },
-  { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '暂不可用', note: '智谱旗舰' },
+  { name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', badge: '', note: '代码专用' },
+  { name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', badge: '', note: '智谱旗舰' },
   { name: 'GLM-5.2', provider: '智谱AI', input: '¥4.0', output: '¥35.0', badge: 'New', note: '1M上下文旗舰' },
 ];
 
@@ -40,41 +38,12 @@ export default function PricingPage() {
     return r || key;
   };
 
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [buying, setBuying] = useState<string | null>(null);
-  const [msg, setMsg] = useState({ type: '', text: '' });
-
-  useEffect(() => {
-    subscriptionApi.plans().then((data: any) => {
-      if (data?.plans) {
-        const arr = Object.entries(data.plans).map(([id, p]: [string, any]) => ({ id, ...p }));
-        setPlans(arr);
-      }
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
-
-  const handlePurchase = async (planId: string) => {
-    setBuying(planId);
-    setMsg({ type: '', text: '' });
-    try {
-      const res = await subscriptionApi.purchase(planId);
-      if (res.success) {
-        setMsg({ type: 'success', text: `开通成功！有效期至 ${new Date(res.expires).toLocaleDateString()}` });
-      } else {
-        if (res.message?.includes('余额不足')) {
-          setMsg({ type: 'error', text: '余额不足，请先充值' });
-          setTimeout(() => openRecharge(), 500);
-        } else {
-          setMsg({ type: 'error', text: res.message || '开通失败' });
-        }
-      }
-    } catch (e: any) {
-      setMsg({ type: 'error', text: e?.response?.data?.detail || '网络错误' });
-    } finally {
-      setBuying(null);
-    }
-  };
+  const PACKAGES = [
+    { id: 'trial', label: '体验包', price: 29.9, tokens: 2990, desc: '低门槛尝鲜 · 新用户首选', popular: false, unit: '/次' },
+    { id: 'monthly', label: '月卡', price: 99.0, tokens: 9900, desc: '新用户特惠 · 原价 ¥129', popular: false, unit: '/月' },
+    { id: 'quarterly', label: '季卡', price: 199.0, tokens: 30000, desc: '日均 ¥2.2 · 最受欢迎', popular: true, unit: '/季' },
+    { id: 'yearly', label: '年卡', price: 499.0, tokens: 120000, desc: '日均 ¥1.4 · 超值长享', popular: false, unit: '/年' },
+  ];
 
   return (
     <div className="w-full page-container space-y-8">
@@ -82,16 +51,6 @@ export default function PricingPage() {
         <h1 className="text-[20px] font-semibold text-white">{tr('pricing.title')}</h1>
         <p className="text-[12px] text-white/30 mt-1">{tr('pricing.desc')}</p>
       </div>
-
-      {/* Message toast */}
-      {msg.text && (
-        <div className={`px-5 py-3 rounded-xl text-sm ${
-          msg.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-          : 'bg-red-500/10 border border-red-500/20 text-red-400'
-        }`}>
-          {msg.text}
-        </div>
-      )}
 
       {/* 汇率展示 */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
@@ -110,57 +69,42 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Subscription Plans */}
-      {!loading && plans.length > 0 && (
-        <div>
-          <h2 className="text-[15px] font-semibold text-white mb-5">订阅套餐（每日 Token 配额）</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative rounded-2xl border p-6 backdrop-blur-xl bg-white/[0.02] transition-all hover:bg-white/[0.04] ${
-                  plan.id === 'quarterly' ? 'border-emerald-500/30' : 'border-white/[0.06]'
-                }`}
-              >
-                {plan.id === 'quarterly' && (
-                  <span className="absolute -top-2.5 right-4 px-3 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
-                    推荐
-                  </span>
-                )}
-                <h3 className="text-[16px] font-semibold text-white">{plan.label}</h3>
-                <div className="mt-3">
-                  <span className="text-[28px] font-bold text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
-                  <span className="text-[11px] text-white/30 ml-1">
-                    {plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
-                  </span>
-                </div>
-                <p className="text-[12px] text-white/50 mt-1">{plan.desc}</p>
-                <div className="mt-4 space-y-2 text-[12px] text-white/50">
-                  <p>每日 {plan.daily_limit.toLocaleString()} Token</p>
-                  <p>超额按量计费</p>
-                  <p>每日额度自动重置</p>
-                </div>
-                <button
-                  onClick={() => handlePurchase(plan.id)}
-                  disabled={buying === plan.id}
-                  className={`mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    buying === plan.id
-                      ? 'bg-emerald-500/5 text-emerald-400/50'
-                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
-                  }`}
-                >
-                  {buying === plan.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      处理中...
-                    </span>
-                  ) : '立即开通'}
-                </button>
+      {/* 充值套餐 */}
+      <div>
+        <h2 className="text-[15px] font-semibold text-white mb-5">充值套餐（余额按量计费 · 即充即用）</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {PACKAGES.map((p) => (
+            <div
+              key={p.id}
+              className={`relative rounded-2xl border p-6 backdrop-blur-xl bg-white/[0.02] transition-all hover:bg-white/[0.04] ${
+                p.popular ? 'border-emerald-500/30' : 'border-white/[0.06]'
+              }`}
+            >
+              {p.popular && (
+                <span className="absolute -top-2.5 right-4 px-3 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
+                  推荐
+                </span>
+              )}
+              <h3 className="text-[16px] font-semibold text-white">{p.label}</h3>
+              <div className="mt-3">
+                <span className="text-[28px] font-bold text-white">¥{p.price}</span>
+                <span className="text-[11px] text-white/30 ml-1">{p.unit}</span>
               </div>
-            ))}
-          </div>
+              <p className="text-[12px] text-white/50 mt-1">{p.desc}</p>
+              <div className="mt-4 space-y-2 text-[12px] text-white/50">
+                <p>{p.tokens.toLocaleString()} Token 到账</p>
+                <p>永久有效 · 按量计费</p>
+              </div>
+              <button
+                onClick={openRecharge}
+                className="mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
+              >
+                去充值
+              </button>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Pricing table */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">

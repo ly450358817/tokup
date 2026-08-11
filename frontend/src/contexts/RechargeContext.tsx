@@ -51,7 +51,6 @@ export function RechargeProvider({ children }: { children: ReactNode }) {
             setTimeout(() => window.location.reload(), 1500);
           }}
           onError={(msg) => {
-            setShow(false);
             showToast(msg || 'Payment failed', 'error');
           }}
         />

@@ -13,9 +13,10 @@ const PACKAGES = [
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
+  onError?: (msg?: string) => void;
 }
 
-export default function PaymentModal({ onClose, onSuccess }: Props) {
+export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
   const { t } = useLang();
   const tr = (key: string): string => {
     const ks = key.split('.');
@@ -77,10 +78,14 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           setTimeout(() => onSuccess(), 3000);
         }
       } else {
-        setError(res.message || 'Payment failed');
+        const msg = res.message || 'Payment failed';
+        setError(msg);
+        onError?.(msg);
       }
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Network error');
+      const msg = e?.response?.data?.detail || 'Network error';
+      setError(msg);
+      onError?.(msg);
     } finally {
       setPaying(false);
     }

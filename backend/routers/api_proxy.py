@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from database import get_db
 from models import User, ApiKey, UsageRecord
@@ -56,6 +57,31 @@ def _ensure_paid(api_key, db):
     if (user.token_balance or 0) <= 0:
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
     return user
+
+
+def _key_usage_tokens(db: Session, api_key_id: str, since) -> float:
+    """API Key 在 since 之后的累计用量（token）"""
+    val = (
+        db.query(func.coalesce(func.sum(UsageRecord.input_tokens + UsageRecord.output_tokens), 0))
+        .filter(UsageRecord.api_key_id == api_key_id, UsageRecord.created_at >= since)
+        .scalar()
+    )
+    return float(val or 0)
+
+
+def _check_key_caps(api_key: ApiKey, db: Session):
+    """强制 API Key 每日/每月额度上限（0 = 不限）"""
+    now = datetime.now(timezone.utc)
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    month_start = day_start.replace(day=1)
+    if api_key.daily_cap and api_key.daily_cap > 0:
+        used = _key_usage_tokens(db, api_key.id, day_start)
+        if used >= api_key.daily_cap:
+            raise HTTPException(status_code=429, detail=f"已达今日额度上限（{api_key.daily_cap:.0f} token），明天再来")
+    if api_key.monthly_cap and api_key.monthly_cap > 0:
+        used = _key_usage_tokens(db, api_key.id, month_start)
+        if used >= api_key.monthly_cap:
+            raise HTTPException(status_code=429, detail=f"已达本月额度上限（{api_key.monthly_cap:.0f} token）")
 
 
 def _capture_key_identity(api_key):
@@ -221,6 +247,7 @@ def _convert_tool_choice(tool_choice):
 async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
     model = resolve_model(req.model)
     _u = _ensure_paid(api_key, db)
+    _check_key_caps(api_key, db)
     _uid, _kid = _capture_key_identity(api_key)
     _initial_balance = _u.token_balance
 
@@ -416,6 +443,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
 
     _u = _ensure_paid(api_key, db)
+    _check_key_caps(api_key, db)
     _need = estimate_request_cost(model, messages)
     if _u.token_balance < _need:
         raise HTTPException(status_code=402, detail=f"余额不足，本次调用至少需要 {_need} token，请先充值")
@@ -627,9 +655,10 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                 await _consumer
             except Exception:
                 pass
+            # 断流/异常也结算：有内容按实际扣费、无内容退回预扣，避免余额泄漏
+            _settle(True)
 
-        # 正常结束：收尾事件 + 计费
-        _settle(True)
+        # 正常结束：收尾事件 + 计费（幂等，_settled 已置位）
 
         if _rs_added:
             yield _sse("response.reasoning_summary_text.done", {

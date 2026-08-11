@@ -55,34 +55,12 @@ export default function SettingsPage() {
         <p className="text-[12px] text-white/30 mt-1">{tr('settings.preferences')}</p>
       </div>
 
-      {/* Auto Top-up */}
-      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-        <h3 className="text-[13px] font-medium text-white/70 mb-4">
-          <span className="flex items-center gap-2"><RefreshCw size={14} className="text-emerald-400" /> {tr("settings.autoTopup")}</span>
+      {/* Auto Top-up（暂未开放） */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 opacity-70">
+        <h3 className="text-[13px] font-medium text-white/70 mb-2">
+          <span className="flex items-center gap-2"><RefreshCw size={14} className="text-white/40" /> {tr("settings.autoTopup")}</span>
         </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[12px] text-white/70">{tr("settings.autoTopupDesc")}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">{tr("settings.autoTopupDesc2")}</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" />
-              <div className="w-9 h-5 bg-white/[0.08] rounded-full peer peer-checked:bg-emerald-500/60 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-            </label>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <p className="text-[10px] text-white/30 mb-1.5">{tr("settings.threshold")} (¥)</p>
-              <input type="number" defaultValue="10" className="glass-input w-full" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[10px] text-white/30 mb-1.5">{tr("settings.rechargeAmount")} (¥)</p>
-              <input type="number" defaultValue="50" className="glass-input w-full" />
-            </div>
-          </div>
-          <button className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all">{tr("settings.saveBtn")}</button>
-        </div>
+        <p className="text-[12px] text-white/40">暂未开放，敬请期待</p>
       </div>
 
       {/* Language Selection */}

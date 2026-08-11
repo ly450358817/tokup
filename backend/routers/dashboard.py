@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-from models import User, Transaction, ApiKey
+from models import User, Transaction, ApiKey, UsageRecord
 from routers.auth import get_current_user
+from services.ai_service import MODEL_ROUTES
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -51,19 +52,15 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
     # 各模型用量占比
     key_count = db.query(ApiKey).filter(ApiKey.user_id == user.id, ApiKey.is_active).count()
 
-    # Stats for dashboard
-    import random as _r
-    today_txns = (
-        db.query(func.count(Transaction.id))
-        .filter(
-            Transaction.user_id == user.id,
-            Transaction.created_at >= today_start,
-        )
-        .scalar()
-        or 0
+    # 今日请求数 / 平均响应（真实 usage_records）
+    today_records = (
+        db.query(UsageRecord)
+        .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= today_start)
+        .all()
     )
-    today_requests_est = today_txns * _r.randint(8, 15) or _r.randint(50, 200)
-    avg_response = round(_r.uniform(180, 650), 1)
+    today_requests_est = len(today_records)
+    _lats = [r.latency_ms for r in today_records if r.latency_ms and r.latency_ms > 0]
+    avg_response = round(sum(_lats) / len(_lats), 1) if _lats else 0
 
     return {
         "balance": user.token_balance,
@@ -77,11 +74,7 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
         "today_requests": today_requests_est,
         "avg_response_ms": avg_response,
         "status": "online",  # 模拟 API 状态
-        "models": {
-            "gpt-4o": True,
-            "claude-3-5-sonnet": True,
-            "deepseek-chat": True,
-        },
+        "models": {m: True for m in MODEL_ROUTES},
     }
 
 

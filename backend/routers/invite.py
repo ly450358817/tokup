@@ -17,7 +17,7 @@ def invite_info(user: User = Depends(get_current_user), db: Session = Depends(ge
     return {
         "invite_code": user.invite_code,
         "invite_count": user.invite_count or 0,
-        "invite_bonus": user.invite_count * 500,  # 每人奖励 500 分
+        "invite_bonus": (user.paid_invite_count or 0) * 500,  # 实际到账奖励（上限 5 人 × 500）
         "invite_link": f"https://tokup.net/register?code={user.invite_code}",
     }
 
