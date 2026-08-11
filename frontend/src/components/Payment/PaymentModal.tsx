@@ -3,12 +3,7 @@ import { paymentApi } from '../../utils/api';
 import { X, CheckCircle, Loader2 } from 'lucide-react';
 import { useLang } from '../../contexts/LanguageContext';
 
-const PACKAGES = [
-  { id: 'trial', label: '体验包', tokens: 2990, price: 29.9, desc: '低门槛尝鲜', popular: false },
-  { id: 'monthly', label: '月卡', tokens: 9900, price: 99.0, originalPrice: 129.0, desc: '新用户特惠', popular: false },
-  { id: 'quarterly', label: '季卡', tokens: 30000, price: 199.0, desc: '日均¥2.2 · 最受欢迎', popular: true },
-  { id: 'yearly', label: '年卡', tokens: 120000, price: 499.0, desc: '日均¥1.4 · 超值长享', popular: false },
-];
+const QUICK_AMOUNTS = [29.9, 50, 100, 200];
 
 interface Props {
   onClose: () => void;
@@ -24,7 +19,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
     for (const k of ks) r = r?.[k];
     return r || key;
   };
-  const [selected, setSelected] = useState('trial');  // 默认体验包 ¥29.9（新手首充引导）
+  const [amount, setAmount] = useState('29.9');  // 默认 ¥29.9（新手首充引导）
   const [paying, setPaying] = useState(false);
   const [payUrl, setPayUrl] = useState('');
   const [orderId, setOrderId] = useState('');
@@ -32,7 +27,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
   const [paid, setPaid] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const pkg = PACKAGES.find(p => p.id === selected)!;
+  const amountNum = Number(amount) || 0;
 
   useEffect(() => {
     return () => {
@@ -67,8 +62,14 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
     setPayUrl('');
     setOrderId('');
     setPaid(false);
+    const amt = Number(amount) || 0;
+    if (amt < 1 || amt > 5000) {
+      setError('请输入 ¥1 ~ ¥5000 之间的金额');
+      setPaying(false);
+      return;
+    }
     try {
-      const res = await paymentApi.recharge(selected, 'wechat');
+      const res = await paymentApi.rechargeAmount(amt, 'wechat');
       if (res.success) {
         setOrderId(res.order_id || '');
         setPayUrl(res.pay_url || '');
@@ -111,35 +112,41 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                 <CheckCircle className="w-10 h-10 text-emerald-400" />
               </div>
               <p className="text-white font-medium text-lg">支付成功</p>
-              <p className="text-white/40 text-sm">¥{pkg.price} · {pkg.tokens.toLocaleString()} tokens</p>
+              <p className="text-white/40 text-sm">¥{amountNum.toFixed(2)} · {Math.round(amountNum * 100).toLocaleString()} tokens</p>
             </div>
           ) : (
             <>
               <div>
-                <p className="text-[11px] text-white/30 tracking-[0.1em] uppercase mb-3">选择套餐</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {PACKAGES.map((p) => (
+                <p className="text-[11px] text-white/30 tracking-[0.1em] uppercase mb-3">充值金额</p>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">¥</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5000"
+                    step="0.1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="输入金额"
+                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white text-sm outline-none focus:border-emerald-500/40 transition-all"
+                  />
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {QUICK_AMOUNTS.map((v) => (
                     <button
-                      key={p.id}
-                      onClick={() => setSelected(p.id)}
-                      className={`relative rounded-xl p-4 text-left transition-all border ${
-                        selected === p.id
-                          ? 'border-emerald-500/40 bg-emerald-500/5'
-                          : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                      key={v}
+                      onClick={() => setAmount(String(v))}
+                      className={`flex-1 py-2 rounded-lg text-xs transition-all border ${
+                        Math.abs(amountNum - v) < 0.01
+                          ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-400'
+                          : 'border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
                       }`}
                     >
-                      {p.popular && (
-                        <span className="absolute -top-2 right-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
-                          POPULAR
-                        </span>
-                      )}
-                      <p className="text-[13px] font-medium text-white">{p.label}</p>
-                      <p className="text-[22px] font-bold text-white mt-1">¥{p.price}</p>
-                      <p className="text-[11px] text-white/30 mt-0.5">{p.tokens.toLocaleString()} tokens</p>
-                      <p className="text-[10px] text-white/20 mt-1">{p.desc}</p>
+                      ¥{v}
                     </button>
                   ))}
                 </div>
+                <p className="text-[10px] text-white/25 mt-2">1 元 = 100 Token · 本次到账 {Math.round(amountNum * 100).toLocaleString()} token</p>
               </div>
 
               <div>
@@ -187,7 +194,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                       处理中...
                     </span>
                   ) : (
-                    `支付 ¥${pkg.price}`
+                    `支付 ¥${amountNum.toFixed(2)}`
                   )}
                 </button>
               )}
@@ -196,10 +203,12 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                 <p className="text-[12px] text-red-400 text-center">{error}</p>
               )}
 
-              <div className="flex justify-center gap-4 text-[10px] text-white/20">
-                <span>费率: ¥0.01 / Token</span>
+              <div className="flex justify-center gap-3 text-[10px] text-white/25">
+                <span>1 元 = 100 Token</span>
                 <span>|</span>
-                <span>已锁定</span>
+                <span>最低 ¥1</span>
+                <span>|</span>
+                <span>单次最高 ¥5000</span>
               </div>
             </>
           )}

@@ -26,6 +26,10 @@ PACKAGES = {
     "yearly":  {"price": 499.0, "tokens": 120000, "label": "年卡"},
 }
 
+# 自由充值限额（元）
+MIN_RECHARGE_CNY = float(os.getenv("MIN_RECHARGE_CNY", "1"))
+MAX_RECHARGE_CNY = float(os.getenv("MAX_RECHARGE_CNY", "5000"))
+
 # ── 支付渠道配置（环境变量）──
 PAY_CHANNEL = os.getenv("PAY_CHANNEL", "mock")  # mock | manual | payjs | custom
 
@@ -61,8 +65,9 @@ BASE_URL = os.getenv("TOKUP_BASE_URL", "http://localhost:3000")
 
 
 class RechargeReq(BaseModel):
-    package: str
+    package: str = ""          # 固定套餐（兼容）
     payment_method: str = "alipay"
+    amount: float = 0          # 自由充值金额（元）
 
 
 @router.get("/qr/{method}")
@@ -112,22 +117,37 @@ def get_packages():
 
 @router.post("/recharge")
 async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    pkg = PACKAGES.get(req.package)
-    if not pkg:
-        return {"success": False, "message": "Invalid package"}
+    # 自由充值：传 amount 按 1 元 = 100 token；否则按固定套餐（兼容）
+    if req.amount and req.amount > 0:
+        price = round(float(req.amount), 2)
+        if price < MIN_RECHARGE_CNY:
+            return {"success": False, "message": f"最低充值 ¥{MIN_RECHARGE_CNY:g}"}
+        if price > MAX_RECHARGE_CNY:
+            return {"success": False, "message": f"单次最高充值 ¥{MAX_RECHARGE_CNY:g}"}
+        tokens = int(price * 100)
+        label = f"自由充值 ¥{price:g}"
+        desc = label
+    else:
+        pkg = PACKAGES.get(req.package)
+        if not pkg:
+            return {"success": False, "message": "请选择充值金额或套餐"}
+        price = pkg["price"]
+        tokens = pkg["tokens"]
+        label = pkg["label"]
+        desc = f"{pkg['label']} ¥{pkg['price']:g}"
 
     order_id = f"TK{uuid.uuid4().hex[:12].upper()}"
 
     # Save order
     txn = Transaction(
         user_id=user.id,
-        amount=pkg["price"],
-        token_amount=pkg["tokens"],
+        amount=price,
+        token_amount=tokens,
         type="recharge",
         status="pending",
         payment_method=req.payment_method,
         payment_id=order_id,
-        description=f"{pkg['label']} ¥{pkg['price']}"
+        description=desc,
     )
     db.add(txn)
     db.commit()
@@ -143,8 +163,8 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
             "success": True,
             "order_id": order_id,
             "pay_url": qr_url,
-            "pay_amount": pkg["price"],
-            "package": pkg,
+            "pay_amount": price,
+            "package": {"label": label, "price": price, "tokens": tokens},
             "channel": "manual",
             "note": "请扫码付款后，在订单页面点击「我已付款」等待确认",
         }
@@ -154,7 +174,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
         try:
             pay_data = {
                 "mchid": PAYJS_MCHID,
-                "total_fee": int(pkg["price"] * 100),  # 单位：分
+                "total_fee": int(price * 100),  # 单位：分
                 "out_trade_no": order_id,
                 "notify_url": notify_url,
             }
@@ -171,8 +191,8 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                         "success": True,
                         "order_id": order_id,
                         "pay_url": result.get("code_url", ""),
-                        "pay_amount": pkg["price"],
-                        "package": pkg,
+                        "pay_amount": price,
+                        "package": {"label": label, "price": price, "tokens": tokens},
                         "channel": "payjs",
                     }
                 else:
@@ -189,15 +209,15 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
     if PAY_CHANNEL == "xorpay" and XORPAY_AID and XORPAY_APP_SECRET:
         try:
             pay_type = "native" if req.payment_method == "wechat" else "alipay"
-            name = f"TokUp {pkg['label']}"
-            price = f"{pkg['price']:.2f}"
+            name = f"TokUp {label}"
+            _pay_price = f"{price:.2f}"
 
-            sign = xorpay_sign(name, pay_type, price, order_id, notify_url, XORPAY_APP_SECRET)
+            sign = xorpay_sign(name, pay_type, _pay_price, order_id, notify_url, XORPAY_APP_SECRET)
 
             pay_data = {
                 "name": name,
                 "pay_type": pay_type,
-                "price": price,
+                "price": _pay_price,
                 "order_id": order_id,
                 "notify_url": notify_url,
                 "sign": sign,
@@ -234,8 +254,8 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                         "success": True,
                         "order_id": order_id,
                         "pay_url": pay_url,
-                        "pay_amount": pkg["price"],
-                        "package": pkg,
+                        "pay_amount": price,
+                        "package": {"label": label, "price": price, "tokens": tokens},
                         "channel": "xorpay",
                         "aoid": aoid,
                     }
@@ -256,7 +276,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
             pay_data = {
                 "app_id": CUSTOM_APP_ID,
                 "order_id": order_id,
-                "amount": pkg["price"],
+                "amount": price,
                 "currency": "CNY",
                 "method": method_map.get(req.payment_method, "alipay"),
                 "notify_url": notify_url,
@@ -282,8 +302,8 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                         "success": True,
                         "order_id": order_id,
                         "pay_url": pay_url,
-                        "pay_amount": pkg["price"],
-                        "package": pkg,
+                        "pay_amount": price,
+                        "package": {"label": label, "price": price, "tokens": tokens},
                         "channel": "custom",
                     }
                 txn.status = "failed"
@@ -306,8 +326,8 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
         "success": True,
         "order_id": order_id,
         "pay_url": mock_url,
-        "pay_amount": pkg["price"],
-        "package": pkg,
+        "pay_amount": price,
+        "package": {"label": label, "price": price, "tokens": tokens},
         "channel": "mock",
         "message": "⚠ Mock mode. Set PAY_CHANNEL and credentials for real payments.",
     }

@@ -40,13 +40,6 @@ export default function PricingPage() {
     return r || key;
   };
 
-  const PACKAGES = [
-    { id: 'trial', label: '体验包', price: 29.9, tokens: 2990, desc: '低门槛尝鲜 · 新用户首选', popular: false, unit: '/次' },
-    { id: 'monthly', label: '月卡', price: 99.0, tokens: 9900, desc: '新用户特惠 · 原价 ¥129', popular: false, unit: '/月' },
-    { id: 'quarterly', label: '季卡', price: 199.0, tokens: 30000, desc: '日均 ¥2.2 · 最受欢迎', popular: true, unit: '/季' },
-    { id: 'yearly', label: '年卡', price: 499.0, tokens: 120000, desc: '日均 ¥1.4 · 超值长享', popular: false, unit: '/年' },
-  ];
-
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [buying, setBuying] = useState<string | null>(null);
@@ -115,57 +108,22 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* 汇率展示 */}
-      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <span className="text-emerald-400 text-[15px] font-bold">¥</span>
+      {/* 自由充值 */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <div className="flex flex-wrap items-center gap-5">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <span className="text-emerald-400 text-[18px] font-bold">¥</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] text-white/70">充值汇率</p>
-            <p className="text-[11px] text-white/40 mt-0.5">1 元 = 100 Token · 余额消耗以实际 API 调用用量为准</p>
+            <p className="text-[15px] font-semibold text-white">自由充值</p>
+            <p className="text-[12px] text-white/40 mt-1">1 元 = 100 Token · 输入任意金额（¥1 ~ ¥5000），余额永久有效、按量计费</p>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-[20px] font-bold text-emerald-400">1:100</p>
-            <p className="text-[10px] text-white/30">元 : Token</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 充值套餐 */}
-      <div>
-        <h2 className="text-[15px] font-semibold text-white mb-5">充值套餐（余额按量计费 · 即充即用）</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {PACKAGES.map((p) => (
-            <div
-              key={p.id}
-              className={`relative rounded-2xl border p-6 backdrop-blur-xl bg-white/[0.02] transition-all hover:bg-white/[0.04] ${
-                p.popular ? 'border-emerald-500/30' : 'border-white/[0.06]'
-              }`}
-            >
-              {p.popular && (
-                <span className="absolute -top-2.5 right-4 px-3 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
-                  推荐
-                </span>
-              )}
-              <h3 className="text-[16px] font-semibold text-white">{p.label}</h3>
-              <div className="mt-3">
-                <span className="text-[28px] font-bold text-white">¥{p.price}</span>
-                <span className="text-[11px] text-white/30 ml-1">{p.unit}</span>
-              </div>
-              <p className="text-[12px] text-white/50 mt-1">{p.desc}</p>
-              <div className="mt-4 space-y-2 text-[12px] text-white/50">
-                <p>{p.tokens.toLocaleString()} Token 到账</p>
-                <p>永久有效 · 按量计费</p>
-              </div>
-              <button
-                onClick={openRecharge}
-                className="mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
-              >
-                去充值
-              </button>
-            </div>
-          ))}
+          <button
+            onClick={openRecharge}
+            className="px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all shrink-0"
+          >
+            去充值
+          </button>
         </div>
       </div>
 

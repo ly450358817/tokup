@@ -21,7 +21,7 @@ api.interceptors.response.use(
       window.location.hash = '#/login';
     }
     if (err.response?.status === 402 && localStorage.getItem('tokup_token')) {
-      // 余额不足：自动弹出充值窗口（体验包），减少流失
+      // 余额不足：自动弹出充值窗口（自由充值），减少流失
       window.dispatchEvent(new CustomEvent('tokup:open-recharge'));
     }
     return Promise.reject(err);
@@ -48,6 +48,8 @@ export const paymentApi = {
   packages: () => api.get('/payment/packages').then((r) => r.data),
   recharge: (pkg: string, method = 'alipay') =>
     api.post('/payment/recharge', { package: pkg, payment_method: method }).then((r) => r.data),
+  rechargeAmount: (amount: number, method = 'alipay') =>
+    api.post('/payment/recharge', { amount, payment_method: method }).then((r) => r.data),
 };
 
 export const keysApi = {
