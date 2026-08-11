@@ -35,6 +35,9 @@ def _rate_limit(key: str, max_attempts: int = 200, window: int = 60):
     _rate_limit_store[key] = timestamps
 
 def _get_client_ip(request):
+    cf = request.headers.get("cf-connecting-ip")
+    if cf:
+        return cf.strip()
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()

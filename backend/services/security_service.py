@@ -321,6 +321,10 @@ class AISecurityMiddleware(BaseHTTPMiddleware):
         return response
 
     def _get_client_ip(self, request: Request) -> str:
+        # Cloudflare 直连时优先用 CF-Connecting-IP（客户端无法伪造），避免伪造 XFF 绕过限流
+        cf = request.headers.get("cf-connecting-ip")
+        if cf:
+            return cf.strip()
         forwarded = request.headers.get("x-forwarded-for")
         if forwarded:
             return forwarded.split(",")[0].strip()
