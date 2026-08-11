@@ -26,6 +26,7 @@ class User(Base):
     paid_invite_count = Column(Integer, default=0)
     auto_topup_threshold = Column(Float, default=0)  # 0 = disabled
     auto_topup_amount = Column(Float, default=50)  # yuan
+    ip_address = Column(String, default="", index=True)  # 注册 IP（用于每 IP 注册限流/审计）
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

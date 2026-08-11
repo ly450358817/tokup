@@ -6,6 +6,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from passlib.context import CryptContext
@@ -130,8 +131,20 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid request")
     if req.form_started_at and time.time() - req.form_started_at < 2:
         raise HTTPException(status_code=400, detail="提交太快，请稍后再试")
-    if TURNSTILE_ENABLED and TURNSTILE_SECRET_KEY and not _verify_turnstile(req.turnstile_token):
-        raise HTTPException(status_code=400, detail="人机验证失败，请重试")
+    # Turnstile：有 token 则必须通过；无 token（脚本被墙/未加载）不硬卡真实用户，
+    # 改为收紧「每 IP 每日注册上限」，防机器人批量刷号
+    if req.turnstile_token:
+        if TURNSTILE_ENABLED and TURNSTILE_SECRET_KEY and not _verify_turnstile(req.turnstile_token):
+            raise HTTPException(status_code=400, detail="人机验证失败，请重试")
+    else:
+        # 数据库级限流：该 IP 24 小时内已注册 ≥10 个则拒绝（跨 worker/重启可靠）
+        client_ip = _get_client_ip(request)
+        _recent = db.query(func.count(User.id)).filter(
+            User.ip_address == client_ip,
+            User.created_at >= datetime.now(timezone.utc) - timedelta(hours=24),
+        ).scalar() or 0
+        if _recent >= 10:
+            raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
     _validate_password(req.password)
     _validate_email(req.email)
     if db.query(User).filter(User.email == req.email).first():
@@ -142,6 +155,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         nickname=req.email.split("@")[0],
         token_balance=100,  # 注册赠送 100 token 体验金（约 ¥1，够试几次调用；量小 + IP 限流防白嫖）
         invite_code=uuid.uuid4().hex[:8].upper(),
+        ip_address=_get_client_ip(request),
     )
     try:
         db.add(user)

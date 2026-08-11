@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [website, setWebsite] = useState('');  // 蜜罐字段（正常用户不会填）
   const [formStartedAt] = useState(() => Date.now());
   const [tsToken, setTsToken] = useState('');
+  const [tsTimeout, setTsTimeout] = useState(false);  // 验证码 7 秒没加载出来 -> 放行（不卡真实用户）
   const turnstileRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,11 +30,12 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        if (!tsToken) {
-          setError('请先完成人机验证');
+        if (!tsToken && !tsTimeout) {
+          setError('正在加载人机验证，请稍候重试');
           setLoading(false);
           return;
         }
+        // tsTimeout=true 时无验证码也放行（后端不会硬卡，另有每 IP 限流兜底）
         await register(email, password, inviteCode, { website, form_started_at: formStartedAt / 1000, turnstile_token: tsToken });
       }
     } catch (err: any) {
@@ -45,18 +47,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (mode !== 'register') return;
-    if ((window as any).turnstile) {
-      (window as any).turnstile.render(turnstileRef.current, {
-        sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
-        callback: (t: string) => setTsToken(t),
-        'expired-callback': () => setTsToken(''),
-      });
-      return;
-    }
-    const s = document.createElement('script');
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-    s.async = true;
-    s.onload = () => {
+    setTsTimeout(false);
+    setTsToken('');
+    const timer = setTimeout(() => {
+      // 7 秒没加载出验证码 -> 放行，绝不卡真实用户
+      if (!tsToken && !(window as any).turnstile) setTsTimeout(true);
+    }, 7000);
+    const doRender = () => {
       if (turnstileRef.current && (window as any).turnstile) {
         (window as any).turnstile.render(turnstileRef.current, {
           sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
@@ -65,8 +62,17 @@ export default function LoginPage() {
         });
       }
     };
+    if ((window as any).turnstile) {
+      doRender();
+      return () => clearTimeout(timer);
+    }
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => doRender();
+    s.onerror = () => setTsTimeout(true);
     document.body.appendChild(s);
-    return () => { /* 组件卸载时保留全局脚本 */ };
+    return () => clearTimeout(timer);
   }, [mode]);
 
   useEffect(() => {
