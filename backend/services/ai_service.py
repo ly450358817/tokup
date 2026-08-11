@@ -28,9 +28,6 @@ MODEL_ROUTES = {
     "openai/gpt-5.6-terra": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
     "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
     # Anthropic (直连)
-    "claude-3-5-sonnet-20241022": ("anthropic", "https://api.anthropic.com/v1/messages"),
-    "claude-3-opus-20240229": ("anthropic", "https://api.anthropic.com/v1/messages"),
-    "claude-3-haiku-20240307": ("anthropic", "https://api.anthropic.com/v1/messages"),
     # DeepSeek → 七牛云（合规上游）
     "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),

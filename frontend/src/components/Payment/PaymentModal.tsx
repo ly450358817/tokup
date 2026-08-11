@@ -177,6 +177,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                   <p className="text-[12px] text-white/40 mt-3">请使用微信扫码支付</p>
                   <p className="text-[10px] text-white/20 mt-1">支付名称: TokUp脉充</p>
                   <p className="text-[11px] text-amber-300/80 mt-2 text-center">二维码有效期 5 分钟，请尽快完成付款</p>
+                  <p className="text-[11px] text-emerald-400/70 mt-1 text-center">支付成功后自动到账（一般几秒），无需人工处理</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
                     <p className="text-[11px] text-white/30">等待支付...</p>

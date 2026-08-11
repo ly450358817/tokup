@@ -61,6 +61,8 @@ class RegisterReq(BaseModel):
     email: str
     password: str
     invite_code: str = ""  # 可选邀请码
+    website: str = ""          # 蜜罐：正常用户不会填
+    form_started_at: float = 0  # 前端记录的表单开始时间（秒）
 
 
 class LoginReq(BaseModel):
@@ -101,6 +103,11 @@ def get_current_user(token: HTTPAuthorizationCredentials = Depends(security), db
 @router.post("/register")
 def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
     _rate_limit("register:" + _get_client_ip(request))
+    # 轻量防刷（零依赖，不影响正常用户）：蜜罐 + 填表耗时检测
+    if req.website:
+        raise HTTPException(status_code=400, detail="Invalid request")
+    if req.form_started_at and time.time() - req.form_started_at < 2:
+        raise HTTPException(status_code=400, detail="提交太快，请稍后再试")
     _validate_password(req.password)
     _validate_email(req.email)
     if db.query(User).filter(User.email == req.email).first():

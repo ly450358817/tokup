@@ -15,7 +15,7 @@ interface AuthContextType {
   isAuth: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, invite_code?: string) => Promise<void>;
+  register: (email: string, password: string, invite_code?: string, extra?: any) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshUser();
   };
 
-  const register = async (email: string, password: string, invite_code?: string) => {
-    const data = await authApi.register(email, password, invite_code);
+  const register = async (email: string, password: string, invite_code?: string, extra?: any) => {
+    const data = await authApi.register(email, password, invite_code, extra);
     localStorage.setItem('tokup_token', data.token);
     await refreshUser();
     localStorage.setItem('tokup_new_registration', 'true');

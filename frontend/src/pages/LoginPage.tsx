@@ -16,6 +16,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [website, setWebsite] = useState('');  // 蜜罐字段（正常用户不会填）
+  const [formStartedAt] = useState(() => Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +27,7 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(email, password, inviteCode);
+        await register(email, password, inviteCode, { website, form_started_at: formStartedAt / 1000 });
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || '网络错误，请稍后重试');

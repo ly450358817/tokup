@@ -2,8 +2,8 @@
 TokUp · 脉充 — 通用支付接口
 支持 码支付(codepay) / PayJS / 自定义聚合支付
 """
-import os, json, hashlib, uuid, hmac
-from datetime import datetime, timezone
+import os, json, hashlib, uuid, hmac, time, asyncio
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -62,6 +62,71 @@ def xorpay_sign(*args):
 
 
 BASE_URL = os.getenv("TOKUP_BASE_URL", "http://localhost:3000")
+
+
+def _xorpay_query_order(order_id: str) -> str:
+    """查询 XorPay 订单状态：not_exist/new/payed/fee_error/success/expire"""
+    try:
+        sign = xorpay_sign(order_id, XORPAY_APP_SECRET)
+        url = f"https://xorpay.com/api/query2/{XORPAY_AID}?order_id={order_id}&sign={sign}"
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(url)
+            return resp.json().get("status", "")
+    except Exception:
+        return ""
+
+
+async def payment_reconcile_loop():
+    """支付对账：每 5 分钟把「XorPay 已支付但回调未到」的订单自动补到账，实现全自动到账（无需联系管理员）。"""
+    from database import SessionLocal
+    from models import Transaction, User
+    from sqlalchemy import update
+    _last_checked = {}  # order_id -> 时间戳（进程内去重，避免高频轮询 XorPay）
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                now = datetime.now(timezone.utc)
+                cutoff = now - timedelta(minutes=3)   # 只处理 3 分钟前的单
+                recent = now - timedelta(hours=24)    # 只处理 24 小时内的单（更早视为放弃）
+                pendings = (
+                    db.query(Transaction)
+                    .filter(
+                        Transaction.type == "recharge",
+                        Transaction.status == "pending",
+                        Transaction.payment_id.like("TK%"),
+                        Transaction.created_at < cutoff,
+                        Transaction.created_at >= recent,
+                    )
+                    .all()
+                )
+                for txn in pendings:
+                    oid = txn.payment_id
+                    last = _last_checked.get(oid, 0)
+                    if time.time() - last < 600:      # 同一单 10 分钟内不重复查
+                        continue
+                    _last_checked[oid] = time.time()
+                    st = _xorpay_query_order(oid)
+                    if st not in ("payed", "success"):
+                        continue
+                    # 原子更新：只有「仍为 pending」才处理，防止回调/多 worker 并发重复到账
+                    res = db.execute(
+                        update(Transaction)
+                        .where(Transaction.id == txn.id, Transaction.status == "pending")
+                        .values(status="completed")
+                    )
+                    if res.rowcount == 1:
+                        user = db.query(User).filter(User.id == txn.user_id).first()
+                        if user:
+                            user.token_balance += txn.token_amount
+                            user.total_recharged += txn.amount
+                            user.updated_at = now
+                db.commit()
+            finally:
+                db.close()
+        except Exception:
+            pass
+        await asyncio.sleep(300)
 
 
 class RechargeReq(BaseModel):

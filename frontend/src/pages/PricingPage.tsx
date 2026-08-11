@@ -117,6 +117,7 @@ export default function PricingPage() {
           <div className="flex-1 min-w-0">
             <p className="text-[15px] font-semibold text-white">自由充值</p>
             <p className="text-[12px] text-white/40 mt-1">1 元 = 100 Token · 输入任意金额（¥1 ~ ¥5000），余额永久有效、按量计费</p>
+            <p className="text-[11px] text-white/30 mt-0.5">参考：一次普通对话 ≈ 1~5 Token ≈ 1~5 分钱</p>
           </div>
           <button
             onClick={openRecharge}

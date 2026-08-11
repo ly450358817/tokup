@@ -4,6 +4,7 @@ TokUp · 脉充 — Backend API
 import os
 import secrets
 from dotenv import load_dotenv
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -75,6 +76,13 @@ app.include_router(admin.router)
 app.include_router(usage.router)
 app.include_router(invite.router)
 app.include_router(subscription.router)
+
+
+@app.on_event("startup")
+async def _startup_tasks():
+    """启动支付对账后台任务：自动补到账（幂等，多 worker 安全）"""
+    from routers.payment import payment_reconcile_loop
+    asyncio.create_task(payment_reconcile_loop())
 
 @app.get("/api/health")
 def health():
