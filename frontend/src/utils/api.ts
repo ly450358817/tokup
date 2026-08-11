@@ -20,6 +20,10 @@ api.interceptors.response.use(
       localStorage.removeItem('tokup_token');
       window.location.hash = '#/login';
     }
+    if (err.response?.status === 402 && localStorage.getItem('tokup_token')) {
+      // 余额不足：自动弹出充值窗口（体验包），减少流失
+      window.dispatchEvent(new CustomEvent('tokup:open-recharge'));
+    }
     return Promise.reject(err);
   }
 );

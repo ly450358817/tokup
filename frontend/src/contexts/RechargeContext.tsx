@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import PaymentModal from '../components/Payment/PaymentModal';
 import { CheckCircle, XCircle } from 'lucide-react';
 
@@ -27,6 +27,12 @@ function Toast({ message, type, visible }: { message: string; type: 'success' | 
 export function RechargeProvider({ children }: { children: ReactNode }) {
   const [show, setShow] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    const open = () => setShow(true);
+    window.addEventListener('tokup:open-recharge', open);
+    return () => window.removeEventListener('tokup:open-recharge', open);
+  }, []);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });

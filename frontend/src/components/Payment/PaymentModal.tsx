@@ -23,7 +23,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
     for (const k of ks) r = r?.[k];
     return r || key;
   };
-  const [selected, setSelected] = useState('quarterly');
+  const [selected, setSelected] = useState('trial');  // 默认体验包 ¥29.9（新手首充引导）
   const [paying, setPaying] = useState(false);
   const [payUrl, setPayUrl] = useState('');
   const [orderId, setOrderId] = useState('');

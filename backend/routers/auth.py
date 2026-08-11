@@ -106,7 +106,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         email=req.email,
         password_hash=pwd.hash(req.password),
         nickname=req.email.split("@")[0],
-        token_balance=0,  # 注册不再赠送 token
+        token_balance=100,  # 注册赠送 100 token 体验金（约 ¥1，够试几次调用；量小 + IP 限流防白嫖）
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
     try:

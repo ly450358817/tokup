@@ -8,7 +8,7 @@ from models import User, ApiKey, UsageRecord
 from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES
 from datetime import datetime, timezone
 from routers.auth import get_current_user
-from services.token_service import reserve_token, settle_reserved, has_completed_recharge
+from services.token_service import reserve_token, settle_reserved
 
 import secrets, time, json, asyncio
 
@@ -47,14 +47,14 @@ def authenticate_api_key(
 
 
 def _ensure_paid(api_key, db):
-    """只有充值成功的用户才能调用 API（管理员可测试）"""
+    """余额 > 0 即可调用 API（注册体验金/邀请奖励均可体验，管理员可测试）；余额用尽后提示充值。"""
     user = db.query(User).filter(User.id == api_key.user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     if user.is_admin:
         return user
-    if not has_completed_recharge(user.id, db):
-        raise HTTPException(status_code=402, detail="请先充值成功后再调用 API")
+    if (user.token_balance or 0) <= 0:
+        raise HTTPException(status_code=402, detail="余额不足，请先充值")
     return user
 
 
@@ -368,9 +368,9 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
 
 @router.post("/test/chat")
 async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """AI 客服 / 调试对话测试（同样要求充值成功）"""
-    if not user.is_admin and not has_completed_recharge(user.id, db):
-        return {"success": False, "detail": "请先充值成功后再测试"}
+    """AI 客服 / 调试对话测试（余额 > 0 即可体验）"""
+    if not user.is_admin and (user.token_balance or 0) <= 0:
+        return {"success": False, "detail": "余额不足，请先充值"}
     _model_t = resolve_model(req.model or "deepseek-v3")
     _need = estimate_request_cost(_model_t, req.messages)
     if user.token_balance < _need:

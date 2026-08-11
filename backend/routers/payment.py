@@ -424,10 +424,13 @@ def user_notify_paid(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """User confirms payment - auto-adds balance"""
+    """管理员确认收款（已禁止用户自助确认，防止未支付直接到账）"""
     from fastapi import HTTPException
     from datetime import datetime, timezone
-    
+
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+
     txn = db.query(Transaction).filter(
         Transaction.payment_id == order_id,
         Transaction.user_id == user.id,
