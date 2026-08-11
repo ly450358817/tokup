@@ -171,11 +171,15 @@ import { useLang } from '../contexts/LanguageContext';
          <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
            <span className="text-[12px] text-emerald-400">{selectedKeys.size} selected</span>
            <button
-             onClick={() => {
-               if (confirm('Delete ' + selectedKeys.size + ' keys?')) {
-                 // TODO: call batch delete API
+             onClick={async () => {
+               if (!confirm('确定删除选中的 ' + selectedKeys.size + ' 个密钥？此操作不可撤销。')) return;
+               try {
+                 await keysApi.batchDelete(Array.from(selectedKeys));
                  setSelectedKeys(new Set());
                  setSelectAll(false);
+                 await loadKeys();
+               } catch (err) {
+                 console.error('Failed to batch delete keys', err);
                }
              }}
              className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] hover:bg-red-500/20 transition-all"

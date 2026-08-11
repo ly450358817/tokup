@@ -288,48 +288,57 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                 "sign": sign,
             }
 
-            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=5.0)) as client:
-                resp = await client.post(
-                    f"{XORPAY_API_URL}/{XORPAY_AID}",
-                    data=pay_data,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                )
-                result = resp.json()
+            # XorPay 偶发网络抖动：下单失败自动重试一次；成功/失败处理放在循环外
+            result = None
+            for _attempt in range(2):
+                try:
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=5.0)) as client:
+                        resp = await client.post(
+                            f"{XORPAY_API_URL}/{XORPAY_AID}",
+                            data=pay_data,
+                            headers={"Content-Type": "application/x-www-form-urlencoded"},
+                        )
+                        result = resp.json() or {}
+                    break
+                except Exception as _e:
+                    if _attempt == 1:
+                        raise
+                    await asyncio.sleep(1)
 
-                if result.get("status") == "ok" and "info" in result:
-                    qr_content = result["info"].get("qr", "")
-                    aoid = result["info"].get("aoid", "")
+            if result.get("status") == "ok" and "info" in result:
+                qr_content = result["info"].get("qr", "")
+                aoid = result["info"].get("aoid", "")
 
-                    # Generate QR as base64 data URL (no file system dependency)
-                    pay_url = ""
-                    if qr_content:
-                        try:
-                            import qrcode as _qr
-                            import io as _io
-                            import base64 as _b64
-                            img = _qr.make(qr_content, box_size=8, border=2)
-                            buf = _io.BytesIO()
-                            img.save(buf, format="PNG")
-                            b64 = _b64.b64encode(buf.getvalue()).decode()
-                            pay_url = f"data:image/png;base64,{b64}"
-                        except:
-                            pay_url = qr_content
+                # Generate QR as base64 data URL (no file system dependency)
+                pay_url = ""
+                if qr_content:
+                    try:
+                        import qrcode as _qr
+                        import io as _io
+                        import base64 as _b64
+                        img = _qr.make(qr_content, box_size=8, border=2)
+                        buf = _io.BytesIO()
+                        img.save(buf, format="PNG")
+                        b64 = _b64.b64encode(buf.getvalue()).decode()
+                        pay_url = f"data:image/png;base64,{b64}"
+                    except:
+                        pay_url = qr_content
 
-                    return {
-                        "success": True,
-                        "order_id": order_id,
-                        "pay_url": pay_url,
-                        "pay_amount": price,
-                        "package": {"label": label, "price": price, "tokens": tokens},
-                        "channel": "xorpay",
-                        "aoid": aoid,
-                    }
-                else:
-                    status = result.get("status", "XorPay error")
-                    msg = result.get("info", "") if isinstance(result.get("info"), str) else ""
-                    txn.status = "failed"
-                    db.commit()
-                    return {"success": False, "message": f"{status}: {msg}"}
+                return {
+                    "success": True,
+                    "order_id": order_id,
+                    "pay_url": pay_url,
+                    "pay_amount": price,
+                    "package": {"label": label, "price": price, "tokens": tokens},
+                    "channel": "xorpay",
+                    "aoid": aoid,
+                }
+            else:
+                status = result.get("status", "XorPay error")
+                msg = result.get("info", "") if isinstance(result.get("info"), str) else ""
+                txn.status = "failed"
+                db.commit()
+                return {"success": False, "message": f"{status}: {msg}"}
         except Exception as e:
             txn.status = "failed"
             db.commit()
