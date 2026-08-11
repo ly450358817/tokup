@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [website, setWebsite] = useState('');  // 蜜罐字段（正常用户不会填）
   const [formStartedAt] = useState(() => Date.now());
+  const [tsToken, setTsToken] = useState('');
+  const turnstileRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,12 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(email, password, inviteCode, { website, form_started_at: formStartedAt / 1000 });
+        if (!tsToken) {
+          setError('请先完成人机验证');
+          setLoading(false);
+          return;
+        }
+        await register(email, password, inviteCode, { website, form_started_at: formStartedAt / 1000, turnstile_token: tsToken });
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || '网络错误，请稍后重试');
@@ -35,6 +42,32 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (mode !== 'register') return;
+    if ((window as any).turnstile) {
+      (window as any).turnstile.render(turnstileRef.current, {
+        sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
+        callback: (t: string) => setTsToken(t),
+        'expired-callback': () => setTsToken(''),
+      });
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => {
+      if (turnstileRef.current && (window as any).turnstile) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
+          callback: (t: string) => setTsToken(t),
+          'expired-callback': () => setTsToken(''),
+        });
+      }
+    };
+    document.body.appendChild(s);
+    return () => { /* 组件卸载时保留全局脚本 */ };
+  }, [mode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -211,6 +244,7 @@ export default function LoginPage() {
                   }}
                   className="glass-input"
                 />
+                <div ref={turnstileRef} className="flex justify-center mt-3" />
               </div>
             )}
 

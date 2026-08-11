@@ -22,6 +22,27 @@ security = HTTPBearer()
 SECRET_KEY = os.getenv("TOKUP_SECRET_KEY", secrets.token_hex(32))
 ALGORITHM = "HS256"
 
+# ── Cloudflare Turnstile 人机验证 ──
+TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
+TURNSTILE_ENABLED = os.getenv("TURNSTILE_ENABLED", "true").lower() == "true"
+
+
+def _verify_turnstile(token: str) -> bool:
+    if not TURNSTILE_SECRET_KEY:
+        return True  # 未配置则跳过
+    if not token:
+        return False
+    try:
+        import httpx
+        r = httpx.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={"secret": TURNSTILE_SECRET_KEY, "response": token},
+            timeout=10,
+        )
+        return r.json().get("success") is True
+    except Exception:
+        return False
+
 # --- Rate limiter (in-memory, per IP) ---
 _rate_limit_store: dict = {}
 
@@ -60,9 +81,10 @@ def _validate_email(email: str):
 class RegisterReq(BaseModel):
     email: str
     password: str
-    invite_code: str = ""  # 可选邀请码
-    website: str = ""          # 蜜罐：正常用户不会填
-    form_started_at: float = 0  # 前端记录的表单开始时间（秒）
+    invite_code: str = ""        # 可选邀请码
+    website: str = ""            # 蜜罐：正常用户不会填
+    form_started_at: float = 0   # 前端记录的表单开始时间（秒）
+    turnstile_token: str = ""    # Cloudflare Turnstile 人机验证令牌
 
 
 class LoginReq(BaseModel):
@@ -108,6 +130,8 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid request")
     if req.form_started_at and time.time() - req.form_started_at < 2:
         raise HTTPException(status_code=400, detail="提交太快，请稍后再试")
+    if TURNSTILE_ENABLED and TURNSTILE_SECRET_KEY and not _verify_turnstile(req.turnstile_token):
+        raise HTTPException(status_code=400, detail="人机验证失败，请重试")
     _validate_password(req.password)
     _validate_email(req.email)
     if db.query(User).filter(User.email == req.email).first():

@@ -97,52 +97,80 @@ def get_headers(provider: str) -> dict:
     return {}
 
 
+# ── DeepSeek 官方兜底（备胎）：七牛失败时自动切换，需配置 DEEPSEEK_API_KEY ──
+DEEPSEEK_OFFICIAL_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL_MAP = {
+    "deepseek-v3": "deepseek-chat",
+    "deepseek/deepseek-v3.2": "deepseek-chat",
+    "deepseek-r1": "deepseek-reasoner",
+    "deepseek/deepseek-v4-pro": "deepseek-chat",
+    "deepseek/deepseek-v4-flash": "deepseek-chat",
+    "deepseek/deepseek-v4-flash-20260731": "deepseek-chat",
+}
+
+
+def _deepseek_fallback(model: str, provider: str):
+    """deepseek 模型在七牛失败时切到官方（返回 (官方模型名, provider, url) 或 None）"""
+    if provider == "qiniu" and model.startswith("deepseek") and os.getenv("DEEPSEEK_API_KEY"):
+        official = DEEPSEEK_MODEL_MAP.get(model)
+        if official:
+            return official, "deepseek", DEEPSEEK_OFFICIAL_URL
+    return None
+
+
 async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None) -> dict:
     """
-    转发请求到上游。
-    遇到 SSL/网络错误自动重试一次，大幅降低偶发断流。
+    转发请求到上游；deepseek 模型在七牛失败时自动切到 DeepSeek 官方兜底。
+    每个上游遇到 SSL/网络/HTTP>=400 错误自动重试。
     """
+    import logging
+    _log = logging.getLogger(__name__)
     route = MODEL_ROUTES.get(model)
     if not route:
         return {"error": f"Unsupported model: {model}"}
 
     provider, url = route
-    headers = get_headers(provider)
-    if not headers.get("Authorization") and not headers.get("x-api-key"):
-        return {"error": f"API key not configured for {provider}"}
+    candidates = [(model, provider, url)]
+    fb = _deepseek_fallback(model, provider)
+    if fb:
+        candidates.append(fb)
 
-    payload = {"model": model, "messages": messages, "stream": False}
-    if max_tokens:
-        payload["max_tokens"] = max_tokens
-    if provider == "anthropic":
-        payload = {"model": model, "messages": messages, "max_tokens": max_tokens or 4096}
+    last_err = ""
+    for m_name, prov, u in candidates:
+        headers = get_headers(prov)
+        if not headers.get("Authorization") and not headers.get("x-api-key"):
+            last_err = f"API key not configured for {prov}"
+            continue
 
-    MAX_RETRIES = 2
+        payload = {"model": m_name, "messages": messages, "stream": False}
+        if max_tokens:
+            payload["max_tokens"] = max_tokens
+        if prov == "anthropic":
+            payload = {"model": m_name, "messages": messages, "max_tokens": max_tokens or 4096}
 
-    for attempt in range(MAX_RETRIES + 1):
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=30.0)) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                result = resp.json()
-                usage = result.get("usage", {})
-                input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
-                output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0))
-                cost = calculate_cost(model, input_tokens, output_tokens)
-                return {
-                    "success": True,
-                    "data": result,
-                    "usage": {"input": input_tokens, "output": output_tokens, "cost": cost},
-                }
-        except Exception as e:
-            import logging
-            _log = logging.getLogger(__name__)
-            if attempt < MAX_RETRIES:
-                _log.warning(
-                    f"上游请求失败（第{attempt+1}次），即将重试: model={model} err={e}"
-                )
-                continue
-            _log.error(f"上游请求最终失败: model={model} payload_keys={list(payload.keys())} err={e}")
-            return {"error": str(e)}
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=30.0)) as client:
+                    resp = await client.post(u, headers=headers, json=payload)
+                    if resp.status_code >= 400:
+                        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
+                    result = resp.json()
+                    usage = result.get("usage", {})
+                    input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
+                    output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0))
+                    cost = calculate_cost(model, input_tokens, output_tokens)
+                    return {
+                        "success": True,
+                        "data": result,
+                        "usage": {"input": input_tokens, "output": output_tokens, "cost": cost},
+                    }
+            except Exception as e:
+                last_err = str(e)
+                if attempt < 2:
+                    _log.warning(f"上游请求失败（{prov} 第{attempt+1}次），即将重试: model={model} err={e}")
+                    continue
+                _log.error(f"上游最终失败: model={model} provider={prov} err={e}")
+    return {"error": last_err or "所有上游均失败"}
 
 
 
@@ -164,75 +192,82 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
         raise ValueError(f"Unsupported model: {model}")
 
     provider, url = route
-    headers = get_headers(provider)
-    if not headers.get("Authorization") and not headers.get("x-api-key"):
-        raise ValueError(f"API key not configured for {provider}")
+    candidates = [(model, provider, url)]
+    fb = _deepseek_fallback(model, provider)
+    if fb:
+        candidates.append(fb)
 
-    payload = {"model": model, "messages": messages, "stream": True}
-    if max_tokens:
-        payload["max_tokens"] = max_tokens
-    if tools:
-        payload["tools"] = tools
-    if tool_choice:
-        payload["tool_choice"] = tool_choice
-    if provider == "anthropic":
-        payload = {"model": model, "messages": messages, "max_tokens": max_tokens or 4096, "stream": True}
+    last_err = None
+    for m_name, prov, u in candidates:
+        headers = get_headers(prov)
+        if not headers.get("Authorization") and not headers.get("x-api-key"):
+            last_err = RuntimeError(f"API key not configured for {prov}")
+            continue
 
-    MAX_RETRIES = 1
+        payload = {"model": m_name, "messages": messages, "stream": True}
+        if max_tokens:
+            payload["max_tokens"] = max_tokens
+        if tools:
+            payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
+        if prov == "anthropic":
+            payload = {"model": m_name, "messages": messages, "max_tokens": max_tokens or 4096, "stream": True}
 
-    for attempt in range(MAX_RETRIES + 1):
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
-                async with client.stream("POST", url, headers=headers, json=payload) as resp:
-                    input_tok = 0
-                    output_tok = 0
-                    full_content = ""
-                    full_reasoning = ""
-                    started = False      # 出现 reasoning 或 content 即开始转发
-                    pending = b""        # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
-                    async for chunk in resp.aiter_bytes():
-                        usage_tag = b""
-                        try:
-                            text = chunk.decode("utf-8")
-                            for line in text.split("\n"):
-                                if line.startswith("data: ") and "[DONE]" not in line:
-                                    data_str = line[6:]
-                                    data = _json.loads(data_str)
-                                    usage = data.get("usage", {})
-                                    if usage:
-                                        input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
-                                        output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
-                                    delta = data.get("choices", [{}])[0].get("delta", {}) or {}
-                                    rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
-                                    dc = delta.get("content") or ""
-                                    has_tc = bool(delta.get("tool_calls"))
-                                    if rc:
-                                        full_reasoning += rc
-                                    if dc:
-                                        full_content += dc
-                                    # 工具调用也是有效输出：立即开始转发，避免被当成空流
-                                    if (rc or dc or has_tc) and not started:
-                                        started = True
-                                    if data.get("choices", [{}])[0].get("finish_reason"):
-                                        cost_val = calculate_cost(model, input_tok, output_tok)
-                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
-                        except Exception:
-                            pass
-                        if started:
-                            if usage_tag:
-                                yield usage_tag
-                            yield chunk
-                        else:
-                            pending += chunk
-                    if not started:
-                        # 整段流既无 reasoning 也无 content -> 视为空流，触发重试（客户端尚未收到任何字节）
-                        raise RuntimeError("上游流式返回为空（无内容）")
-                    if pending:
-                        yield pending
-                    return
-        except Exception as e:
-            logging.getLogger(__name__).warning(
-                f"上游流式请求失败（第{attempt+1}次），即将重试: model={model} err={e}"
-            )
-            if attempt >= MAX_RETRIES:
-                raise RuntimeError(f"流式请求失败（已重试{MAX_RETRIES}次）: {str(e)}")
+        for attempt in range(2):
+            try:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
+                    async with client.stream("POST", u, headers=headers, json=payload) as resp:
+                        input_tok = 0
+                        output_tok = 0
+                        full_content = ""
+                        full_reasoning = ""
+                        started = False      # 出现 reasoning 或 content 即开始转发
+                        pending = b""        # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
+                        async for chunk in resp.aiter_bytes():
+                            usage_tag = b""
+                            try:
+                                text = chunk.decode("utf-8")
+                                for line in text.split("\n"):
+                                    if line.startswith("data: ") and "[DONE]" not in line:
+                                        data_str = line[6:]
+                                        data = _json.loads(data_str)
+                                        usage = data.get("usage", {})
+                                        if usage:
+                                            input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
+                                            output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
+                                        delta = data.get("choices", [{}])[0].get("delta", {}) or {}
+                                        rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
+                                        dc = delta.get("content") or ""
+                                        has_tc = bool(delta.get("tool_calls"))
+                                        if rc:
+                                            full_reasoning += rc
+                                        if dc:
+                                            full_content += dc
+                                        # 工具调用也是有效输出：立即开始转发，避免被当成空流
+                                        if (rc or dc or has_tc) and not started:
+                                            started = True
+                                        if data.get("choices", [{}])[0].get("finish_reason"):
+                                            cost_val = calculate_cost(model, input_tok, output_tok)
+                                            usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
+                            except Exception:
+                                pass
+                            if started:
+                                if usage_tag:
+                                    yield usage_tag
+                                yield chunk
+                            else:
+                                pending += chunk
+                        if not started:
+                            # 整段流既无 reasoning 也无 content -> 视为空流，触发重试（客户端尚未收到任何字节）
+                            raise RuntimeError("上游流式返回为空（无内容）")
+                        if pending:
+                            yield pending
+                        return
+            except Exception as e:
+                last_err = e
+                logging.getLogger(__name__).warning(
+                    f"上游流式请求失败（{prov} 第{attempt+1}次），即将重试: model={model} err={e}"
+                )
+                continue
+    raise RuntimeError(f"流式请求失败（所有上游均失败）: {last_err}")
