@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LanguageContext';
 import { useRecharge } from '../contexts/RechargeContext';
-import { Check } from 'lucide-react';
+import { subscriptionApi } from '../utils/api';
+import { Check, Loader2 } from 'lucide-react';
 
 const MODELS = [
   { name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥20', output: '¥80', badge: 'New', note: '旗舰 Terra' },
@@ -45,12 +47,73 @@ export default function PricingPage() {
     { id: 'yearly', label: '年卡', price: 499.0, tokens: 120000, desc: '日均 ¥1.4 · 超值长享', popular: false, unit: '/年' },
   ];
 
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [buying, setBuying] = useState<string | null>(null);
+  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [subStatus, setSubStatus] = useState<any>(null);
+
+  useEffect(() => {
+    subscriptionApi.plans().then((data: any) => {
+      if (data?.plans) {
+        const arr = Object.entries(data.plans).map(([id, p]: [string, any]) => ({ id, ...p }));
+        setPlans(arr);
+      }
+    }).catch(() => {}).finally(() => setLoadingPlans(false));
+    subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
+  }, []);
+
+  const handlePurchase = async (planId: string) => {
+    setBuying(planId);
+    setMsg({ type: '', text: '' });
+    try {
+      const res = await subscriptionApi.purchase(planId);
+      if (res.success) {
+        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${new Date(res.expires).toLocaleDateString()}，每日 ${(res.daily_limit || 0).toLocaleString()} Token 免费额度` });
+        const d = await subscriptionApi.status();
+        setSubStatus(d);
+      } else {
+        setMsg({ type: 'error', text: res.message || '开通失败' });
+      }
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail || '';
+      if (detail.includes('余额不足')) {
+        setMsg({ type: 'error', text: '余额不足，请先充值' });
+        setTimeout(() => openRecharge(), 500);
+      } else {
+        setMsg({ type: 'error', text: detail || '网络错误' });
+      }
+    } finally {
+      setBuying(null);
+    }
+  };
+
   return (
     <div className="w-full page-container space-y-8">
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('pricing.title')}</h1>
         <p className="text-[12px] text-white/30 mt-1">{tr('pricing.desc')}</p>
       </div>
+
+      {/* Message toast */}
+      {msg.text && (
+        <div className={`px-5 py-3 rounded-xl text-sm ${
+          msg.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+          : 'bg-red-500/10 border border-red-500/20 text-red-400'
+        }`}>
+          {msg.text}
+        </div>
+      )}
+
+      {/* 我的订阅状态 */}
+      {subStatus?.active && (
+        <div className="backdrop-blur-xl bg-emerald-500/[0.06] border border-emerald-500/20 rounded-2xl p-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <p className="text-[13px] text-emerald-300 font-medium">我的订阅：{subStatus.plan_label || subStatus.plan}</p>
+          <p className="text-[12px] text-white/50">有效期至 {new Date(subStatus.expires_at).toLocaleDateString()}</p>
+          <p className="text-[12px] text-white/50">今日配额 {Math.round(subStatus.today_used).toLocaleString()} / {Math.round(subStatus.daily_limit).toLocaleString()} token</p>
+          <p className="text-[12px] text-emerald-400/80">剩余 {Math.round(subStatus.today_remaining).toLocaleString()} token 免费</p>
+        </div>
+      )}
 
       {/* 汇率展示 */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
@@ -104,6 +167,60 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 订阅套餐（每日免费额度） */}
+      <div>
+        <h2 className="text-[15px] font-semibold text-white mb-1">订阅套餐（每日免费额度）</h2>
+        <p className="text-[12px] text-white/30 mb-5">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
+        {loadingPlans ? (
+          <div className="text-[12px] text-white/30">加载中...</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative rounded-2xl border p-6 backdrop-blur-xl bg-white/[0.02] transition-all hover:bg-white/[0.04] ${
+                  plan.id === 'monthly' ? 'border-emerald-500/30' : 'border-white/[0.06]'
+                }`}
+              >
+                {plan.id === 'monthly' && (
+                  <span className="absolute -top-2.5 right-4 px-3 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
+                    推荐
+                  </span>
+                )}
+                <h3 className="text-[16px] font-semibold text-white">{plan.label}</h3>
+                <div className="mt-3">
+                  <span className="text-[28px] font-bold text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
+                  <span className="text-[11px] text-white/30 ml-1">
+                    {plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
+                  </span>
+                </div>
+                <p className="text-[12px] text-white/50 mt-1">{plan.desc}</p>
+                <div className="mt-4 space-y-2 text-[12px] text-white/50">
+                  <p>每日 {plan.daily_limit.toLocaleString()} Token 免费</p>
+                  <p>超额按量计费 · 0 点重置</p>
+                </div>
+                <button
+                  onClick={() => handlePurchase(plan.id)}
+                  disabled={buying === plan.id}
+                  className={`mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    buying === plan.id
+                      ? 'bg-emerald-500/5 text-emerald-400/50'
+                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                  }`}
+                >
+                  {buying === plan.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 size={14} className="animate-spin" />
+                      处理中...
+                    </span>
+                  ) : '用余额开通'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Pricing table */}

@@ -84,3 +84,19 @@ class ApiKey(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="api_keys")
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    plan_id = Column(String, nullable=False)
+    plan_label = Column(String, default="")
+    daily_limit = Column(Float, default=0)
+    is_active = Column(Boolean, default=True)
+    start_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    end_date = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User")
