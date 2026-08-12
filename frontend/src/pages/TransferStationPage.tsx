@@ -37,16 +37,17 @@ const models: ModelPrice[] = [
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: '稳定可靠' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', note: '旗舰模型', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', note: '极致性价比' },
-  { id: 'deepseek/deepseek-v4-flash-20260731', name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥0.5', output: '¥2.5', note: 'Agent增强 · 适配Codex', badge: 'Hot' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', note: '达GPT-5水平', badge: 'New' },
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥1.0', output: '¥2.0', note: '深度推理' },
   { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥3.0', output: '¥9.0', note: '通义旗舰' },
   { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥5.0', output: '¥15.0', note: '通义旗舰' },
   { id: 'qwen/qwen3.8-max', name: 'Qwen3.8 Max', provider: '通义千问', input: '¥6.0', output: '¥45.0', note: '2.4T参数新旗舰', badge: 'New' },
-  { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen3 Coder 480B', provider: '通义千问', input: '¥4.0', output: '¥12.0', note: '代码专用' },
-  { id: 'glm-4.5', name: 'GLM-4.5', provider: '智谱AI', input: '¥3.0', output: '¥9.0', note: '智谱旗舰' },
   { id: 'glm-5.2', name: 'GLM-5.2', provider: '智谱AI', input: '¥4.0', output: '¥35.0', note: '1M上下文旗舰', badge: 'New' },
+  { id: 'qwen3.5-397b-a17b', name: 'Qwen3.5 397B', provider: '通义千问', input: '¥6.0', output: '¥45.0', note: '397B超大杯旗舰', badge: 'New' },
+  { id: 'MiniMax-M1', name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', note: '顶级推理旗舰', badge: 'New' },
+  { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', note: '最新旗舰', badge: 'New' },
+  { id: 'moonshotai/kimi-k2.7-code', name: 'Kimi K2.7 Code', provider: '月之暗面', input: '¥5.0', output: '¥15.0', note: '代码最强', badge: 'New' },
 ];
 
 // Format model ID for display with proper casing

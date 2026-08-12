@@ -27,16 +27,17 @@ const MODELS = [
   { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥0.8/1M input' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥0.3/1M input' },
-  { id: 'deepseek/deepseek-v4-flash-20260731', label: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', cost: '¥0.5/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥0.5/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥1.2/1M input' },
   { id: 'deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek', cost: '¥1.0/1M input' },
   { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '通义千问', cost: '¥5.0/1M input' },
   { id: 'qwen3-max', label: 'Qwen3 Max', provider: '通义千问', cost: '¥3.0/1M input' },
   { id: 'qwen/qwen3.8-max', label: 'Qwen3.8 Max', provider: '通义千问', cost: '¥6.0/1M input' },
-  { id: 'qwen3-coder-480b-a35b-instruct', label: 'Qwen3 Coder 480B', provider: '通义千问', cost: '¥4.0/1M input' },
-  { id: 'glm-4.5', label: 'GLM-4.5', provider: '智谱AI', cost: '¥3.0/1M input' },
   { id: 'glm-5.2', label: 'GLM-5.2', provider: '智谱AI', cost: '¥4.0/1M input' },
+  { id: 'qwen3.5-397b-a17b', label: 'Qwen3.5 397B', provider: '通义千问', cost: '¥6.0/1M input' },
+  { id: 'MiniMax-M1', label: 'MiniMax M1', provider: 'MiniMax', cost: '¥8.0/1M input' },
+  { id: 'minimax/minimax-m3', label: 'MiniMax M3', provider: 'MiniMax', cost: '¥6.0/1M input' },
+  { id: 'moonshotai/kimi-k2.7-code', label: 'Kimi K2.7 Code', provider: '月之暗面', cost: '¥5.0/1M input' },
 ];
 
 const TIME_RANGES = [

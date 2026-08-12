@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v5');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v6');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v5', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v6', Date.now().toString());
     setVisible(false);
   };
 
@@ -33,19 +33,18 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型调整通知</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🔧 <span className="text-white/80 font-medium">模型服务调整通知</span></p>
-          <p>因上游渠道调整，以下模型已暂时下架：</p>
+          <p>🚀 <span className="text-white/80 font-medium">4 款顶级新模型已上线</span></p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-red-400 font-medium">GPT-4o</span></li>
-            <li><span className="text-red-400 font-medium">GPT-4o-mini</span></li>
-            <li><span className="text-red-400 font-medium">GPT-4 Turbo</span></li>
+            <li><span className="text-emerald-400 font-medium">Qwen3.5 397B</span> — 3970亿参数超大杯旗舰</li>
+            <li><span className="text-emerald-400 font-medium">MiniMax M1</span> — 顶级推理旗舰</li>
+            <li><span className="text-emerald-400 font-medium">MiniMax M3</span> — 最新旗舰</li>
+            <li><span className="text-emerald-400 font-medium">Kimi K2.7 Code</span> — 代码能力最强</li>
           </ul>
-          <p className="text-white/40 text-[11px]">建议使用 GPT-5.5 或 GPT-5.6 系列替代，体验更好；上游恢复后会第一时间重新上架。</p>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 deepseek-v3.1 已于 2026-08-04 退役，请迁移至 V4 Flash 或 V3.2。</p>
+            <p className="text-white/40 text-[11px]">🔧 调整：DeepSeek V4 Flash 0731 已合并至最新版 V4 Flash（价格更低）；GLM-4.5、Qwen3 Coder 480B、Doubao 因上游渠道调整已下架。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>

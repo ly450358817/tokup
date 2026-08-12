@@ -30,17 +30,17 @@ MODEL_ROUTES = {
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v4-flash-20260731": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "glm-5.2": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
-    "glm-4.5": ("qiniu", QINIU_ENDPOINT),
-    "doubao-seed-1.6": ("qiniu", QINIU_ENDPOINT),
     "qwen3-max": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
-    "qwen3-coder-480b-a35b-instruct": ("qiniu", QINIU_ENDPOINT),
+    "qwen3.5-397b-a17b": ("qiniu", QINIU_ENDPOINT),
+    "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
+    "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
 }
 
 MODEL_COST = {
@@ -56,17 +56,17 @@ MODEL_COST = {
     "deepseek-r1": (1.0, 2.0),
     "deepseek/deepseek-v4-pro": (0.8, 1.6),
     "deepseek/deepseek-v4-flash": (0.3, 0.6),
-    "deepseek/deepseek-v4-flash-20260731": (0.5, 2.5),
     "deepseek/deepseek-v3.2": (1.2, 3.8),
     "glm-5.2": (4.0, 35.0),
     "qwen/qwen3.8-max": (6.0, 45.0),
     "anthropic/claude-fable-5": (25.0, 100.0),
-    "glm-4.5": (3.0, 9.0),
-    "doubao-seed-1.6": (1.5, 4.5),
     "qwen3-max": (3.0, 9.0),
     "moonshotai/kimi-k2.6": (4.0, 12.0),
     "moonshotai/kimi-k3": (5.0, 15.0),
-    "qwen3-coder-480b-a35b-instruct": (4.0, 12.0),
+    "qwen3.5-397b-a17b": (6.0, 45.0),
+    "MiniMax-M1": (8.0, 32.0),
+    "minimax/minimax-m3": (6.0, 24.0),
+    "moonshotai/kimi-k2.7-code": (5.0, 15.0),
 }
 
 
