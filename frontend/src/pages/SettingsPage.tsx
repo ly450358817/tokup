@@ -148,11 +148,15 @@ export default function SettingsPage() {
         <h3 className="text-[13px] font-medium text-white/70 mb-4">
           <span className="flex items-center gap-2"><Users size={14} /> 官方交流群</span>
         </h3>
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.02]">
-          <Users size={14} className="text-emerald-400 mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="text-[12px] text-white/70 mb-0.5">QQ 群号：<span className="text-white font-medium">1102529130</span></p>
-            <p className="text-[11px] text-white/40 mb-3">遇到问题、模型建议、获取最新公告，欢迎进群交流（群内仅官方渠道，谨防假冒）。</p>
+        <div className="flex flex-col items-center gap-4">
+          <img
+            src="/group-qrcode.jpg"
+            alt="TokUp 官方群二维码"
+            className="w-[220px] rounded-xl border border-white/[0.08]"
+          />
+          <div className="text-center">
+            <p className="text-[12px] text-white/70 mb-1">QQ 群号：<span className="text-white font-medium">1102529130</span></p>
+            <p className="text-[11px] text-white/40 mb-3">扫码或搜索群号加入 · 遇到问题、模型建议、最新公告都在这里（群内仅官方渠道，谨防假冒）</p>
             <button
               onClick={copyGroupId}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all border ${
