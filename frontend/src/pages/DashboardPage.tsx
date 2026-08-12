@@ -22,8 +22,6 @@ const MODELS = [
   { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '¥30/1M input' },
   { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', cost: '¥35/1M input' },
   { id: 'openai/gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', cost: '¥20/1M input' },
-  { id: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', cost: '¥20/1M input' },
-  { id: 'gpt-4o-mini', label: 'GPT-4o-mini', provider: 'OpenAI', cost: '¥1.5/1M input' },
   { id: 'anthropic/claude-fable-5', label: 'Claude Fable 5', provider: 'Anthropic', cost: '¥25/1M input' },
   { id: 'moonshotai/kimi-k3', label: 'Kimi K3', provider: '月之暗面', cost: '¥5.0/1M input' },
   { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },

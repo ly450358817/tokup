@@ -32,8 +32,6 @@ const models: ModelPrice[] = [
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥30', output: '¥90', note: '最新旗舰', badge: 'Hot' },
   { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥35', output: '¥100', note: '最新旗舰 Luna', badge: 'New' },
   { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥20', output: '¥80', note: '高效推理 Sol', badge: 'New' },
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', input: '¥20', output: '¥60', note: '通用主力' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', input: '¥1.5', output: '¥4.5', note: '轻量高效' },
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', note: '最新 Claude', badge: 'New' },
   { id: 'moonshotai/kimi-k3', name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', note: '最新旗舰 · 中国开源', badge: 'New' },
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: '稳定可靠' },

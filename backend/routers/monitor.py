@@ -15,9 +15,6 @@ from routers.auth import get_current_user
 router = APIRouter(prefix="/api/monitor", tags=["monitor"])
 
 MODEL_LABELS = {
-    "gpt-4o": "GPT-4o",
-    "gpt-4o-mini": "GPT-4o Mini",
-    "gpt-4-turbo": "GPT-4 Turbo",
     "gpt-5.5": "GPT-5.5",
     "openai/gpt-5.6-luna": "GPT-5.6 Luna",
     "openai/gpt-5.6-sol": "GPT-5.6 Sol",

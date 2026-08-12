@@ -19,9 +19,6 @@ QINIU_ENDPOINT = "https://api.qnaigc.com/v1/chat/completions"
 
 MODEL_ROUTES = {
     # OpenAI (七牛云)
-    "gpt-4o": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "gpt-4o-mini": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "gpt-4-turbo": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
     "gpt-5.5": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
     "openai/gpt-5.6-luna": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
     "openai/gpt-5.6-sol": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
@@ -47,13 +44,10 @@ MODEL_ROUTES = {
 }
 
 MODEL_COST = {
-    "gpt-4o": (20.0, 60.0),
-    "gpt-4o-mini": (1.5, 4.5),
     "openai/gpt-5.6-luna": (35.0, 100.0),
     "openai/gpt-5.6-sol": (20.0, 80.0),
     "openai/gpt-5.6-terra": (20.0, 80.0),
     "qwen/qwen3.7-max": (5.0, 15.0),
-    "gpt-4-turbo": (30.0, 60.0),
     "gpt-5.5": (30.0, 60.0),
     "claude-3-5-sonnet-20241022": (15.0, 75.0),
     "claude-3-opus-20240229": (60.0, 180.0),

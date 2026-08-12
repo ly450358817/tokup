@@ -246,6 +246,8 @@ def _convert_tool_choice(tool_choice):
 @router.post("/chat/completions")
 async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
     model = resolve_model(req.model)
+    if model not in MODEL_ROUTES:
+        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
     _uid, _kid = _capture_key_identity(api_key)
@@ -420,6 +422,8 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
         return {"success": False, "detail": "余额不足，请先充值"}
     from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _model_t = resolve_model(req.model or "deepseek-v3")
+    if _model_t not in MODEL_ROUTES:
+        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
     _sub = get_active_subscription(user.id, db)
     _day_start = beijing_day_start()
     _eligible = model_quota_eligible(_model_t)

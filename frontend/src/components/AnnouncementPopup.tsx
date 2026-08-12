@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v4');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v5');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v4', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v5', Date.now().toString());
     setVisible(false);
   };
 
@@ -33,18 +33,17 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型更新公告</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型调整通知</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🚀 <span className="text-white/80 font-medium">全新模型已上线</span></p>
-          <p>即日起，TokUp 新增以下热门模型：</p>
+          <p>🔧 <span className="text-white/80 font-medium">模型服务调整通知</span></p>
+          <p>因上游渠道调整，以下模型已暂时下架：</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">DeepSeek V4 Flash 0731</span> — Agent 大幅增强，原生适配 Codex</li>
-            <li><span className="text-emerald-400 font-medium">DeepSeek V3.2</span> — 推理能力达 GPT-5 水平</li>
-            <li><span className="text-emerald-400 font-medium">Qwen3.8 Max</span> — 2.4 万亿参数新旗舰</li>
-            <li><span className="text-emerald-400 font-medium">GLM-5.2</span> — 原生 1M 上下文窗口</li>
+            <li><span className="text-red-400 font-medium">GPT-4o</span></li>
+            <li><span className="text-red-400 font-medium">GPT-4o-mini</span></li>
+            <li><span className="text-red-400 font-medium">GPT-4 Turbo</span></li>
           </ul>
-          <p className="text-white/30 text-[11px]">以上模型均通过合规上游接入，计费透明，余额通用。</p>
+          <p className="text-white/40 text-[11px]">建议使用 GPT-5.5 或 GPT-5.6 系列替代，体验更好；上游恢复后会第一时间重新上架。</p>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
             <p className="text-white/40 text-[11px]">📢 deepseek-v3.1 已于 2026-08-04 退役，请迁移至 V4 Flash 或 V3.2。</p>
           </div>
