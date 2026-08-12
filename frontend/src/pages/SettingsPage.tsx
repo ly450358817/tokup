@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LanguageContext';
-import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, RefreshCw } from 'lucide-react';
+import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, RefreshCw, Users } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -9,6 +9,7 @@ export default function SettingsPage() {
   const [chatMessages, setChatMessages] = useState<{role:string;content:string}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [copiedGroup, setCopiedGroup] = useState(false);
 
   const handleChatSend = async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -36,6 +37,15 @@ export default function SettingsPage() {
       setChatMessages(prev => [...prev, {role:'assistant', content: errMsg}]);
     }
     setChatLoading(false);
+  };
+  const copyGroupId = async () => {
+    try {
+      await navigator.clipboard.writeText('1102529130');
+      setCopiedGroup(true);
+      setTimeout(() => setCopiedGroup(false), 2000);
+    } catch (e) {
+      window.prompt('请手动复制群号：', '1102529130');
+    }
   };
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -130,6 +140,30 @@ export default function SettingsPage() {
               <p className="text-[11px] text-white/40">{tr('settings.aiQuestionDesc')}</p>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* 官方交流群（仅设置页，用户指定位置） */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-4">
+          <span className="flex items-center gap-2"><Users size={14} /> 官方交流群</span>
+        </h3>
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.02]">
+          <Users size={14} className="text-emerald-400 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="text-[12px] text-white/70 mb-0.5">QQ 群号：<span className="text-white font-medium">1102529130</span></p>
+            <p className="text-[11px] text-white/40 mb-3">遇到问题、模型建议、获取最新公告，欢迎进群交流（群内仅官方渠道，谨防假冒）。</p>
+            <button
+              onClick={copyGroupId}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all border ${
+                copiedGroup
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                  : 'border-white/[0.08] text-white/60 hover:text-white/80 hover:bg-white/[0.04]'
+              }`}
+            >
+              {copiedGroup ? '已复制 ✓' : '复制群号'}
+            </button>
+          </div>
         </div>
       </div>
 
