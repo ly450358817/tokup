@@ -14,10 +14,17 @@ from models import Subscription, UsageRecord
 # 免费配额适用的最高输出单价（¥/1M output token），可用环境变量覆盖
 FREE_QUOTA_MAX_OUTPUT_COST = float(os.getenv("FREE_QUOTA_MAX_OUTPUT_COST", "15"))
 
+# 不参与订阅免费配额（旗舰/高价模型一律走余额），可用环境变量 FREE_QUOTA_EXCLUDE_MODELS 逗号分隔覆盖
+FREE_QUOTA_EXCLUDE_MODELS = set(
+    m.strip() for m in os.getenv("FREE_QUOTA_EXCLUDE_MODELS", "").split(",") if m.strip()
+) or {"deepseek/deepseek-v4-pro"}
+
 
 def model_quota_eligible(model: str) -> bool:
     """该模型是否可用订阅免费配额：MODEL_COST 有定价且输出价 ≤ 阈值"""
     from services.ai_service import MODEL_COST
+    if model in FREE_QUOTA_EXCLUDE_MODELS:
+        return False
     costs = MODEL_COST.get(model)
     if not costs:
         return False

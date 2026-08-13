@@ -58,7 +58,8 @@ MODEL_COST = {
     "claude-3-haiku-20240307": (1.5, 6.0),
     "deepseek-v3": (0.5, 1.0),
     "deepseek-r1": (1.0, 2.0),
-    "deepseek/deepseek-v4-pro": (0.8, 1.6),
+    # 2026-08-13 V4 Pro 正式版官方价 ¥3/¥6 per 1M（缓存未命中）；按 ≥1.3x 毛利定价防亏
+    "deepseek/deepseek-v4-pro": (4.0, 8.0),
     "deepseek/deepseek-v4-flash": (0.3, 0.6),
     "deepseek/deepseek-v3.2": (1.2, 3.8),
     "glm-5.2": (4.0, 35.0),

@@ -35,7 +35,7 @@ const models: ModelPrice[] = [
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', note: '最新 Claude', badge: 'New' },
   { id: 'moonshotai/kimi-k3', name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', note: '最新旗舰 · 中国开源', badge: 'New' },
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', note: '稳定可靠' },
-  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', note: '旗舰模型', badge: 'Hot' },
+  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥4.0', output: '¥8.0', note: '旗舰模型', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', note: '极致性价比' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', note: '通用模型' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', note: '达GPT-5水平', badge: 'New' },

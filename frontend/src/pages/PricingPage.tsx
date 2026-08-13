@@ -12,7 +12,7 @@ const MODELS = [
   { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥25', output: '¥100', badge: 'New', note: '最新 Claude' },
   { name: 'Kimi K3', provider: '月之暗面', input: '¥5.0', output: '¥15.0', badge: 'Hot', note: '中国开源 · 最新旗舰' },
   { name: 'Kimi K2.6', provider: '月之暗面', input: '¥4.0', output: '¥12.0', badge: '', note: '稳定可靠' },
-  { name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥0.8', output: '¥1.6', badge: 'Hot', note: '旗舰模型' },
+  { name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥4.0', output: '¥8.0', badge: 'Hot', note: '旗舰模型' },
   { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥0.3', output: '¥0.6', badge: '', note: '极致性价比' },
   { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥0.5', output: '¥1.0', badge: '', note: '通用模型' },
   { name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥1.2', output: '¥3.8', badge: 'New', note: '达GPT-5水平' },

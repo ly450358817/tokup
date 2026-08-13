@@ -25,7 +25,7 @@ const MODELS = [
   { id: 'anthropic/claude-fable-5', label: 'Claude Fable 5', provider: 'Anthropic', cost: '¥25/1M input' },
   { id: 'moonshotai/kimi-k3', label: 'Kimi K3', provider: '月之暗面', cost: '¥5.0/1M input' },
   { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥4.0/1M input' },
-  { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥0.8/1M input' },
+  { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥0.3/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥0.5/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥1.2/1M input' },
