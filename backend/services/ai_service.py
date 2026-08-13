@@ -102,7 +102,9 @@ DEEPSEEK_MODEL_MAP = {
     "deepseek-v3": "deepseek-chat",
     "deepseek/deepseek-v3.2": "deepseek-chat",
     "deepseek-r1": "deepseek-reasoner",
-    "deepseek/deepseek-v4-pro": "deepseek-chat",
+    # 2026-08-13 V4 Pro 正式转正：官方 API 已有 deepseek-v4-pro 独立模型；
+    # deepseek-chat 现在解析为 v4-flash，Pro 兜底必须走 deepseek-v4-pro，否则付费用户拿到 Flash
+    "deepseek/deepseek-v4-pro": "deepseek-v4-pro",
     "deepseek/deepseek-v4-flash": "deepseek-chat",
     "deepseek/deepseek-v4-flash-20260731": "deepseek-chat",
 }

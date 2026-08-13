@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v6');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v7');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v6', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v7', Date.now().toString());
     setVisible(false);
   };
 
@@ -36,15 +36,14 @@ export default function AnnouncementPopup() {
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🚀 <span className="text-white/80 font-medium">4 款顶级新模型已上线</span></p>
+          <p>🚀 <span className="text-white/80 font-medium">DeepSeek V4 Pro 正式版已上线</span></p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">Qwen3.5 397B</span> — 3970亿参数超大杯旗舰</li>
-            <li><span className="text-emerald-400 font-medium">MiniMax M1</span> — 顶级推理旗舰</li>
-            <li><span className="text-emerald-400 font-medium">MiniMax M3</span> — 最新旗舰</li>
-            <li><span className="text-emerald-400 font-medium">Kimi K2.7 Code</span> — 代码能力最强</li>
+            <li><span className="text-emerald-400 font-medium">V4 Pro 正式版</span> — 8月13日正式转正，性能接近 Claude Fable 5</li>
+            <li><span className="text-emerald-400 font-medium">1M 超大上下文</span> — 单次可处理海量文本</li>
+            <li><span className="text-emerald-400 font-medium">384K 超长输出</span> — 思考模式默认开启，Agent 能力大幅增强</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">🔧 调整：DeepSeek V4 Flash 0731 已合并至最新版 V4 Flash（价格更低）；GLM-4.5、Qwen3 Coder 480B、Doubao 因上游渠道调整已下架。</p>
+            <p className="text-white/40 text-[11px]">🔧 调用模型名不变（deepseek-v4-pro），无需任何改动即可使用最新正式版。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
