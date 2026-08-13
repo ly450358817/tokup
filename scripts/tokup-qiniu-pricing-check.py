@@ -32,6 +32,15 @@ QINIU_COST_URL = "https://api.qnaigc.com/v3/stat/usage/apikey/cost"
 QINIU_MODELS_PAGE = "https://www.qiniu.com/ai/models"
 MIN_RELIABLE_TOKENS = 20_000  # 账单费用保留2位小数，样本低于此值反推单价不可靠
 
+# 七牛账单 model_id → tokup key 的显式别名（upstream 映射之外的写法差异）
+BILLING_ALIASES = {
+    "deepseek/deepseek-v3.2-exp": "deepseek/deepseek-v3.2",
+    "deepseek/deepseek-v3.2-exp-thinking": "deepseek/deepseek-v3.2",
+    "deepseek/deepseek-v3.2-251201": "deepseek/deepseek-v3.2",
+    "deepseek/deepseek-v4-flash-202605": "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-flash-20260731": "deepseek/deepseek-v4-flash",
+}
+
 
 def load_env():
     env = {}
@@ -181,6 +190,8 @@ def main():
     rev_upstream = {v: k for k, v in upstream.items()}
 
     def to_tokup(mid):
+        if mid in BILLING_ALIASES:
+            return BILLING_ALIASES[mid]
         if mid in rev_upstream:
             return rev_upstream[mid]
         if mid in costs:
@@ -193,9 +204,12 @@ def main():
 
     def plaza_get(up_id, tk):
         """广场 model_id → 价格。七牛广场用 z-ai/glm-5.2 等带前缀 ID，而 tokup 可能发短名。"""
-        for cand in (up_id, tk,
-                     "z-ai/" + tk, "deepseek/" + tk, "moonshotai/" + tk,
-                     "qwen/" + tk, "openai/" + tk, "anthropic/" + tk):
+        cands = [up_id, tk,
+                 "z-ai/" + tk, "deepseek/" + tk, "moonshotai/" + tk,
+                 "qwen/" + tk, "openai/" + tk, "anthropic/" + tk]
+        # 账单别名反向：如 v3.2 → deepseek/deepseek-v3.2-exp / -251201
+        cands += [mid for mid, t in BILLING_ALIASES.items() if t == tk]
+        for cand in cands:
             if cand in plaza:
                 return plaza[cand]
         return None
@@ -273,6 +287,14 @@ def main():
                 (ic > expected[0] * 1.05 or oc > expected[1] * 1.05):
             detail[-1]["issue"] = (detail[-1]["issue"] or []) + \
                 [f"注:账单实测成本({ic:.2f},{oc:.2f})高于当前上游广场价{expected}（可能含切换前用量或上游调价，下期观察）"]
+
+    # 1.5) 智谱免费模型显式标注
+    for tk, sell in costs.items():
+        if tk in merged or tk in {d["model"] for d in detail}:
+            continue
+        if sell and isinstance(sell, (tuple, list)) and len(sell) == 2 and sell[0] == 0 and sell[1] == 0:
+            detail.append({"model": tk, "billed_as": [], "sell": list(sell), "cost": [0.0, 0.0],
+                           "source": "免费(智谱直连)", "issue": [], "has_billing": False})
 
     # 2) 无账单用量的在售模型：用当前上游广场价兜底
     for tk in sorted(costs):
