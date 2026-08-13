@@ -25,6 +25,7 @@ const MODELS = [
   { name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', badge: 'New', note: '顶级推理旗舰' },
   { name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', badge: 'New', note: '最新旗舰' },
   { name: 'Kimi K2.7 Code', provider: '月之暗面', input: '¥5.0', output: '¥15.0', badge: 'New', note: '代码最强' },
+  { name: 'GLM-4.6V Flash', provider: '智谱AI', input: '免费', output: '免费', badge: 'New', note: '免费视觉模型 · 看图/视频' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];

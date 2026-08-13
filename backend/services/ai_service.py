@@ -12,10 +12,12 @@ def get_api_keys() -> dict:
         "anthropic": os.getenv("ANTHROPIC_API_KEY", ""),
         "deepseek": os.getenv("DEEPSEEK_API_KEY", ""),
         "qiniu": os.getenv("QINIU_API_KEY", ""),
+        "zhipu": os.getenv("ZHIPU_API_KEY", ""),
     }
 
 
 QINIU_ENDPOINT = "https://api.qnaigc.com/v1/chat/completions"
+ZHIPU_ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
 MODEL_ROUTES = {
     # OpenAI (七牛云)
@@ -41,6 +43,8 @@ MODEL_ROUTES = {
     "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
     "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
+    # 智谱（直连，免费视觉模型）
+    "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
 
 MODEL_COST = {
@@ -67,6 +71,7 @@ MODEL_COST = {
     "MiniMax-M1": (8.0, 32.0),
     "minimax/minimax-m3": (6.0, 24.0),
     "moonshotai/kimi-k2.7-code": (5.0, 15.0),
+    "glm-4.6v-flash": (0.0, 0.0),  # 智谱免费
 }
 
 
@@ -82,7 +87,7 @@ def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 def get_headers(provider: str) -> dict:
     keys = get_api_keys()
     key = keys.get(provider, "")
-    if provider in ("openai", "qiniu"):
+    if provider in ("openai", "qiniu", "zhipu"):
         return {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     elif provider == "anthropic":
         return {"x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"}

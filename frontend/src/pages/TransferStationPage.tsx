@@ -48,6 +48,7 @@ const models: ModelPrice[] = [
   { id: 'MiniMax-M1', name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', note: '顶级推理旗舰', badge: 'New' },
   { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', note: '最新旗舰', badge: 'New' },
   { id: 'moonshotai/kimi-k2.7-code', name: 'Kimi K2.7 Code', provider: '月之暗面', input: '¥5.0', output: '¥15.0', note: '代码最强', badge: 'New' },
+  { id: 'glm-4.6v-flash', name: 'GLM-4.6V Flash', provider: '智谱AI', input: '免费', output: '免费', note: '免费视觉模型 · 看图/视频', badge: 'New' },
 ];
 
 // Format model ID for display with proper casing

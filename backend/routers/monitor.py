@@ -28,6 +28,7 @@ MODEL_LABELS = {
     "qwen/qwen3.7-max": "Qwen3.7 Max",
     "qwen/qwen3.8-max": "Qwen3.8 Max",
     "glm-5.2": "GLM-5.2",
+    "glm-4.6v-flash": "GLM-4.6V Flash",
     "moonshotai/kimi-k2.6": "Kimi K2.6",
     "moonshotai/kimi-k3": "Kimi K3",
     "qwen3.5-397b-a17b": "Qwen3.5 397B",
