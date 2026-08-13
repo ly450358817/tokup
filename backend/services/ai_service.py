@@ -47,32 +47,40 @@ MODEL_ROUTES = {
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
 
+# 2026-08-13 七牛同一模型有两个渠道：标准版按 ¥12/¥24 计费（实测账单），
+# 原厂版 deepseek/deepseek-v4-pro-202606 按 DeepSeek 官方价 ¥3/¥6 计费。
+# 为不亏本，V4 Pro 上游固定走原厂版（效果一致，仅价格不同）。
+UPSTREAM_MODEL_NAME = {
+    "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-202606",
+}
+
 MODEL_COST = {
-    "openai/gpt-5.6-luna": (35.0, 100.0),
-    "openai/gpt-5.6-sol": (20.0, 80.0),
-    "openai/gpt-5.6-terra": (20.0, 80.0),
-    "qwen/qwen3.7-max": (5.0, 15.0),
-    "gpt-5.5": (30.0, 60.0),
+    # 2026-08-13 定价修复：按七牛官方账单/模型广场实测成本 × ≥1.3 定价，杜绝倒挂
+    "openai/gpt-5.6-luna": (10.0, 55.0),        # 上游实测 ~¥7/¥42（7月账单；8/30 官方降价七牛未必跟进，按高价成本定价）
+    "openai/gpt-5.6-sol": (45.0, 270.0),        # 上游实测 ¥34.3/¥207
+    "openai/gpt-5.6-terra": (18.0, 110.0),      # 上游实测 ¥13.8/¥83
+    "qwen/qwen3.7-max": (16.0, 48.0),           # 上游 ¥12/¥36
+    "gpt-5.5": (45.0, 270.0),                   # 上游实测 ¥34.5/¥207
     "claude-3-5-sonnet-20241022": (15.0, 75.0),
     "claude-3-opus-20240229": (60.0, 180.0),
     "claude-3-haiku-20240307": (1.5, 6.0),
-    "deepseek-v3": (0.5, 1.0),
-    "deepseek-r1": (1.0, 2.0),
-    # 2026-08-13 V4 Pro 正式版官方价 ¥3/¥6 per 1M（缓存未命中）；按 ≥1.3x 毛利定价防亏
+    "deepseek-v3": (3.0, 11.0),                 # 上游 ¥2/¥8
+    "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
+    # V4 Pro 走七牛原厂版 -202606：上游 ¥3/¥6（若走标准版是 ¥12/¥24，必亏）
     "deepseek/deepseek-v4-pro": (4.0, 8.0),
-    "deepseek/deepseek-v4-flash": (0.3, 0.6),
-    "deepseek/deepseek-v3.2": (1.2, 3.8),
-    "glm-5.2": (4.0, 35.0),
-    "qwen/qwen3.8-max": (6.0, 45.0),
-    "anthropic/claude-fable-5": (25.0, 100.0),
-    "qwen3-max": (3.0, 9.0),
-    "moonshotai/kimi-k2.6": (4.0, 12.0),
-    "moonshotai/kimi-k3": (5.0, 15.0),
-    "qwen3.5-397b-a17b": (6.0, 45.0),
-    "MiniMax-M1": (8.0, 32.0),
-    "minimax/minimax-m3": (6.0, 24.0),
-    "moonshotai/kimi-k2.7-code": (5.0, 15.0),
-    "glm-4.6v-flash": (0.0, 0.0),  # 智谱免费
+    "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游 ¥1/¥2（8M+ token 实测无峰谷加价）
+    "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
+    "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
+    "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
+    "anthropic/claude-fable-5": (90.0, 450.0),  # 上游实测 ¥69/¥345
+    "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
+    "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
+    "moonshotai/kimi-k3": (26.0, 130.0),        # 上游 ¥20/¥100
+    "qwen3.5-397b-a17b": (6.0, 45.0),           # 上游 ¥1.2-3/¥7.2-18，盈利保留
+    "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
+    "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
+    "moonshotai/kimi-k2.7-code": (9.0, 36.0),   # 上游 ¥6.5/¥27
+    "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
 }
 
 
@@ -132,7 +140,7 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
         return {"error": f"Unsupported model: {model}"}
 
     provider, url = route
-    candidates = [(model, provider, url)]
+    candidates = [(UPSTREAM_MODEL_NAME.get(model, model), provider, url)]
     fb = _deepseek_fallback(model, provider)
     if fb:
         candidates.append(fb)
@@ -194,7 +202,7 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
         raise ValueError(f"Unsupported model: {model}")
 
     provider, url = route
-    candidates = [(model, provider, url)]
+    candidates = [(UPSTREAM_MODEL_NAME.get(model, model), provider, url)]
     fb = _deepseek_fallback(model, provider)
     if fb:
         candidates.append(fb)
