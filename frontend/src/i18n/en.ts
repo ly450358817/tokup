@@ -244,7 +244,7 @@ export const en = {
     howItWorks: "How it works",
     howItWorksDesc: "Recharge → Generate API Key → Call any model",
     supportedModels: "Supported Models",
-    supportedModelsDesc: "GPT-5.6 Terra, GPT-5.5, GPT-5.6 Luna, GPT-5.6 Sol, GPT-4o (Not Available), GPT-4o-mini (Not Available), Claude Fable 5, Kimi K3, Kimi K2.6, DeepSeek V4 Pro, V4 Flash, V3 (Offline), DeepSeek R1 (Temp Unavailable), Qwen 3.7 Max, Qwen3 Max, Qwen3 Coder 480B (Temp Unavailable), GLM-4.5 (Temp Unavailable)",
+    supportedModelsDesc: "GPT-5.6 Terra / GPT-5.5 / GPT-5.6 Luna / GPT-5.6 Sol / Claude Fable 5 / Kimi K3 / Kimi K2.6 / Kimi K2.7 Code / DeepSeek V4 Pro / V4 Flash / V3.2 / V3 / R1 / Qwen3.8 Max / Qwen 3.7 Max / Qwen3 Max / Qwen3.5 397B / GLM-5.2 / MiniMax M1 / M3",
     quickStart: "Quick Start",
     learnMore: "Learn more →",
     comingSoon: "Coming soon",

@@ -5,27 +5,26 @@ import { subscriptionApi } from '../utils/api';
 import { Check, Loader2 } from 'lucide-react';
 
 const MODELS = [
-  { name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', badge: 'New', note: '旗舰 Terra' },
-  { name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'Hot', note: '最新旗舰' },
-  { name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', badge: 'New', note: '最新旗舰 Luna' },
-  { name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'New', note: '高效推理 Sol' },
-  { name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥450', badge: 'New', note: '最新 Claude' },
-  { name: 'Kimi K3', provider: '月之暗面', input: '¥26', output: '¥130', badge: 'Hot', note: '中国开源 · 最新旗舰' },
-  { name: 'Kimi K2.6', provider: '月之暗面', input: '¥9', output: '¥36', badge: '', note: '稳定可靠' },
-  { name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥4.0', output: '¥8.0', badge: 'Hot', note: '旗舰模型' },
-  { name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.5', output: '¥3.0', badge: '', note: '极致性价比' },
-  { name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', badge: '', note: '通用模型' },
-  { name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', badge: 'New', note: '达GPT-5水平' },
-  { name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥6.0', output: '¥21.0', badge: '', note: '深度推理' },
-  { name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: '', note: '通义旗舰' },
-  { name: 'Qwen3 Max', provider: '通义千问', input: '¥20', output: '¥80', badge: '', note: '通义旗舰' },
-  { name: 'Qwen3.8 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: 'New', note: '2.4T参数新旗舰' },
-  { name: 'GLM-5.2', provider: '智谱AI', input: '¥11', output: '¥37', badge: 'New', note: '1M上下文旗舰' },
-  { name: 'Qwen3.5 397B', provider: '通义千问', input: '¥6.0', output: '¥45.0', badge: 'New', note: '397B超大杯旗舰' },
-  { name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', badge: 'New', note: '顶级推理旗舰' },
-  { name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', badge: 'New', note: '最新旗舰' },
-  { name: 'Kimi K2.7 Code', provider: '月之暗面', input: '¥9', output: '¥36', badge: 'New', note: '代码最强' },
-  { name: 'GLM-4.6V Flash', provider: '智谱AI', input: '免费', output: '免费', badge: 'New', note: '免费视觉模型 · 看图/视频' },
+  { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', badge: 'New', note: '旗舰 Terra' },
+  { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'Hot', note: '最新旗舰' },
+  { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', badge: 'New', note: '最新旗舰 Luna' },
+  { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'New', note: '高效推理 Sol' },
+  { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥450', badge: 'New', note: '最新 Claude' },
+  { id: 'moonshotai/kimi-k3', name: 'Kimi K3', provider: '月之暗面', input: '¥26', output: '¥130', badge: 'Hot', note: '中国开源 · 最新旗舰' },
+  { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥9', output: '¥36', badge: '', note: '稳定可靠' },
+  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥4.0', output: '¥8.0', badge: 'Hot', note: '旗舰模型' },
+  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.5', output: '¥3.0', badge: '', note: '极致性价比' },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', badge: '', note: '通用模型' },
+  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', badge: 'New', note: '达GPT-5水平' },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥6.0', output: '¥21.0', badge: '', note: '深度推理' },
+  { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: '', note: '通义旗舰' },
+  { id: 'qwen3-max', name: 'Qwen3 Max', provider: '通义千问', input: '¥20', output: '¥80', badge: '', note: '通义旗舰' },
+  { id: 'qwen/qwen3.8-max', name: 'Qwen3.8 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: 'New', note: '2.4T参数新旗舰' },
+  { id: 'glm-5.2', name: 'GLM-5.2', provider: '智谱AI', input: '¥11', output: '¥37', badge: 'New', note: '1M上下文旗舰' },
+  { id: 'qwen3.5-397b-a17b', name: 'Qwen3.5 397B', provider: '通义千问', input: '¥6.0', output: '¥45.0', badge: 'New', note: '397B超大杯旗舰' },
+  { id: 'MiniMax-M1', name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', badge: 'New', note: '顶级推理旗舰' },
+  { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', badge: 'New', note: '最新旗舰' },
+  { id: 'moonshotai/kimi-k2.7-code', name: 'Kimi K2.7 Code', provider: '月之暗面', input: '¥9', output: '¥36', badge: 'New', note: '代码最强' },
 ];
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -45,12 +44,19 @@ export default function PricingPage() {
   const [buying, setBuying] = useState<string | null>(null);
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [subStatus, setSubStatus] = useState<any>(null);
+  const [quotaModels, setQuotaModels] = useState<string[]>([]);
 
   useEffect(() => {
     subscriptionApi.plans().then((data: any) => {
       if (data?.plans) {
         const arr = Object.entries(data.plans).map(([id, p]: [string, any]) => ({ id, ...p }));
         setPlans(arr);
+      }
+      if (Array.isArray(data?.eligible_models)) {
+        const names = (data.eligible_models as string[])
+          .filter((id: string) => id !== 'glm-4.6v-flash')  // 内部视觉模型不对外展示
+          .map((id: string) => { const m = MODELS.find(x => x.id === id); return m ? m.name : id; });
+        setQuotaModels(names);
       }
     }).catch(() => {}).finally(() => setLoadingPlans(false));
     subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
@@ -132,7 +138,10 @@ export default function PricingPage() {
       <div>
         <h2 className="text-[15px] font-semibold text-white mb-1">订阅套餐（每日免费额度）</h2>
         <p className="text-[12px] text-white/30 mb-2">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
-        <p className="text-[11px] text-amber-300/60 mb-5">免费配额仅适用低价模型（DeepSeek / Kimi / Qwen / GLM-4.5 等）；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
+        <p className="text-[11px] text-amber-300/60 mb-1">免费配额仅适用低价模型；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
+        {quotaModels.length > 0 && (
+          <p className="text-[10px] text-white/30 mb-5">当前适用：{quotaModels.join(' / ')}（以实际扣费规则为准）</p>
+        )}
         {loadingPlans ? (
           <div className="text-[12px] text-white/30">加载中...</div>
         ) : (

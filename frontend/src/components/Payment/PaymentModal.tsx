@@ -5,6 +5,8 @@ import { useLang } from '../../contexts/LanguageContext';
 
 const QUICK_AMOUNTS = [29.9, 50, 100, 200];
 
+const QR_TTL = 300; // 秒，与后端 XorPay expire=300 一致（二维码有效期 5 分钟）
+
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
@@ -25,15 +27,48 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
   const [orderId, setOrderId] = useState('');
   const [error, setError] = useState('');
   const [paid, setPaid] = useState(false);
+  const [qrExpired, setQrExpired] = useState(false);
+  const [expireLeft, setExpireLeft] = useState(QR_TTL);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expireRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const amountNum = Number(amount) || 0;
 
   useEffect(() => {
     return () => {
       if (pollRef.current) clearTimeout(pollRef.current);
+      if (expireRef.current) clearInterval(expireRef.current);
     };
   }, []);
+
+  // 二维码过期：停止轮询，显示「重新生成」
+  useEffect(() => {
+    if (qrExpired && pollRef.current) {
+      clearTimeout(pollRef.current);
+      pollRef.current = null;
+    }
+  }, [qrExpired]);
+
+  // 5 分钟倒计时：payUrl 存在且未过期时每秒递减
+  useEffect(() => {
+    if (!payUrl || qrExpired) return;
+    setExpireLeft(QR_TTL);
+    expireRef.current = setInterval(() => {
+      setExpireLeft((prev) => {
+        if (prev <= 1) {
+          if (expireRef.current) clearInterval(expireRef.current);
+          expireRef.current = null;
+          setQrExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (expireRef.current) clearInterval(expireRef.current);
+      expireRef.current = null;
+    };
+  }, [payUrl, qrExpired]);
 
   const pollStatus = (oid: string, count = 0) => {
     if (count > 120) return;
@@ -62,6 +97,9 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
     setPayUrl('');
     setOrderId('');
     setPaid(false);
+    setQrExpired(false);
+    if (pollRef.current) clearTimeout(pollRef.current);
+    if (expireRef.current) clearInterval(expireRef.current);
     const amt = Number(amount) || 0;
     if (amt < 1 || amt > 5000) {
       setError('请输入 ¥1 ~ ¥5000 之间的金额');
@@ -171,17 +209,35 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
 
               {payUrl ? (
                 <div className="flex flex-col items-center py-4">
-                  <div className="w-48 h-48 rounded-xl bg-white p-3 flex items-center justify-center">
-                    <img src={payUrl} alt="QR Code" className="w-full h-full object-contain" />
-                  </div>
-                  <p className="text-[12px] text-white/40 mt-3">请使用微信扫码支付</p>
-                  <p className="text-[10px] text-white/20 mt-1">支付名称: TokUp脉充</p>
-                  <p className="text-[11px] text-amber-300/80 mt-2 text-center">二维码有效期 5 分钟，请尽快完成付款</p>
-                  <p className="text-[11px] text-emerald-400/70 mt-1 text-center">支付成功后自动到账（一般几秒），无需人工处理</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
-                    <p className="text-[11px] text-white/30">等待支付...</p>
-                  </div>
+                  {qrExpired ? (
+                    <>
+                      <div className="w-48 h-48 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
+                        <p className="text-[13px] text-white/40 text-center px-4">二维码已过期</p>
+                      </div>
+                      <p className="text-[12px] text-white/40 mt-3">二维码已失效，请重新生成</p>
+                      <button
+                        onClick={handlePay}
+                        disabled={paying}
+                        className="mt-3 px-6 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all disabled:opacity-50"
+                      >
+                        {paying ? '生成中...' : '重新生成二维码'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-48 h-48 rounded-xl bg-white p-3 flex items-center justify-center">
+                        <img src={payUrl} alt="QR Code" className="w-full h-full object-contain" />
+                      </div>
+                      <p className="text-[12px] text-white/40 mt-3">请使用微信扫码支付</p>
+                      <p className="text-[10px] text-white/20 mt-1">支付名称: TokUp脉充</p>
+                      <p className="text-[11px] text-amber-300/80 mt-2 text-center">二维码有效期 5 分钟，剩余 {Math.floor(expireLeft / 60)} 分 {expireLeft % 60} 秒</p>
+                      <p className="text-[11px] text-emerald-400/70 mt-1 text-center">支付成功后自动到账（一般几秒），无需人工处理</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                        <p className="text-[11px] text-white/30">等待支付...</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <button

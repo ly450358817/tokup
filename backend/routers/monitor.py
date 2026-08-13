@@ -4,6 +4,7 @@ TokUp · 脉充 — Monitoring router
 （响应耗时 latency_ms 尚未采集，统一返回 0，前端显示为 "-"）
 """
 from datetime import datetime, timedelta, timezone
+import time
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
@@ -13,6 +14,20 @@ from models import User, UsageRecord
 from routers.auth import get_current_user
 
 router = APIRouter(prefix="/api/monitor", tags=["monitor"])
+
+_BOOT_TIME = time.time()
+
+
+def _fmt_uptime(sec: float) -> str:
+    """把秒格式化成可读的进程运行时长（真实值，非写死）"""
+    sec = max(0, int(sec))
+    if sec < 60:
+        return f"{sec}秒"
+    if sec < 3600:
+        return f"{sec // 60}分钟"
+    if sec < 86400:
+        return f"{sec // 3600}小时{sec % 3600 // 60}分"
+    return f"{sec // 86400}天{sec % 86400 // 3600}小时"
 
 MODEL_LABELS = {
     "gpt-5.5": "GPT-5.5",
@@ -141,6 +156,6 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
         "models": models_data,
         "hourly_trend": hourly,
         "gateway_status": "online",
-        "uptime": "99.97%",
+        "uptime": _fmt_uptime(time.time() - _BOOT_TIME),
         "last_updated": now.isoformat(),
     }

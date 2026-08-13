@@ -16,7 +16,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     nickname = Column(String, default="")
-    token_balance = Column(Float, default=0.0)  # 单位：分（人民币）
+    token_balance = Column(Float, default=0.0)  # 单位：token（1 元 = 100 token）
     total_recharged = Column(Float, default=0.0)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
@@ -39,8 +39,8 @@ class Transaction(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    amount = Column(Float, nullable=False)  # 金额（分）
-    token_amount = Column(Float, nullable=False)  # token 数量（分）
+    amount = Column(Float, nullable=False)  # 金额（元）
+    token_amount = Column(Float, nullable=False)  # token 数量
     type = Column(String, nullable=False)  # "recharge" | "consume" | "refund"
     status = Column(String, default="pending")  # "pending" | "completed" | "failed"
     payment_method = Column(String, default="")  # "alipay" | "wechat"

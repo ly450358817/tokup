@@ -285,6 +285,7 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                 "price": _pay_price,
                 "order_id": order_id,
                 "notify_url": notify_url,
+                "expire": 300,  # 与前端「二维码有效期 5 分钟」文案一致（XorPay 默认 7200 秒）
                 "sign": sign,
             }
 

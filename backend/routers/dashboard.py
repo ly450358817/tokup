@@ -15,9 +15,6 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    range_start = today_start - timedelta(days=days)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    week_ago = today_start - timedelta(days=7)
 
     # 今日消耗
     today_usage = (

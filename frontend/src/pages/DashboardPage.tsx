@@ -38,7 +38,6 @@ const MODELS = [
   { id: 'MiniMax-M1', label: 'MiniMax M1', provider: 'MiniMax', cost: '¥8.0/1M input' },
   { id: 'minimax/minimax-m3', label: 'MiniMax M3', provider: 'MiniMax', cost: '¥6.0/1M input' },
   { id: 'moonshotai/kimi-k2.7-code', label: 'Kimi K2.7 Code', provider: '月之暗面', cost: '¥9/1M input' },
-  { id: 'glm-4.6v-flash', label: 'GLM-4.6V Flash', provider: '智谱AI', cost: '免费' },
 ];
 
 const TIME_RANGES = [

@@ -31,6 +31,20 @@ def model_quota_eligible(model: str) -> bool:
     return costs[1] <= FREE_QUOTA_MAX_OUTPUT_COST
 
 
+def quota_eligible_models() -> list:
+    """当前可用免费配额的低价模型 id（输出价 ≤ 阈值、未被排除、且已在 MODEL_ROUTES 上架可用）"""
+    from services.ai_service import MODEL_COST, MODEL_ROUTES
+    out = []
+    for model, costs in MODEL_COST.items():
+        if model in FREE_QUOTA_EXCLUDE_MODELS:
+            continue
+        if model not in MODEL_ROUTES:
+            continue
+        if costs[1] <= FREE_QUOTA_MAX_OUTPUT_COST:
+            out.append(model)
+    return sorted(out, key=lambda m: MODEL_COST[m][1])
+
+
 def beijing_day_start() -> datetime:
     """最近一次北京时间 0 点对应的 UTC 时间"""
     now = datetime.now(timezone.utc)

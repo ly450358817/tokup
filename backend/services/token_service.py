@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from models import User, Transaction
 
 
-TOKEN_TO_CNY_RATIO = 100  # 1 元 = 100 token 分
+TOKEN_TO_CNY_RATIO = 100  # 1 元 = 100 token
 
 
 def get_balance(user_id: str, db: Session) -> float:
@@ -44,7 +44,7 @@ def add_token(user_id: str, amount_cny: float, db: Session, payment_method: str 
 
 
 def deduct_token(user_id: str, amount: float, db: Session, description: str = "") -> dict:
-    """扣除 token，amount 为 token 分"""
+    """扣除 token，amount 为 token 数量（1 元 = 100 token）"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return {"success": False, "message": "User not found"}

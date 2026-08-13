@@ -7,7 +7,7 @@ from database import get_db
 from models import User, Transaction, Subscription
 from routers.auth import get_current_user
 from datetime import datetime, timezone, timedelta
-from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens
+from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, quota_eligible_models
 
 router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
@@ -22,8 +22,8 @@ PLANS = {
 
 @router.get("/plans")
 def get_plans():
-    """返回所有订阅套餐"""
-    return {"plans": PLANS}
+    """返回所有订阅套餐 + 当前可用免费配额的低价模型（单一事实来源，随 MODEL_COST/阈值变化自动更新）"""
+    return {"plans": PLANS, "eligible_models": quota_eligible_models()}
 
 
 @router.post("/purchase/{plan_id}")
