@@ -101,3 +101,24 @@ class Subscription(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User")
+
+
+class ConversationLog(Base):
+    """对话全量存档：记录每次 API 调用的请求消息与响应内容（以备不时之需，不自动清理）"""
+    __tablename__ = "conversation_logs"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True, index=True)
+    model = Column(String, nullable=False)
+    endpoint = Column(String, default="")  # chat | responses | test
+    request_json = Column(Text, default="")  # 请求 messages JSON
+    response_json = Column(Text, default="")  # 响应内容 JSON
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    cost_cny = Column(Float, default=0.0)
+    status = Column(String, default="success")  # success | error
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User")
+    api_key = relationship("ApiKey")

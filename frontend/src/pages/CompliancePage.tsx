@@ -3,10 +3,10 @@ import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink, ShieldC
 const COMMITMENTS = [
   {
     icon: Eye,
-    title: '数据不截留',
-    desc: 'TokUp 仅透传 API 请求和响应，不存储任何用户消息内容。每条请求的 message body 在完成路由后立即丢弃，不留日志。',
+    title: '数据透明可控',
+    desc: '对话内容按《用户服务协议》与《隐私政策》留存：仅用于安全、质量、计费与防滥用，仅授权人员可查看，不用于模型训练、不对外提供；留存期限 12 个月，法定要求（交易 3 年 / 日志 6 个月）除外。',
     status: '✅ 已实现',
-    detail: 'api_proxy.py 只将消息转发到上游，不写入数据库',
+    detail: 'conversation_logs 仅管理员可查 + 注册协议已明确告知',
   },
   {
     icon: Database,

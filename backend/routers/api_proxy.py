@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-from models import User, ApiKey, UsageRecord
+from models import User, ApiKey, UsageRecord, ConversationLog
 from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES
 from datetime import datetime, timezone
 from routers.auth import get_current_user
@@ -101,6 +101,34 @@ def estimate_request_cost(model: str, messages: list) -> int:
         return max(round(cost * 100), 1) if cost > 0 else 0
     except Exception:
         return 1
+
+
+def _log_conversation(db, *, user_id, api_key_id, model, endpoint, request_messages,
+                      response_content=None, input_tokens=0, output_tokens=0,
+                      cost_cny=0.0, status="success"):
+    """对话全量存档：把请求消息与响应内容写入 conversation_logs（失败不影响主流程）"""
+    try:
+        req_txt = json.dumps(request_messages, ensure_ascii=False, default=str) if request_messages is not None else ""
+        if isinstance(response_content, (dict, list)):
+            resp_txt = json.dumps(response_content, ensure_ascii=False, default=str)
+        elif response_content is None:
+            resp_txt = ""
+        else:
+            resp_txt = str(response_content)
+        if len(req_txt) > 1_000_000:
+            req_txt = req_txt[:1_000_000] + "...[截断]"
+        if len(resp_txt) > 1_000_000:
+            resp_txt = resp_txt[:1_000_000] + "...[截断]"
+        db.add(ConversationLog(
+            user_id=user_id, api_key_id=api_key_id, model=model, endpoint=endpoint,
+            request_json=req_txt, response_json=resp_txt,
+            input_tokens=int(input_tokens or 0), output_tokens=int(output_tokens or 0),
+            cost_cny=float(cost_cny or 0.0), status=status,
+            created_at=datetime.now(timezone.utc),
+        ))
+    except Exception:
+        import logging
+        logging.getLogger("tokup.log").exception("对话存档失败: model=%s", model)
 
 
 def resolve_model(model: str) -> str:
@@ -281,6 +309,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
             async def _forward():
                 _usage_data = None
                 _fwd_content = ""
+                _fwd_reasoning = ""
                 _settled = False
                 _balance_after = None
                 _t0 = time.monotonic()
@@ -319,6 +348,12 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                                 created_at=datetime.now(timezone.utc),
                             )
                             db.add(_record)
+                        _log_conversation(
+                            db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
+                            request_messages=_messages,
+                            response_content={"content": _fwd_content, "reasoning": _fwd_reasoning},
+                            input_tokens=_input_tok, output_tokens=_output_tok, cost_cny=_cost,
+                        )
                         _r = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
                         _balance_after = _r.get("balance", _initial_balance)
                     except Exception as _se:
@@ -346,9 +381,13 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                                     if _ln.startswith("data: ") and "[DONE]" not in _ln:
                                         try:
                                             _obj = json.loads(_ln[6:])
-                                            _dc = _obj.get("choices", [{}])[0].get("delta", {}).get("content")
+                                            _delta = _obj.get("choices", [{}])[0].get("delta", {}) or {}
+                                            _dc = _delta.get("content") or ""
                                             if _dc:
                                                 _fwd_content += _dc
+                                            _rc = _delta.get("reasoning_content") or ""
+                                            if _rc:
+                                                _fwd_reasoning += _rc
                                         except Exception:
                                             pass
                                 yield _text
@@ -391,6 +430,9 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens)
     _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
+        _log_conversation(db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
+                          request_messages=req.messages, response_content={"error": result["error"]},
+                          status="error")
         settle_reserved(_uid, _need_balance, 0, db, f"API退回: {model}")
         raise HTTPException(status_code=502, detail=result["error"])
     usage_data = result.get("usage", {})
@@ -424,6 +466,12 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
         cost_cny=cost, status="success", latency_ms=_latency,
         created_at=datetime.now(timezone.utc),
     ))
+    _log_conversation(
+        db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
+        request_messages=req.messages, response_content=result["data"],
+        input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
+        cost_cny=cost,
+    )
     db.commit()
     return result["data"]
 
@@ -459,6 +507,9 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     result = await proxy_request(model, req.messages, False)
     _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
+        _log_conversation(db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
+                          request_messages=req.messages, response_content={"error": result["error"]},
+                          status="error")
         settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
         return {"success": False, "detail": result["error"]}
     usage_data = result.get("usage", {})
@@ -482,6 +533,12 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
         cost_cny=cost, status="success", latency_ms=_latency,
         created_at=datetime.now(timezone.utc),
     ))
+    _log_conversation(
+        db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
+        request_messages=req.messages, response_content=result["data"],
+        input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
+        cost_cny=cost,
+    )
     db.commit()
     return {"success": True, "data": result["data"]}
 
@@ -582,6 +639,13 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                         created_at=datetime.now(timezone.utc),
                     )
                     db.add(_record)
+                _log_conversation(
+                    db, user_id=_uid, api_key_id=_kid, model=model, endpoint="responses",
+                    request_messages=messages,
+                    response_content={"content": _content_text, "reasoning": _reasoning_text, "tool_calls": _tool_items} if ok else None,
+                    input_tokens=_in, output_tokens=_out, cost_cny=_cost,
+                    status="success" if ok else "error",
+                )
                 settle_reserved(_uid, _need_balance, _balance_charge if ok else 0, db, f"API: {model}" if ok else f"API退回: {model}")
             except Exception as _se:
                 try:

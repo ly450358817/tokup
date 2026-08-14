@@ -104,7 +104,7 @@ export const en = {
     password: 'Password',
     createAccount: 'Create Account',
     welcome: 'Welcome back',
-    terms: 'By continuing, you agree to our Terms of Service',
+    terms: 'By continuing, you agree to our Terms of Service and Privacy Policy',
   },
   dashboard: {
     title: 'Energy Ring',

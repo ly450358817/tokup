@@ -106,7 +106,7 @@ export const zh = {
     password: '密码',
     createAccount: '创建账号',
     welcome: '欢迎回来',
-    terms: '继续即表示您同意我们的服务条款',
+    terms: '继续即表示您同意《用户服务协议》和《隐私政策》',
   },
   dashboard: {
     title: '能量环',

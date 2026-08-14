@@ -17,6 +17,7 @@ import IntegrationPage from './pages/IntegrationPage';
 import TransferStationPage from './pages/TransferStationPage';
 import MonitorPage from './pages/MonitorPage';
 import CompliancePage from './pages/CompliancePage';
+import TermsPage from './pages/TermsPage';
 import UsagePage from './pages/UsagePage';
 import InvitePage from './pages/InvitePage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -74,6 +75,8 @@ function AppRoutes() {
       <Route path="/guide" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
       <Route path="/transfer-station" element={<ProtectedRoute><TransferStationPage /></ProtectedRoute>} />
       <Route path="/compliance" element={<CompliancePage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<TermsPage />} />
       <Route path="/usage" element={<ProtectedRoute><UsagePage /></ProtectedRoute>} />
       <Route path="/invite" element={<ProtectedRoute><InvitePage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

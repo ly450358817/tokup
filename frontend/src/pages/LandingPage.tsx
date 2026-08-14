@@ -87,7 +87,7 @@ function GlassCard({
 const FEATURES = [
   { icon: Shield, title: '合规上游', desc: 'DeepSeek 等模型通过合规上游链路接入。', gradient: '#10B981' },
   { icon: BarChart3, title: '逐笔审计', desc: '每次 API 调用的模型、Token、费用均记录在案。', gradient: '#14B8A6' },
-  { icon: Globe, title: '数据不落地', desc: 'API 只做透传转发，消息内容不留存。', gradient: '#3B82F6' },
+  { icon: Globe, title: '数据有边界', desc: '对话内容按《隐私政策》留存，仅用于安全与计费，不用于训练、不对外提供。', gradient: '#3B82F6' },
   { icon: Zap, title: 'OpenAI 兼容', desc: '改一行代码即可接入。零迁移成本。', gradient: '#8B5CF6' },
   { icon: Sparkles, title: 'AI 安全护盾', desc: '12 层防护，全方位保护您的 API。', gradient: '#F59E0B' },
   { icon: Coins, title: '按量付费', desc: '注册即用，用多少扣多少，透明计价。', gradient: '#EC4899' },

@@ -123,9 +123,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <button
                   key={item.id}
                   onClick={(e) => { e.preventDefault(); openRecharge(); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all mt-1 mb-2
-                    bg-emerald-500/15 border border-emerald-500/25 text-emerald-400
-                    hover:bg-emerald-500/25 hover:border-emerald-500/35`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all
+                    text-white/40 hover:text-emerald-400 hover:bg-emerald-500/15`}
                 >
                   <Zap size={18} />
                   {tr(item.labelKey)}
@@ -141,7 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all ${
                   isActive
                     ? 'bg-white/[0.10] border border-white/[0.08] text-white font-medium shadow-sm'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                    : 'text-white/40 hover:text-emerald-400 hover:bg-emerald-500/15'
                 }`}
               >
                 <Icon size={18} />

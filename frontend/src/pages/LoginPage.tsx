@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [formStartedAt] = useState(() => Date.now());
   const [tsToken, setTsToken] = useState('');
   const [tsTimeout, setTsTimeout] = useState(false);  // 验证码 7 秒没加载出来 -> 放行（不卡真实用户）
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +31,11 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
+        if (!agreeTerms) {
+          setError('请先阅读并勾选同意《用户服务协议》和《隐私政策》');
+          setLoading(false);
+          return;
+        }
         if (!tsToken && !tsTimeout) {
           setError('正在加载人机验证，请稍候重试');
           setLoading(false);
@@ -251,6 +257,21 @@ export default function LoginPage() {
                   className="glass-input"
                 />
                 <div ref={turnstileRef} className="flex justify-center mt-3" />
+                <label className="flex items-start gap-2 mt-4 text-[11px] text-white/40 cursor-pointer select-none leading-relaxed">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 shrink-0"
+                  />
+                  <span>
+                    我已阅读并同意{' '}
+                    <a href="/terms" target="_blank" rel="noreferrer" className="text-emerald-400 underline hover:text-emerald-300">《用户服务协议》</a>{' '}
+                    和{' '}
+                    <a href="/privacy" target="_blank" rel="noreferrer" className="text-emerald-400 underline hover:text-emerald-300">《隐私政策》</a>
+                    （含对话内容存档告知）
+                  </span>
+                </label>
               </div>
             )}
 
