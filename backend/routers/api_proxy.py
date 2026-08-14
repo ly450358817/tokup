@@ -7,6 +7,7 @@ from sqlalchemy import func
 from database import get_db
 from models import User, ApiKey, UsageRecord, ConversationLog
 from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES
+from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
 from services.token_service import reserve_token, settle_reserved
@@ -337,6 +338,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                         _q_covered = min(_tc, _q_rem)
                         _balance_charge = max(0, _tc - _q_covered)
+                        if _sub and _balance_charge > 0:
+                            _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
                         if _tc > 0:
                             _record = UsageRecord(
                                 user_id=_uid, api_key_id=_kid, model=model,
@@ -445,6 +448,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
     _balance_charge = max(0, token_cost - _q_covered)
+    if _sub and _balance_charge > 0:
+        _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
     _deduct = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
     if not _deduct["success"]:
         return JSONResponse(
@@ -522,6 +527,8 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
     _balance_charge = max(0, token_cost - _q_covered)
+    if _sub and _balance_charge > 0:
+        _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
     _deduct = settle_reserved(user.id, _need_balance, _balance_charge, db, f"API: {model}")
     if not _deduct["success"]:
         return {"success": False, "detail": "余额不足"}
@@ -630,6 +637,8 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                 _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                 _q_covered = min(_tc, _q_rem)
                 _balance_charge = max(0, _tc - _q_covered)
+                if _sub and _balance_charge > 0:
+                    _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
                 if ok and _tc > 0:
                     _record = UsageRecord(
                         user_id=_uid, api_key_id=_kid, model=model,
