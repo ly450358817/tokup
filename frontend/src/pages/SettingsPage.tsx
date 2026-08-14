@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LanguageContext';
-import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, RefreshCw, Users } from 'lucide-react';
+import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, Users } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -63,14 +63,6 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-[20px] font-semibold text-white">{tr('nav.settings')}</h1>
         <p className="text-[12px] text-white/30 mt-1">{tr('settings.preferences')}</p>
-      </div>
-
-      {/* Auto Top-up（暂未开放） */}
-      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 opacity-70">
-        <h3 className="text-[13px] font-medium text-white/70 mb-2">
-          <span className="flex items-center gap-2"><RefreshCw size={14} className="text-white/40" /> {tr("settings.autoTopup")}</span>
-        </h3>
-        <p className="text-[12px] text-white/40">暂未开放，敬请期待</p>
       </div>
 
       {/* Language Selection */}
