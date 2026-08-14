@@ -230,7 +230,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="glass-input pr-10"
                 required
-                minLength={6}
+                minLength={8}
               />
               <button
                 type="button"
@@ -280,7 +280,7 @@ export default function LoginPage() {
 
             {mode === 'register' && !error && (
               <p className="text-[10px] text-white/20 text-center leading-relaxed">
-                At least 6 characters
+                At least 8 characters
               </p>
             )}
 

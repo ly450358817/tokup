@@ -30,7 +30,7 @@ def invite_info(user: User = Depends(get_current_user), db: Session = Depends(ge
 
 
 @router.get("/top")
-def invite_top(db: Session = Depends(get_db), limit: int = 10):
+def invite_top(user: User = Depends(get_current_user), db: Session = Depends(get_db), limit: int = 10):
     """邀请排行榜"""
     top = db.query(User).filter(User.invite_count > 0).order_by(User.invite_count.desc()).limit(limit).all()
     return [

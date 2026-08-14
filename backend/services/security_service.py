@@ -29,8 +29,11 @@ SECURITY_LEVEL = os.getenv("TOKUP_SECURITY_LEVEL", "high")  # low | medium | hig
 RATE_LIMIT_PER_MIN = int(os.getenv("TOKUP_RATE_LIMIT", "60"))
 RATE_LIMIT_WINDOW = 60  # seconds
 BURST_LIMIT = int(os.getenv("TOKUP_BURST_LIMIT", "10"))  # max requests in 3s
+# API 代理路径（/api/v1/*）单独放宽：模型调用是高频正常流量，且 body 是提示词不能按注入拦截
+RATE_LIMIT_API_PER_MIN = int(os.getenv("TOKUP_RATE_LIMIT_API", "300"))
+BURST_LIMIT_API = int(os.getenv("TOKUP_BURST_LIMIT_API", "40"))
 BAN_DURATION = int(os.getenv("TOKUP_BAN_DURATION", "300"))  # 5 min temp ban
-MAX_AUTH_ATTEMPTS = int(os.getenv("TOKUP_MAX_AUTH_ATTEMPTS", "5"))
+MAX_AUTH_ATTEMPTS = int(os.getenv("TOKUP_MAX_AUTH_ATTEMPTS", "20"))  # IP 级多账号爆破阈值（单账号锁定见 auth.py）
 ENABLE_AI_ANALYSIS = os.getenv("TOKUP_ENABLE_AI_SECURITY", "true").lower() == "true"
 
 # ──────────────────────────────────────────────
@@ -128,7 +131,7 @@ class IPTracker:
     def record_suspicious(self, ip: str, reason: str):
         self._suspicious[ip].append({"time": datetime.now().isoformat(), "reason": reason})
         self._total_blocked += 1
-        if len(self._suspicious[ip]) >= 3:
+        if len(self._suspicious[ip]) >= 10:
             self.ban(ip)
 
     def request_count(self, ip: str) -> int:
@@ -240,6 +243,7 @@ class AISecurityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         client_ip = self._get_client_ip(request)
         path = request.url.path
+        is_api = path.startswith("/api/v1/")  # 模型代理路径：只限流、不扫描提示词内容
 
         # Skip security checks for health endpoints and static files
         if path in ("/api/health", "/api/security/health", "/docs", "/openapi.json"):
@@ -254,9 +258,11 @@ class AISecurityMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Too Many Requests", "code": "rate_limited", "retry_after": BAN_DURATION},
             )
 
-        # 2. Rate + burst check
+        # 2. Rate + burst check（API 路径用更宽松阈值，避免误伤正常高频模型调用）
         ip_tracker.record_request(client_ip)
-        if ip_tracker.burst_count(client_ip) > BURST_LIMIT:
+        _burst = BURST_LIMIT_API if is_api else BURST_LIMIT
+        _per_min = RATE_LIMIT_API_PER_MIN if is_api else RATE_LIMIT_PER_MIN
+        if ip_tracker.burst_count(client_ip) > _burst:
             ip_tracker.record_suspicious(client_ip, f"burst_exceeded ({ip_tracker.burst_count(client_ip)} in 3s)")
             from fastapi.responses import JSONResponse
             return JSONResponse(
@@ -264,15 +270,15 @@ class AISecurityMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Request rate exceeded", "code": "burst_limited"},
             )
 
-        if ip_tracker.request_count(client_ip) > RATE_LIMIT_PER_MIN:
+        if ip_tracker.request_count(client_ip) > _per_min:
             from fastapi.responses import JSONResponse
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Rate limit exceeded", "code": "rate_limited"},
             )
 
-        # 3. Payload scanning
-        if request.method in ("POST", "PUT", "PATCH") and request.headers.get("content-type", "").startswith(
+        # 3. Payload scanning（仅非 API 路径；/api/v1 的 body 是用户提示词，不能按注入拦截）
+        if not is_api and request.method in ("POST", "PUT", "PATCH") and request.headers.get("content-type", "").startswith(
             ("application/json", "application/x-www-form-urlencoded", "multipart/form-data")
         ):
             try:
