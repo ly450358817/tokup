@@ -167,6 +167,24 @@ ip_tracker = IPTracker()
 # ──────────────────────────────────────────────
 # Pattern Scanner
 # ──────────────────────────────────────────────
+def _redact_sensitive(body_str: str) -> str:
+    """把 JSON 里的密码/密钥/验证码类字段值打码，避免正常用户密码误触发注入扫描"""
+    try:
+        import json as _json
+        data = _json.loads(body_str)
+        if isinstance(data, dict):
+            changed = False
+            for k in list(data.keys()):
+                if any(s in k.lower() for s in ("password", "secret", "turnstile", "token", "key")):
+                    data[k] = "***"
+                    changed = True
+            if changed:
+                return _json.dumps(data, ensure_ascii=False)
+    except Exception:
+        pass
+    return body_str
+
+
 def scan_payload(payload: str) -> List[Tuple[str, str]]:
     """
     Scan a string payload for known attack patterns.
@@ -283,7 +301,7 @@ class AISecurityMiddleware(BaseHTTPMiddleware):
         ):
             try:
                 body = await request.body()
-                body_str = body.decode("utf-8", errors="ignore")
+                body_str = _redact_sensitive(body.decode("utf-8", errors="ignore"))
 
                 findings = scan_payload(body_str)
                 if findings:
