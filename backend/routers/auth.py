@@ -183,8 +183,8 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=400, detail="该邮箱已被注册，请直接登录")
     
-    # 处理邀请奖励（防刷小号：仅累计真实充值 ≥¥50 的邀请人可获奖励；单次 200 token、上限 5 次，
-    # 刷号成本(¥50)远超收益(≤¥10)，无利可图；被邀请人注册不再赠送 token）
+    # 处理邀请奖励（防刷小号：仅累计真实充值 ≥¥50 的邀请人可获奖励；单次 100 token、上限 5 次，
+    # 刷号成本(¥50)远超收益(≤¥5)，无利可图；被邀请人注册不再赠送 token）
     if req.invite_code:
         referrer = db.query(User).filter(User.invite_code == req.invite_code).first()
         if referrer and referrer.id != user.id:
@@ -193,7 +193,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
                 if hasattr(referrer, 'invite_count'):
                     referrer.invite_count = (referrer.invite_count or 0) + 1
                 if (referrer.paid_invite_count or 0) < 5:
-                    referrer.token_balance += 200
+                    referrer.token_balance += 100
                     referrer.paid_invite_count = (referrer.paid_invite_count or 0) + 1
             # 被邀请人注册不再赠送 token（避免白嫖）
     

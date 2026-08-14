@@ -80,9 +80,32 @@ app.include_router(subscription.router)
 
 @app.on_event("startup")
 async def _startup_tasks():
-    """启动支付对账后台任务：自动补到账（幂等，多 worker 安全）"""
+    """启动后台任务：支付对账 + 对话存档定期清理（幂等，多 worker 安全）"""
     from routers.payment import payment_reconcile_loop
     asyncio.create_task(payment_reconcile_loop())
+    asyncio.create_task(_cleanup_conversation_logs())
+
+
+async def _cleanup_conversation_logs():
+    """每天清理超过 12 个月的对话存档（与《隐私政策》留存期限一致，控制库增长）"""
+    import logging
+    from datetime import datetime, timedelta, timezone as _tz
+    while True:
+        try:
+            from database import SessionLocal
+            from models import ConversationLog
+            db = SessionLocal()
+            try:
+                cutoff = datetime.now(_tz.utc) - timedelta(days=365)
+                n = db.query(ConversationLog).filter(ConversationLog.created_at < cutoff).delete()
+                db.commit()
+                if n:
+                    logging.getLogger("tokup.log").info("清理过期对话存档 %s 条", n)
+            finally:
+                db.close()
+        except Exception:
+            pass
+        await asyncio.sleep(86400)
 
 @app.get("/api/health")
 def health():
