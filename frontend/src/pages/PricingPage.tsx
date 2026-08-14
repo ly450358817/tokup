@@ -165,7 +165,10 @@ export default function PricingPage() {
                     {plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
                   </span>
                 </div>
-                <p className="text-[12px] text-white/50 mt-1">{plan.desc}</p>
+                <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-semibold">
+                  全模型 9 折
+                </span>
+                <p className="text-[12px] text-white/50 mt-2">{plan.desc}</p>
                 <div className="mt-4 space-y-2 text-[12px] text-white/50">
                   <p>每日 {plan.daily_limit.toLocaleString()} Token 免费</p>
                   <p>超额按量计费 · 0 点重置</p>
