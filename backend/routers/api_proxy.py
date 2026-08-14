@@ -92,11 +92,11 @@ def _capture_key_identity(api_key):
     return api_key.user_id, api_key.id
 
 
-def estimate_request_cost(model: str, messages: list) -> int:
-    """预扣估算：输入按字符数、输出按保守上限，余额不足直接拒绝"""
+def estimate_request_cost(model: str, messages: list, max_tokens: int | None = None) -> int:
+    """预扣估算：输入按字符数、输出按保守上限（考虑请求的 max_tokens，上限 16384），余额不足直接拒绝"""
     try:
         est_input = sum(len(str(m.get("content", ""))) for m in messages) or 1
-        est_output = 4096
+        est_output = min(int(max_tokens or 0), 16384) if (max_tokens or 0) > 0 else 4096
         cost = calculate_cost(model, est_input, est_output)
         return max(round(cost * 100), 1) if cost > 0 else 0
     except Exception:
@@ -293,7 +293,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if _sub and _eligible:
         _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(model, req.messages)
+    _need = estimate_request_cost(model, req.messages, req.max_tokens or req.max_completion_tokens)
     _need_balance = max(0, _need - _quota_remaining)
 
     if req.stream:
@@ -495,7 +495,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if _sub and _eligible:
         _quota_used = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(_model_t, req.messages)
+    _need = estimate_request_cost(_model_t, req.messages, req.max_tokens or req.max_completion_tokens)
     _need_balance = max(0, _need - _quota_remaining)
     if user.token_balance < _need_balance:
         return {"success": False, "detail": f"余额不足，本次测试至少需要 {_need_balance} token，请先充值"}
@@ -566,7 +566,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
     if _sub and _eligible:
         _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(model, messages)
+    _need = estimate_request_cost(model, messages, req.max_output_tokens)
     _need_balance = max(0, _need - _quota_remaining)
     if _u.token_balance < _need_balance:
         raise HTTPException(status_code=402, detail=f"余额不足，本次调用至少需要 {_need_balance} token，请先充值")

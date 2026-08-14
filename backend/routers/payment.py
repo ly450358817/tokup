@@ -427,6 +427,18 @@ async def payment_notify(request: Request, db: Session = Depends(get_db)):
 
         txn = db.query(Transaction).filter(Transaction.payment_id == xorpay_order_id).first()
         if txn and txn.status == "pending":
+            # 实付金额校验：低于订单金额不补账（防低价支付骗 token），仅记录待人工处理
+            try:
+                paid = float(pay_price)
+            except Exception:
+                paid = 0.0
+            if paid + 0.005 < (txn.amount or 0):
+                import logging
+                logging.getLogger("tokup.payment").warning(
+                    "XorPay 实付低于订单金额，不补账: order=%s paid=%s expect=%s",
+                    xorpay_order_id, paid, txn.amount,
+                )
+                return {"code": 1, "msg": "success"}
             txn.status = "completed"
             user = db.query(User).filter(User.id == txn.user_id).first()
             if user:

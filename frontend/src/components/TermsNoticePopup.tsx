@@ -29,10 +29,7 @@ export default function TermsNoticePopup() {
       <div className="w-full max-w-md backdrop-blur-xl bg-[#15151F] border border-white/[0.08] rounded-2xl p-6">
         <h3 className="text-white font-semibold text-[15px] mb-3">服务协议与隐私政策更新</h3>
         <p className="text-white/60 text-[13px] leading-relaxed mb-5">
-          我们已更新《用户服务协议》与《隐私政策》。新版协议包含
-          <b className="text-white/85">对话内容存档</b>
-          的相关告知（用于安全保障、质量与计费核实，仅授权人员可查看，不用于训练、不对外提供）。
-          继续使用本服务即表示您已阅读并同意更新后的协议与隐私政策。
+          我们已更新《用户服务协议》与《隐私政策》。继续使用本服务即表示您已阅读并同意更新后的协议与隐私政策。
         </p>
         <div className="flex items-center justify-between gap-3">
           <a
