@@ -269,7 +269,6 @@ export default function LoginPage() {
                     <a href="/terms" target="_blank" rel="noreferrer" className="text-emerald-400 underline hover:text-emerald-300">《用户服务协议》</a>{' '}
                     和{' '}
                     <a href="/privacy" target="_blank" rel="noreferrer" className="text-emerald-400 underline hover:text-emerald-300">《隐私政策》</a>
-                    （含对话内容存档告知）
                   </span>
                 </label>
               </div>

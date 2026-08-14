@@ -23,6 +23,8 @@ import InvitePage from './pages/InvitePage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AnnouncementPopup from './components/AnnouncementPopup';
+import TermsNoticePopup from './components/TermsNoticePopup';
+import AdminConversationsPage from './pages/AdminConversationsPage';
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: any}> {
   constructor(props: any) {
@@ -77,6 +79,7 @@ function AppRoutes() {
       <Route path="/compliance" element={<CompliancePage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<TermsPage />} />
+      <Route path="/admin/conversations" element={<ProtectedRoute><AdminConversationsPage /></ProtectedRoute>} />
       <Route path="/usage" element={<ProtectedRoute><UsagePage /></ProtectedRoute>} />
       <Route path="/invite" element={<ProtectedRoute><InvitePage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -93,6 +96,7 @@ export default function App() {
           <LanguageProvider>
             <ThemeProvider>
               <AnnouncementPopup />
+              <TermsNoticePopup />
               <RechargeProvider>
               <AppRoutes />
             </RechargeProvider>

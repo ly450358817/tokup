@@ -36,6 +36,12 @@ export const authApi = {
   register: (email: string, password: string, invite_code?: string, extra?: any) =>
     api.post('/auth/register', { email, password, invite_code, ...extra }).then((r) => r.data),
   me: () => api.get('/auth/me').then((r) => r.data),
+  acceptTerms: () => api.post('/auth/accept-terms').then((r) => r.data),
+};
+
+export const adminApi = {
+  conversations: (params: Record<string, any>) =>
+    api.get('/admin/conversations', { params }).then((r) => r.data),
 };
 
 export const dashboardApi = {

@@ -41,6 +41,7 @@ def list_conversations(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     user_id: str = "",
+    email: str = "",
     model: str = "",
     endpoint: str = "",
     start: str = "",
@@ -52,6 +53,12 @@ def list_conversations(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin only")
     q = db.query(ConversationLog)
+    if email:
+        _u = db.query(User).filter(User.email == email).first()
+        if _u:
+            q = q.filter(ConversationLog.user_id == _u.id)
+        else:
+            q = q.filter(False)
     if user_id:
         q = q.filter(ConversationLog.user_id == user_id)
     if model:

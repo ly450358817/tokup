@@ -8,6 +8,7 @@ interface User {
   token_balance: number;
   total_recharged: number;
   is_active: boolean;
+  terms_version?: string;
 }
 
 interface AuthContextType {

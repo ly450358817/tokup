@@ -20,6 +20,7 @@ import {
   Shield,
   BarChart3,
   Gift,
+  Database,
 } from 'lucide-react';
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
   { id: 'usage', labelKey: '消费明细', icon: BarChart3, href: '/usage' },
   { id: 'compliance', labelKey: '合规声明', icon: Shield, href: '/compliance' },
   { id: 'invite', labelKey: '邀请好友', icon: Gift, href: '/invite' },
+  { id: 'admin-conversations', labelKey: '对话存档', icon: Database, href: '/admin/conversations' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -132,6 +134,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             }
             if (item.id === 'analytics' && !user?.is_admin) return null;
+            if (item.id === 'admin-conversations' && !user?.is_admin) return null;
             return (
               <a
                 key={item.id}

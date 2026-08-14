@@ -27,6 +27,7 @@ class User(Base):
     auto_topup_threshold = Column(Float, default=0)  # 0 = disabled
     auto_topup_amount = Column(Float, default=50)  # yuan
     ip_address = Column(String, default="", index=True)  # 注册 IP（用于每 IP 注册限流/审计）
+    terms_version = Column(String, default="")  # 用户同意的协议版本（v1=含对话存档告知的新版协议，空=老用户未确认）
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

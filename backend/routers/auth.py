@@ -95,6 +95,7 @@ class LoginReq(BaseModel):
 
 class UserResp(BaseModel):
     is_admin: bool = False
+    terms_version: str = ""
     id: str
     email: str
     nickname: str
@@ -156,6 +157,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         token_balance=100,  # 注册赠送 100 token 体验金（约 ¥1，够试几次调用；量小 + IP 限流防白嫖）
         invite_code=uuid.uuid4().hex[:8].upper(),
         ip_address=_get_client_ip(request),
+        terms_version="v1",  # 新用户注册时已勾选同意协议
     )
     try:
         db.add(user)
@@ -208,4 +210,15 @@ def get_me(user: User = Depends(get_current_user)):
         total_recharged=round(user.total_recharged, 2),
         is_active=user.is_active,
         is_admin=user.is_admin,
+        terms_version=user.terms_version or "",
     )
+
+
+@router.post("/accept-terms")
+def accept_terms(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """老用户确认同意新版《用户服务协议》与《隐私政策》（含对话存档告知），记录版本号便于审计"""
+    if not user.terms_version:
+        user.terms_version = "v1"
+        user.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    return {"ok": True, "terms_version": user.terms_version}
