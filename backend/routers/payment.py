@@ -52,6 +52,8 @@ CUSTOM_SIGN_TYPE = os.getenv("CUSTOM_SIGN_TYPE", "md5")  # md5 | hmac
 XORPAY_AID = os.getenv("XORPAY_AID", "")
 XORPAY_APP_SECRET = os.getenv("XORPAY_APP_SECRET", "")
 XORPAY_API_URL = "https://xorpay.com/api/pay"
+# 支付宝个人商户单笔限额（XorPay 通道：个人无执照时支付宝单笔 1000 / 日 5 万，可环境变量覆盖）
+XORPAY_ALIPAY_MAX = float(os.getenv("XORPAY_ALIPAY_MAX", "1000"))
 
 
 def xorpay_sign(*args):
@@ -200,6 +202,10 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
         tokens = pkg["tokens"]
         label = pkg["label"]
         desc = f"{pkg['label']} ¥{pkg['price']:g}"
+
+    # XorPay 支付宝个人商户单笔限额：超限直接拒绝，避免生成无法支付的二维码
+    if PAY_CHANNEL == "xorpay" and req.payment_method == "alipay" and price > XORPAY_ALIPAY_MAX:
+        return {"success": False, "message": f"支付宝单笔限额 ¥{XORPAY_ALIPAY_MAX:g}，请分笔充值或使用微信支付"}
 
     order_id = f"TK{uuid.uuid4().hex[:12].upper()}"
 

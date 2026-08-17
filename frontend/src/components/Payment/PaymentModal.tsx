@@ -22,6 +22,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
     return r || key;
   };
   const [amount, setAmount] = useState('29.9');  // 默认 ¥29.9（新手首充引导）
+  const [method, setMethod] = useState<'wechat' | 'alipay'>('wechat'); // 支付方式：wechat 微信 / alipay 支付宝
   const [paying, setPaying] = useState(false);
   const [payUrl, setPayUrl] = useState('');
   const [orderId, setOrderId] = useState('');
@@ -107,7 +108,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
       return;
     }
     try {
-      const res = await paymentApi.rechargeAmount(amt, 'wechat');
+      const res = await paymentApi.rechargeAmount(amt, method);
       if (res.success) {
         setOrderId(res.order_id || '');
         setPayUrl(res.pay_url || '');
@@ -190,19 +191,33 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
               <div>
                 <p className="text-[11px] text-white/30 tracking-[0.1em] uppercase mb-3">支付方式</p>
                 <div className="flex gap-3">
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm border border-emerald-500/40 bg-emerald-500/5 text-white">
+                  <div
+                    onClick={() => setMethod('wechat')}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm cursor-pointer select-none transition-all ${
+                      method === 'wechat'
+                        ? 'border border-emerald-500/40 bg-emerald-500/5 text-white'
+                        : 'border border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
+                    }`}
+                  >
                     <span className="w-[28px] h-[28px] rounded-lg bg-white flex items-center justify-center shrink-0">
                       <img src="/assets/wechatpay.jpeg" className="w-[24px] h-[24px] object-contain" alt="WeChat Pay" style={{mixBlendMode:"multiply"}} />
                     </span>
                     微信支付
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm border border-white/[0.06] text-white/30 cursor-not-allowed">
-                    <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-                      <rect width="32" height="32" rx="6" fill="#1677FF" opacity="0.4"/>
-                      <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial, sans-serif" opacity="0.6">支</text>
-                    </svg>
+                  <div
+                    onClick={() => setMethod('alipay')}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm cursor-pointer select-none transition-all ${
+                      method === 'alipay'
+                        ? 'border border-[#1677FF]/60 bg-[#1677FF]/10 text-white'
+                        : 'border border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className="w-[28px] h-[28px] rounded-lg bg-[#1677FF] flex items-center justify-center shrink-0">
+                      <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                        <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial, sans-serif">支</text>
+                      </svg>
+                    </span>
                     支付宝
-                    <span className="text-[9px] text-white/20">即将开放</span>
                   </div>
                 </div>
               </div>
@@ -228,9 +243,12 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                       <div className="w-48 h-48 rounded-xl bg-white p-3 flex items-center justify-center">
                         <img src={payUrl} alt="QR Code" className="w-full h-full object-contain" />
                       </div>
-                      <p className="text-[12px] text-white/40 mt-3">请使用微信扫码支付</p>
+                      <p className="text-[12px] text-white/40 mt-3">{method === 'wechat' ? '请使用微信扫码支付' : '请使用支付宝扫码支付'}</p>
                       <p className="text-[10px] text-white/20 mt-1">支付名称: TokUp脉充</p>
                       <p className="text-[11px] text-amber-300/80 mt-2 text-center">二维码有效期 5 分钟，剩余 {Math.floor(expireLeft / 60)} 分 {expireLeft % 60} 秒</p>
+                      {method === 'alipay' && (
+                        <p className="text-[11px] text-amber-300/70 mt-1 text-center">支付宝个人商户单笔限额 ¥1000，大额请分笔充值或使用微信</p>
+                      )}
                       <p className="text-[11px] text-emerald-400/70 mt-1 text-center">支付成功后自动到账（一般几秒），无需人工处理</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
