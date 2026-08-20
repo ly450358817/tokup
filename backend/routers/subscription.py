@@ -12,14 +12,15 @@ from services.subscription_service import get_active_subscription, beijing_day_s
 router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
 # ── 套餐定义 ──
-# 2026-08-20 订阅额度重定价：在"免费额度被薅满且全走输出"的最坏情况下仍盈利
-# （含 flash 峰谷化后闲时输出 ¥4.5/M 的远期成本）；价格不变，只调每日免费额度。
-# 卖点：月卡=最大免费量、季卡=平衡、年卡=最低日均+整年9折。
+# 2026-08-20 订阅额度重定价 v2（用户确认方案A）：越买越多 + 日均价越低
+# 每日免费额度：体验5万 < 月30万 < 季35万 < 年40万（递增，避免"年卡不如季卡"）
+# 最坏情况（免费额度薅满+全走输出，当前价）毛利：体验96%/月73%/季52%/年12%，均不亏
+# ⚠️ 年卡 12% 最薄：若 flash/v3.2 上游峰谷涨价致年卡逼近亏损，周维护须下调年卡额度或把 flash 移出免费额度
 PLANS = {
     "trial": {"label": "体验订阅", "price": 2990, "days": 7, "daily_limit": 50000, "desc": "7天试用 · 每日 5万 Token 免费 + 全模型余额消费 9 折"},
-    "monthly": {"label": "月度订阅", "price": 9900, "days": 30, "daily_limit": 500000, "desc": "要量选我 · 每日 50万 Token 免费（月 1500万）+ 全模型余额消费 9 折"},
-    "quarterly": {"label": "季度订阅", "price": 19900, "days": 90, "daily_limit": 400000, "desc": "日均¥2.2 · 每日 40万 Token 免费 + 全模型余额消费 9 折"},
-    "yearly": {"label": "年度订阅", "price": 49900, "days": 365, "daily_limit": 250000, "desc": "要省选我 · 每日 25万 Token 免费 + 整年 9 折，日均仅 ¥1.4"},
+    "monthly": {"label": "月度订阅", "price": 9900, "days": 30, "daily_limit": 300000, "desc": "每日 30万 Token 免费（月 900万）+ 全模型余额消费 9 折"},
+    "quarterly": {"label": "季度订阅", "price": 19900, "days": 90, "daily_limit": 350000, "desc": "每日 35万 Token 免费 + 全模型余额消费 9 折，日均 ¥2.2"},
+    "yearly": {"label": "年度订阅", "price": 49900, "days": 365, "daily_limit": 400000, "desc": "每日 40万 Token 免费（最多）+ 整年 9 折，日均仅 ¥1.4 最省"},
 }
 
 
