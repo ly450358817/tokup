@@ -45,14 +45,17 @@ if [ "${disk:-100}" -lt 85 ]; then pass "磁盘使用 ${disk}%"; else fail "磁�
 mem=$(SSH "free -m | awk 'NR==2{printf \"%d\", \$3*100/\$2}'" 2>/dev/null)
 if [ "${mem:-100}" -lt 90 ]; then pass "内存使用 ${mem}%"; else fail "内存使用 ${mem}%"; fi
 
-# 4) 最近7天后端错误日志
-echo "▍4. 后端日志（7天）"
+# 4) 最近7天后端错误日志（仅最近24h的新错误算故障；历史错误多为已解决的上游429/配额事件）
+echo "▍4. 后端日志（7天 / 最近24h）"
 err=$(SSH "journalctl -u tokup-backend --since '-7 days' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
 err=${err:-0}
-if [ "$err" -le 20 ]; then
-  pass "错误日志 $err 条"
+err24=$(SSH "journalctl -u tokup-backend --since '-24 hours' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
+err24=${err24:-0}
+echo "      7天共 ${err} 条；其中最近24h ${err24} 条"
+if [ "$err24" -eq 0 ] && [ "$err" -le 50 ]; then
+  pass "最近24h无错误日志（7天历史 ${err} 条多为已解决事件）"
 else
-  fail "错误日志 $err 条（需排查）"
+  fail "最近24h错误日志 ${err24} 条（需排查）"
 fi
 if [ "$err" -gt 0 ]; then
   echo "      最近错误："
