@@ -36,12 +36,8 @@ export default function LoginPage() {
           setLoading(false);
           return;
         }
-        if (!tsToken && !tsTimeout) {
-          setError('正在加载人机验证，请稍候重试');
-          setLoading(false);
-          return;
-        }
-        // tsTimeout=true 时无验证码也放行（后端不会硬卡，另有每 IP 限流兜底）
+        // 人机验证：token 就绪就带上；未就绪也直接提交（后端不硬卡，蜜罐+每IP限流兜底），
+        // 避免验证码加载慢/被拦导致“注册不进去”（2026-08-20 修复）
         await register(email, password, inviteCode, { website, form_started_at: formStartedAt / 1000, turnstile_token: tsToken });
       }
     } catch (err: any) {
