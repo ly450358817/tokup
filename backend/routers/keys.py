@@ -82,7 +82,7 @@ class BatchDeleteReq(BaseModel):
 def delete_key(key_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user.id).first()
     if not key:
-        raise HTTPException(status_code=404, detail="Key not found")
+        raise HTTPException(status_code=404, detail="API Key 不存在")
     db.delete(key)
     db.commit()
     return {"success": True}

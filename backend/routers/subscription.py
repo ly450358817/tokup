@@ -35,7 +35,7 @@ def purchase_plan(plan_id: str, user: User = Depends(get_current_user), db: Sess
     """用余额购买订阅：立即开通每日免费配额"""
     plan = PLANS.get(plan_id)
     if not plan:
-        raise HTTPException(status_code=404, detail="Invalid plan")
+        raise HTTPException(status_code=404, detail="订阅套餐无效")
 
     # 防白嫖：未真实充值过（体验金/邀请奖励不算）不能购买订阅
     from services.token_service import has_completed_recharge

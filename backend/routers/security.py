@@ -23,7 +23,7 @@ def security_status(user: User = Depends(get_current_user)):
 def security_logs(user: User = Depends(get_current_user), limit: int = 20, ip: Optional[str] = None):
     """Get suspicious request logs (admin only)."""
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
     logs = ip_tracker.get_suspicious_log(limit)
     if ip:
         logs = [l for l in logs if l.get("ip") == ip]

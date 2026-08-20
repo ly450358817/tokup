@@ -167,9 +167,9 @@ async def upload_qr(
     from fastapi import HTTPException
     import shutil
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
     if not file:
-        raise HTTPException(status_code=400, detail="No file provided")
+        raise HTTPException(status_code=400, detail="未提供文件")
     ext = file.filename.split(".")[-1] if "." in file.filename else "png"
     save_path = os.path.join(os.path.dirname(__file__), "..", "uploads", f"{method}.{ext}")
     with open(save_path, "wb") as f:
@@ -389,11 +389,11 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
                     }
                 txn.status = "failed"
                 db.commit()
-                return {"success": False, "message": result.get("msg", "Gateway error")}
+                return {"success": False, "message": result.get("msg", "支付网关错误")}
         except Exception as e:
             txn.status = "failed"
             db.commit()
-            return {"success": False, "message": f"Custom payment error: {str(e)}"}
+            return {"success": False, "message": f"支付通道错误：{str(e)}"}
 
     # ── 支付渠道未配置：禁止回落到 mock，避免给用户假二维码 ──
     if PAY_CHANNEL != "mock":
@@ -527,7 +527,7 @@ def confirm_order(
     from datetime import datetime, timezone
     
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
     
     txn = db.query(Transaction).filter(
         Transaction.payment_id == order_id,
@@ -536,7 +536,7 @@ def confirm_order(
     ).first()
     
     if not txn:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="订单不存在")
     
     txn.status = "completed"
     txn_user = db.query(User).filter(User.id == txn.user_id).first()
@@ -546,7 +546,7 @@ def confirm_order(
         txn_user.updated_at = datetime.now(timezone.utc)
     db.commit()
     
-    return {"success": True, "message": "Payment confirmed", "user_id": txn.user_id, "amount": txn.amount}
+    return {"success": True, "message": "收款确认成功", "user_id": txn.user_id, "amount": txn.amount}
 
 
 @router.post("/orders/{order_id}/notify-paid")
@@ -560,7 +560,7 @@ def user_notify_paid(
     from datetime import datetime, timezone
 
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
 
     txn = db.query(Transaction).filter(
         Transaction.payment_id == order_id,
@@ -570,7 +570,7 @@ def user_notify_paid(
     ).first()
     
     if not txn:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="订单不存在")
     
     # Auto-confirm: add balance immediately
     txn.status = "completed"
@@ -583,7 +583,7 @@ def user_notify_paid(
     
     return {
         "success": True,
-        "message": "Payment confirmed! Balance added.",
+        "message": "收款确认成功，余额已到账。",
         "balance": txn_user.token_balance if txn_user else 0,
         "added": txn.amount,
     }
@@ -599,7 +599,7 @@ def get_order_status(
         Transaction.payment_id == order_id,
     ).first()
     if not txn:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="订单不存在")
     return {
         "order_id": txn.payment_id,
         "status": txn.status,

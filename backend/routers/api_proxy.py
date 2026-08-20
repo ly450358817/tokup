@@ -41,10 +41,10 @@ def authenticate_api_key(
     if api_key_str.startswith("Bearer "):
         api_key_str = api_key_str[7:]
     if not api_key_str:
-        raise HTTPException(status_code=401, detail="Missing API key")
+        raise HTTPException(status_code=401, detail="缺少 API Key")
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
     if not api_key:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+        raise HTTPException(status_code=401, detail="API Key 无效")
     return api_key
 
 
@@ -53,7 +53,7 @@ def _ensure_paid(api_key, db):
     管理员可测试；订阅用户余额 0 仍可用每日免费配额（配额内不扣余额）。"""
     user = db.query(User).filter(User.id == api_key.user_id).first()
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=401, detail="用户不存在")
     if user.is_admin:
         return user
     if not has_completed_recharge(user.id, db):
@@ -282,7 +282,7 @@ def _convert_tool_choice(tool_choice):
 async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_api_key), db: Session = Depends(get_db)):
     model = resolve_model(req.model)
     if model not in MODEL_ROUTES:
-        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
+        raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
     _uid, _kid = _capture_key_identity(api_key)
@@ -498,7 +498,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _model_t = resolve_model(req.model or "deepseek-v3")
     if _model_t not in MODEL_ROUTES:
-        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
+        raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
     _sub = get_active_subscription(user.id, db)
     _day_start = beijing_day_start()
     _eligible = model_quota_eligible(_model_t)
@@ -566,7 +566,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 
     model = resolve_model(req.model)
     if model not in MODEL_ROUTES:
-        raise HTTPException(status_code=400, detail=f"Unsupported model: {req.model}")
+        raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
 
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)

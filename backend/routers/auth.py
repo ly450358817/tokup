@@ -52,7 +52,7 @@ def _rate_limit(key: str, max_attempts: int = 200, window: int = 60):
     timestamps = _rate_limit_store.get(key, [])
     timestamps = [t for t in timestamps if now - t < window]
     if len(timestamps) >= max_attempts:
-        raise HTTPException(status_code=429, detail="Too many attempts")
+        raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
     timestamps.append(now)
     _rate_limit_store[key] = timestamps
 
@@ -90,11 +90,11 @@ def _get_client_ip(request):
     return "unknown"
 def _validate_password(password: str):
     if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        raise HTTPException(status_code=400, detail="密码至少需要 8 位")
 
 def _validate_email(email: str):
     if "@" not in email or "." not in email.split("@")[-1]:
-        raise HTTPException(status_code=400, detail="Invalid email address")
+        raise HTTPException(status_code=400, detail="邮箱格式不正确")
 
 
 
@@ -136,10 +136,10 @@ def get_current_user(token: HTTPAuthorizationCredentials = Depends(security), db
         payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found or inactive")
+        raise HTTPException(status_code=401, detail="用户不存在或已停用")
     return user
 
 
@@ -148,7 +148,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
     _rate_limit("register:" + _get_client_ip(request))
     # 轻量防刷（零依赖，不影响正常用户）：蜜罐 + 填表耗时检测
     if req.website:
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(status_code=400, detail="请求无效")
     if req.form_started_at and time.time() - req.form_started_at < 2:
         raise HTTPException(status_code=400, detail="提交太快，请稍后再试")
     # 数据库级限流：该 IP 24 小时内已注册 ≥10 个则拒绝（无条件生效，跨 worker/重启可靠）
@@ -212,7 +212,7 @@ def login(req: LoginReq, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not pwd.verify(req.password, user.password_hash):
         _record_auth_fail(_auth_key)
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="邮箱或密码错误")
     _clear_auth_fails(_auth_key)
     token = create_token(user.id)
     return {"token": token, "user_id": user.id}

@@ -17,7 +17,7 @@ def get_db():
 @router.get("/stats")
 def admin_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
     total_users = db.query(func.count(User.id)).scalar() or 0
     total_recharged = db.query(func.coalesce(func.sum(Transaction.amount), 0)).filter(
         Transaction.status == "completed",
@@ -51,7 +51,7 @@ def list_conversations(
 ):
     """管理员查询对话存档（仅管理员；按用户/模型/入口/时间过滤）"""
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin only")
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
     q = db.query(ConversationLog)
     if email:
         _u = db.query(User).filter(User.email == email).first()

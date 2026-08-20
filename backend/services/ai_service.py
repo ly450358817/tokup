@@ -161,7 +161,7 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
     _log = logging.getLogger(__name__)
     route = MODEL_ROUTES.get(model)
     if not route:
-        return {"error": f"Unsupported model: {model}"}
+        return {"error": f"不支持的模型：{model}"}
 
     provider, url = route
     candidates = [(UPSTREAM_MODEL_NAME.get(model, model), provider, url)]
