@@ -116,7 +116,7 @@ export default function OnboardingPage() {
               发送
             </button>
           </div>
-          <p className="text-[10px] text-white/30 leading-relaxed">💡 未充值账号需先充值（¥1 起）才能体验；注册赠送的 100 Token 体验金在<strong className="text-emerald-400/70">首次充值后</strong>可用。</p>
+          <p className="text-[10px] text-white/30 leading-relaxed">💡 未充值账号需先充值（¥1 起）才能体验；充值多少用多少，无隐藏赠送。</p>
           {testResponse && (
             <div
               ref={responseRef}
@@ -157,7 +157,7 @@ export default function OnboardingPage() {
             <div className="mt-3 text-[11px] text-white/40 leading-relaxed">
               自由充值 · <strong className="text-white/60">¥1</strong> 起充<br />
               1 元 = 100 Token，所有主流模型随充随用<br />
-              <span className="text-emerald-400/60">首次充值后可用 100 Token 体验金</span>
+              <span className="text-emerald-400/60">按量计费，充值多少用多少</span>
             </div>
           </div>
           <button
