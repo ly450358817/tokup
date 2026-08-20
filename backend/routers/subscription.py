@@ -33,6 +33,11 @@ def purchase_plan(plan_id: str, user: User = Depends(get_current_user), db: Sess
     if not plan:
         raise HTTPException(status_code=404, detail="Invalid plan")
 
+    # 防白嫖：未真实充值过（体验金/邀请奖励不算）不能购买订阅
+    from services.token_service import has_completed_recharge
+    if not user.is_admin and not has_completed_recharge(user.id, db):
+        raise HTTPException(status_code=400, detail="未充值用户不能购买订阅，请先充值")
+
     price = plan["price"]
     if user.token_balance < price:
         raise HTTPException(status_code=400, detail="余额不足，请先充值")

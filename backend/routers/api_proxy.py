@@ -10,7 +10,7 @@ from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES
 from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
-from services.token_service import reserve_token, settle_reserved
+from services.token_service import reserve_token, settle_reserved, has_completed_recharge
 
 import secrets, time, json, asyncio
 
@@ -49,12 +49,15 @@ def authenticate_api_key(
 
 
 def _ensure_paid(api_key, db):
-    """余额 > 0 即可调用 API（注册体验金/邀请奖励均可体验，管理员可测试）；余额用尽后提示充值。"""
+    """防白嫖硬闸：必须真实充值过（排除体验金/邀请奖励）才能调用 API；余额用尽后需充值。
+    管理员可测试；订阅用户余额 0 仍可用每日免费配额（配额内不扣余额）。"""
     user = db.query(User).filter(User.id == api_key.user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     if user.is_admin:
         return user
+    if not has_completed_recharge(user.id, db):
+        raise HTTPException(status_code=402, detail="未充值用户无法调用 API，请先充值后再使用")
     if (user.token_balance or 0) <= 0:
         # 订阅用户余额为 0 仍可用每日免费配额（配额内调用不扣余额）；非订阅用户仍拦截
         from services.subscription_service import get_active_subscription
@@ -483,12 +486,15 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
 
 @router.post("/test/chat")
 async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """AI 客服 / 调试对话测试（余额 > 0 即可体验，订阅用户享受每日免费配额）"""
-    if not user.is_admin and (user.token_balance or 0) <= 0:
-        # 订阅用户余额为 0 仍可用每日免费配额
-        from services.subscription_service import get_active_subscription as _gas
-        if not _gas(user.id, db):
-            return {"success": False, "detail": "余额不足，请先充值"}
+    """AI 客服 / 调试对话测试（必须真实充值过才能体验，余额用尽需充值；订阅用户享受每日免费配额）"""
+    if not user.is_admin:
+        if not has_completed_recharge(user.id, db):
+            return {"success": False, "detail": "未充值用户无法使用测试，请先充值后再使用"}
+        if (user.token_balance or 0) <= 0:
+            # 订阅用户余额为 0 仍可用每日免费配额
+            from services.subscription_service import get_active_subscription as _gas
+            if not _gas(user.id, db):
+                return {"success": False, "detail": "余额不足，请先充值"}
     from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _model_t = resolve_model(req.model or "deepseek-v3")
     if _model_t not in MODEL_ROUTES:
