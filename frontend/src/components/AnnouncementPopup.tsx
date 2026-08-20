@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v7');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v8');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v7', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v8', Date.now().toString());
     setVisible(false);
   };
 
@@ -33,17 +33,17 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">模型更新公告</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">价格调整公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🚀 <span className="text-white/80 font-medium">DeepSeek V4 Pro 正式版已上线</span></p>
+          <p>📢 <span className="text-white/80 font-medium">DeepSeek V4 Pro 实行峰谷计价</span>（同步 DeepSeek 官方 2026-08-17 调价）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">V4 Pro 正式版</span> — 8月13日正式转正，性能接近 Claude Fable 5</li>
-            <li><span className="text-emerald-400 font-medium">1M 超大上下文</span> — 单次可处理海量文本</li>
-            <li><span className="text-emerald-400 font-medium">384K 超长输出</span> — 思考模式默认开启，Agent 能力大幅增强</li>
+            <li><span className="text-emerald-400 font-medium">高峰时段</span> — 每日 9:00–12:00、14:00–18:00（北京时间）</li>
+            <li><span className="text-emerald-400 font-medium">闲时价格</span> — 输入 ¥6 / 输出 ¥18（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">高峰价格</span> — 输入 ¥12 / 输出 ¥36（每百万 token）</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">🔧 调用模型名不变（deepseek-v4-pro），无需任何改动即可使用最新正式版。</p>
+            <p className="text-white/40 text-[11px]">🔧 调用模型名不变（deepseek-v4-pro），无需任何改动；建议错峰调用更省钱。DeepSeek V4 Flash 等其余模型价格不变。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>

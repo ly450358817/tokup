@@ -39,6 +39,8 @@ BILLING_ALIASES = {
     "deepseek/deepseek-v3.2-251201": "deepseek/deepseek-v3.2",
     "deepseek/deepseek-v4-flash-202605": "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-flash-20260731": "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-pro-0813": "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-pro-202606": "deepseek/deepseek-v4-pro",
 }
 
 
@@ -147,7 +149,10 @@ def _accum(it, entry):
 
 
 def fetch_plaza_prices():
-    """解析模型广场 __NEXT_DATA__，返回 {model_id: (input_元/1M, output_元/1M)}（取各档最高价档）"""
+    """解析模型广场 __NEXT_DATA__，返回 {model_id: {"flat":(i,o)|None,"offpeak":(i,o)|None,"peak":(i,o)|None}}
+    - flat: 旧一口价（input/output 或 ncache/output）
+    - offpeak/peak: 2026-08-17 DeepSeek V4 系列峰谷价（ncache_offpeak/output_offpeak 等）
+    所有价格均取各档最高值，单位 ¥/1M tokens。"""
     html = urllib.request.urlopen(QINIU_MODELS_PAGE, timeout=30).read().decode("utf-8", "ignore")
     m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.S)
     if not m:
@@ -157,22 +162,29 @@ def fetch_plaza_prices():
     out = {}
     for md in models:
         pid = md.get("id")
-        best = None
+        res = {"flat": None, "offpeak": None, "peak": None}
         for rule in md.get("pricing_rules_v2") or []:
             dv2 = rule.get("details_v2") or {}
-            inp = dv2.get("input") or dv2.get("ncache")
-            outp = dv2.get("output")
-            if not isinstance(inp, dict) or not isinstance(outp, dict):
-                continue
-            iu = inp.get("unit_price")
-            ou = outp.get("unit_price")
-            if iu is None or ou is None:
-                continue
-            scaled = (float(iu) * 1000, float(ou) * 1000)  # 千token → 1M
-            if best is None or scaled > best:
-                best = scaled
-        if best:
-            out[pid] = best
+            pairs = []
+            if isinstance(dv2.get("input"), dict) and isinstance(dv2.get("output"), dict):
+                pairs.append(("input", "output", "flat"))
+            if isinstance(dv2.get("ncache"), dict) and isinstance(dv2.get("output"), dict):
+                pairs.append(("ncache", "output", "flat"))
+            # 峰谷（DeepSeek V4 系列）：ncache_{peak,offpeak} / output_{peak,offpeak}
+            for suf in ("_peak", "_offpeak"):
+                if isinstance(dv2.get("ncache" + suf), dict) and isinstance(dv2.get("output" + suf), dict):
+                    pairs.append(("ncache" + suf, "output" + suf, suf[1:]))
+            for i_key, o_key, bucket in pairs:
+                iu = dv2[i_key].get("unit_price")
+                ou = dv2[o_key].get("unit_price")
+                if iu is None or ou is None:
+                    continue
+                scaled = (float(iu) * 1000, float(ou) * 1000)  # 千token → 1M
+                cur = res[bucket]
+                if cur is None or scaled > cur:
+                    res[bucket] = scaled
+        if any(v is not None for v in res.values()):
+            out[pid] = res
     return out
 
 
@@ -183,6 +195,8 @@ def main():
     args = ap.parse_args()
 
     costs, routes, upstream = load_local()
+    src_all = open(AI_SERVICE, encoding="utf-8").read()
+    peak_costs = parse_py_dict(src_all, "MODEL_COST_PEAK")  # 峰谷模型的高峰卖价
     env = load_env()
     qk = env.get("QINIU_API_KEY", "")
 
@@ -203,7 +217,7 @@ def main():
         return mid
 
     def plaza_get(up_id, tk):
-        """广场 model_id → 价格。七牛广场用 z-ai/glm-5.2 等带前缀 ID，而 tokup 可能发短名。"""
+        """广场 model_id → 价格字典（flat/offpeak/peak）。七牛广场用 z-ai/glm-5.2 等带前缀 ID，而 tokup 可能发短名。"""
         cands = [up_id, tk,
                  "z-ai/" + tk, "deepseek/" + tk, "moonshotai/" + tk,
                  "qwen/" + tk, "openai/" + tk, "anthropic/" + tk]
@@ -213,6 +227,26 @@ def main():
             if cand in plaza:
                 return plaza[cand]
         return None
+
+    def worst_case(cmap):
+        """展示用成本：取最差档（高峰 > 闲时 > 一口价）"""
+        return cmap.get("peak") or cmap.get("offpeak") or cmap.get("flat")
+
+    def build_scenarios(tk, cmap):
+        """峰谷/多档模型逐档比较场景：[(档位, 卖价, 成本)]；无峰谷返回 None（走旧逻辑）"""
+        base = costs.get(tk)
+        if not base or not isinstance(base, (tuple, list)) or len(base) != 2:
+            return None
+        sc = []
+        for key, cv in (("flat", cmap.get("flat")), ("offpeak", cmap.get("offpeak")), ("peak", cmap.get("peak"))):
+            if cv is None:
+                continue
+            sv = peak_costs.get(tk) if key == "peak" else base
+            if not sv or not isinstance(sv, (tuple, list)) or len(sv) != 2:
+                continue
+            sc.append((f"{key}输入", sv[0], cv[0]))
+            sc.append((f"{key}输出", sv[1], cv[1]))
+        return sc or None
 
     billing_raw = {}
     plaza = {}
@@ -248,9 +282,19 @@ def main():
 
     issues, detail = [], []
 
-    def check(tk, sell, cost, source, billed_as, has_billing):
+    def check(tk, sell, cost, source, billed_as, has_billing, scenarios=None):
         verdict, notes = [], []
-        if cost:
+        if scenarios:
+            # 峰谷/多档模型：逐档比较，任一档倒挂即失败（宁贵不可亏）
+            for lbl, sv, cv in scenarios:
+                if cv is None or cv <= 0:
+                    continue
+                ratio = sv / cv
+                if sv < cv:
+                    verdict.append(f"{lbl}倒挂(卖{sv}<成本{cv})")
+                elif ratio < args.min_margin:
+                    notes.append(f"{lbl}毛利{ratio:.2f}x<{args.min_margin}")
+        elif cost:
             for lbl, sell_v, cost_v in (("输入", sell[0], cost[0]), ("输出", sell[1], cost[1])):
                 if cost_v is None or cost_v <= 0:
                     continue
@@ -272,21 +316,22 @@ def main():
         if not sell or not isinstance(sell, (tuple, list)) or len(sell) != 2:
             continue
         up_id = upstream.get(tk, tk)
-        expected = plaza_get(up_id, tk)  # 当前上游的广场价（最高档）
+        cmap = plaza_get(up_id, tk)  # 当前上游的广场价（含峰谷档）
         ic, oc = eff_cost(me)       # 账单实测有效单价（样本≥20K token）
         # 判定以「当前上游成本」为准；无广场价才用账单实测，避免把切换前用量误报为倒挂
-        if expected:
-            cost, source = expected, "广场价(当前上游)"
+        if cmap:
+            cost, source = worst_case(cmap), "广场价(当前上游)"
         elif ic is not None and oc is not None:
             cost, source = (ic, oc), "账单实测"
         else:
             cost, source = None, "无成本数据"
-        check(tk, sell, cost, source, me["billed_as"], True)
+        check(tk, sell, cost, source, me["billed_as"], True,
+              scenarios=build_scenarios(tk, cmap) if cmap else None)
         # 补充提示：账单实测成本明显高于当前上游广场价（可能含切换前用量/上游涨价），仅提示不判失败
-        if ic is not None and oc is not None and expected and \
-                (ic > expected[0] * 1.05 or oc > expected[1] * 1.05):
+        if ic is not None and oc is not None and cmap and \
+                (ic > cost[0] * 1.05 or oc > cost[1] * 1.05):
             detail[-1]["issue"] = (detail[-1]["issue"] or []) + \
-                [f"注:账单实测成本({ic:.2f},{oc:.2f})高于当前上游广场价{expected}（可能含切换前用量或上游调价，下期观察）"]
+                [f"注:账单实测成本({ic:.2f},{oc:.2f})高于当前上游广场价{cost}（可能含切换前用量或上游调价，下期观察）"]
 
     # 1.5) 智谱免费模型显式标注
     for tk, sell in costs.items():
@@ -307,7 +352,8 @@ def main():
         pc = plaza_get(up_id, tk)
         if not pc:
             continue
-        check(tk, sell, pc, "广场价", {up_id}, False)
+        check(tk, sell, worst_case(pc), "广场价", {up_id}, False,
+              scenarios=build_scenarios(tk, pc))
 
     today = dt.date.today().isoformat()
     os.makedirs(SNAP_DIR, exist_ok=True)

@@ -35,7 +35,7 @@ const models: ModelPrice[] = [
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥450', note: '最新 Claude', badge: 'New' },
   { id: 'moonshotai/kimi-k3', name: 'Kimi K3', provider: '月之暗面', input: '¥26', output: '¥130', note: '最新旗舰 · 中国开源', badge: 'New' },
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥9', output: '¥36', note: '稳定可靠' },
-  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥4.0', output: '¥8.0', note: '旗舰模型', badge: 'Hot' },
+  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥6 / ¥12', output: '¥18 / ¥36', note: '旗舰模型 · 峰谷计价', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.5', output: '¥3.0', note: '极致性价比' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', note: '通用模型' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', note: '达GPT-5水平', badge: 'New' },
@@ -394,6 +394,7 @@ console.log(response.choices[0].message.content);`;
             </tbody>
           </table>
         </div>
+        <p className="text-[10px] text-white/35 mt-3">DeepSeek V4 Pro 为峰谷计价：斜杠前为闲时价、后为高峰价（高峰时段：每日 9:00–12:00、14:00–18:00 北京时间）；其余模型为一口价。</p>
       </div>
 
       <div className="text-center pt-4">

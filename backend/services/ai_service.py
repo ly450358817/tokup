@@ -47,12 +47,20 @@ MODEL_ROUTES = {
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
 
-# 2026-08-13 七牛同一模型有两个渠道：标准版按 ¥12/¥24 计费（实测账单），
-# 原厂版 deepseek/deepseek-v4-pro-202606 按 DeepSeek 官方价 ¥3/¥6 计费。
-# 为不亏本，V4 Pro 上游固定走原厂版（效果一致，仅价格不同）。
+# 2026-08-20 七牛跟随 DeepSeek 官方 8/17 峰谷计价：
+#   原厂版 deepseek/deepseek-v4-pro-202606 已于 2026-08-18 退役（模型广场 retirement_at，
+#   官方建议迁移 -0813），继续走 -202606 会报错，必须切到 -0813。
+#   -0813 按峰谷计费：闲时 ¥4.5/¥13.5、高峰 ¥9/¥27（¥/1M，见 MODEL_COST_PEAK）。
+#   内部计费仍按 tokup key deepseek/deepseek-v4-pro，模型名不变。
 UPSTREAM_MODEL_NAME = {
-    "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-202606",
+    "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-0813",
 }
+
+# 峰谷计费（2026-08-17 DeepSeek 官方 / 七牛同步生效）：
+#   高峰时段：每日 9:00-12:00、14:00-18:00（北京时间），闲时 = 高峰价 5 折。
+#   仅 DeepSeek V4 系列执行；本平台 v4-flash 走无日期别名 deepseek/deepseek-v4-flash
+#   （8/17-8/19 账单实测仍 ¥1/¥2 一口价），不受影响，暂不纳入峰谷。
+PEAK_HOUR_RANGES = ((9, 12), (14, 18))  # [start, end) 小时（北京时间）
 
 MODEL_COST = {
     # 2026-08-13 定价修复：按七牛官方账单/模型广场实测成本 × ≥1.3 定价，杜绝倒挂
@@ -66,9 +74,9 @@ MODEL_COST = {
     "claude-3-haiku-20240307": (1.5, 6.0),
     "deepseek-v3": (3.0, 11.0),                 # 上游 ¥2/¥8
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
-    # V4 Pro 走七牛原厂版 -202606：上游 ¥3/¥6（若走标准版是 ¥12/¥24，必亏）
-    "deepseek/deepseek-v4-pro": (4.0, 8.0),
-    "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游 ¥1/¥2（8M+ token 实测无峰谷加价）
+    # V4 Pro 走七牛 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
+    "deepseek/deepseek-v4-pro": (6.0, 18.0),
+    "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游无日期别名仍 ¥1/¥2 一口价（8/17-8/19 账单实测），不受 8/17 峰谷公告影响
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
@@ -84,10 +92,26 @@ MODEL_COST = {
 }
 
 
+# 峰谷模型的「高峰」卖价（¥/1M）：高峰成本 ×1.33（宁贵不可亏，杜绝高峰倒挂）
+MODEL_COST_PEAK = {
+    "deepseek/deepseek-v4-pro": (12.0, 36.0),   # 上游高峰 ¥9/¥27
+}
+
+
+def _is_beijing_peak_hour() -> bool:
+    """当前是否处于高峰时段：每日 9:00-12:00、14:00-18:00（北京时间）"""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone(timedelta(hours=8)))
+    hour = now.hour
+    return any(start <= hour < end for start, end in PEAK_HOUR_RANGES)
+
+
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     costs = MODEL_COST.get(model)
     if not costs:
         return 0.01
+    if model in MODEL_COST_PEAK and _is_beijing_peak_hour():
+        costs = MODEL_COST_PEAK[model]
     input_cost = costs[0] * input_tokens / 1_000_000
     output_cost = costs[1] * output_tokens / 1_000_000
     return round(input_cost + output_cost, 6)
