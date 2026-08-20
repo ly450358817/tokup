@@ -52,7 +52,7 @@ const scenarios = [
 ];
 
 const steps = [
-  { num: '01', title: '注册账号', desc: '免费注册 TokUp 账号，获得 100 Token 体验金' },
+  { num: '01', title: '注册账号', desc: '免费注册 TokUp 账号，首次充值后可用 100 Token 体验金' },
   { num: '02', title: '创建 API Key', desc: '在后台一键生成你的专属 API 密钥' },
   { num: '03', title: '选择模型', desc: '按需选择 GPT、DeepSeek、Claude 等模型' },
   { num: '04', title: '开始调用', desc: '配置客户端或直接调用 API，即刻使用' },
