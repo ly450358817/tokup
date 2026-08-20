@@ -57,11 +57,17 @@ export default function LoginPage() {
     }, 7000);
     const doRender = () => {
       if (turnstileRef.current && (window as any).turnstile) {
-        (window as any).turnstile.render(turnstileRef.current, {
-          sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
-          callback: (t: string) => setTsToken(t),
-          'expired-callback': () => setTsToken(''),
-        });
+        try {
+          (window as any).turnstile.render(turnstileRef.current, {
+            sitekey: '0x4AAAAAADvk_9V0AN5HmbHc', theme: 'dark',
+            callback: (t: string) => setTsToken(t),
+            'expired-callback': () => setTsToken(''),
+          });
+        } catch (e) {
+          // 跨域脚本报错会被浏览器掩盖成 "Script error. :0"，这里兜底不让它影响注册
+          console.error('Turnstile render failed:', e);
+          setTsTimeout(true);
+        }
       }
     };
     if ((window as any).turnstile) {
@@ -71,6 +77,7 @@ export default function LoginPage() {
     const s = document.createElement('script');
     s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     s.async = true;
+    s.crossOrigin = 'anonymous';  // 让真实错误可见（Turnstile 支持 CORS），不再被掩盖成 Script error. :0
     s.onload = () => doRender();
     s.onerror = () => setTsTimeout(true);
     document.body.appendChild(s);
