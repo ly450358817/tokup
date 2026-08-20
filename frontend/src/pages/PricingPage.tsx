@@ -138,6 +138,9 @@ export default function PricingPage() {
         <h2 className="text-[15px] font-semibold text-white mb-1">订阅套餐（每日免费额度）</h2>
         <p className="text-[12px] text-white/30 mb-2">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
         <p className="text-[11px] text-amber-300/60 mb-1">免费配额仅适用低价模型；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
+        <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[12px] text-emerald-300/90 leading-relaxed">
+          💡 <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 50 万 Token 免费额度 + 全模型 9 折，月调用量大的用户比按量散充划算；要量选月卡、要省选年卡。
+        </div>
         {quotaModels.length > 0 && (
           <p className="text-[10px] text-white/30 mb-5">当前适用：{quotaModels.join(' / ')}（以实际扣费规则为准）</p>
         )}
