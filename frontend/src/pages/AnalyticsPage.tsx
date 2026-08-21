@@ -1,10 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, Users, DollarSign, Key, RefreshCw, ChevronLeft, ChevronRight, CalendarDays, CalendarRange } from 'lucide-react';
+import { Activity, Users, DollarSign, Key, RefreshCw, ChevronLeft, ChevronRight, CalendarDays, CalendarRange, X } from 'lucide-react';
 
 type DayStat = {
   date: string;
+  registrations: number;
+  recharge_amount: number;
+  recharge_count: number;
+  consumed_tokens: number;
+  api_keys_created: number;
+};
+
+type RangeSummary = {
+  start: string;
+  end: string;
+  days: number;
   registrations: number;
   recharge_amount: number;
   recharge_count: number;
@@ -34,6 +45,12 @@ export default function AnalyticsPage() {
   const [selectedDate, setSelectedDate] = useState(toISODate(now));
   const [daily, setDaily] = useState<Record<string, DayStat>>({});
   const [loadingDaily, setLoadingDaily] = useState(false);
+
+  // 区间选择状态
+  const [rangeMode, setRangeMode] = useState(false);
+  const [rangeSel, setRangeSel] = useState<{ start: string; end: string | null } | null>(null);
+  const [rangeSummary, setRangeSummary] = useState<RangeSummary | null>(null);
+  const [rangeError, setRangeError] = useState('');
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -76,6 +93,39 @@ export default function AnalyticsPage() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => { loadDaily(); }, [loadDaily]);
 
+  // 区间汇总：start/end 都确定时拉取
+  useEffect(() => {
+    if (!rangeSel || !rangeSel.start || !rangeSel.end) return;
+    const token = localStorage.getItem('tokup_token');
+    if (!token) return;
+    setLoadingDaily(true);
+    setRangeError('');
+    fetch(`/api/admin/stats/daily?start=${rangeSel.start}&end=${rangeSel.end}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.detail) {
+          setRangeError(String(d.detail));
+          setRangeSummary(null);
+        } else {
+          const rows: DayStat[] = d.daily || [];
+          setRangeSummary({
+            start: rangeSel.start!,
+            end: rangeSel.end!,
+            days: rows.length,
+            registrations: rows.reduce((a, r) => a + r.registrations, 0),
+            recharge_amount: rows.reduce((a, r) => a + r.recharge_amount, 0),
+            recharge_count: rows.reduce((a, r) => a + r.recharge_count, 0),
+            consumed_tokens: rows.reduce((a, r) => a + r.consumed_tokens, 0),
+            api_keys_created: rows.reduce((a, r) => a + r.api_keys_created, 0),
+          });
+        }
+        setLoadingDaily(false);
+      })
+      .catch(() => { setRangeError('区间查询失败，请重试'); setRangeSummary(null); setLoadingDaily(false); });
+  }, [rangeSel]);
+
   // 日历格子
   const cells = useMemo(() => {
     const firstDow = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // 周一起始
@@ -103,12 +153,50 @@ export default function AnalyticsPage() {
   const goToday = () => {
     const t = new Date();
     setViewYear(t.getFullYear()); setViewMonth(t.getMonth());
-    setSelectedDate(toISODate(t));
+    if (!rangeMode) setSelectedDate(toISODate(t));
+  };
+
+  // 格子点击：单日模式=选当天；区间模式=起点/终点
+  const onCellClick = (iso: string) => {
+    if (!rangeMode) { setSelectedDate(iso); return; }
+    setRangeSummary(null);
+    setRangeError('');
+    setRangeSel(prev => {
+      if (!prev || (prev.start && prev.end)) return { start: iso, end: null };
+      let start = prev.start, end = iso;
+      if (end < start) { const t = start; start = end; end = t; }
+      return { start, end };
+    });
+  };
+
+  // 区间内高亮判断
+  const inRange = (iso: string): boolean => {
+    if (!rangeMode || !rangeSel || !rangeSel.start) return false;
+    if (rangeSel.end) return iso >= rangeSel.start && iso <= rangeSel.end;
+    return iso === rangeSel.start;
+  };
+
+  const resetRange = () => { setRangeSel(null); setRangeSummary(null); setRangeError(''); };
+
+  // 区间日期输入联动
+  const onRangeInput = (which: 'start' | 'end', val: string) => {
+    if (!val) return;
+    setRangeSummary(null);
+    setRangeError('');
+    setRangeSel(prev => {
+      const start = which === 'start' ? val : (prev?.start || val);
+      const end = which === 'end' ? val : (prev?.end || null);
+      let s = start, e = end;
+      if (e && e < s) { const t = s; s = e; e = t; }
+      return { start: s, end: e };
+    });
   };
 
   if (loading) return <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" /></div>;
   if (error) return <div className="flex items-center justify-center h-full"><div className="text-red-400 text-sm">{error}</div></div>;
   if (!stats) return <div className="flex items-center justify-center h-full"><div className="text-white/30 text-sm">No data</div></div>;
+
+  const rangeActive = rangeMode && rangeSel && rangeSel.start && rangeSel.end;
 
   return (
     <div className="w-full space-y-6">
@@ -143,27 +231,70 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 每日日历查询 */}
+      {/* 日历查询 */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={15} className="text-emerald-400" />
-            <h3 className="text-[13px] font-medium text-white/70">按日查询</h3>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={15} className="text-emerald-400" />
+              <h3 className="text-[13px] font-medium text-white/70">日历查询</h3>
+            </div>
+            {/* 单日 / 区间 切换 */}
+            <div className="flex items-center rounded-lg bg-white/[0.03] border border-white/[0.06] p-0.5">
+              <button
+                onClick={() => { setRangeMode(false); setRangeSummary(null); setRangeError(''); }}
+                className={`px-3 py-1 text-[11px] rounded-md transition-all ${!rangeMode ? 'bg-emerald-500/20 text-emerald-400 font-medium' : 'text-white/40 hover:text-white/70'}`}
+              >
+                单日
+              </button>
+              <button
+                onClick={() => { setRangeMode(true); setRangeSel(null); setRangeSummary(null); setRangeError(''); }}
+                className={`px-3 py-1 text-[11px] rounded-md transition-all ${rangeMode ? 'bg-emerald-500/20 text-emerald-400 font-medium' : 'text-white/40 hover:text-white/70'}`}
+              >
+                区间
+              </button>
+            </div>
+            {rangeMode && rangeSel?.start && (
+              <button onClick={resetRange} className="flex items-center gap-1 px-2 py-1 text-[10px] rounded-md bg-white/[0.03] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all">
+                <X size={11} /> 重置
+              </button>
+            )}
           </div>
+
           <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/50 hover:text-white/80 flex items-center justify-center transition-all" title="上个月"><ChevronLeft size={15} /></button>
             <span className="text-[13px] text-white/80 w-24 text-center">{monthLabel}</span>
             <button onClick={nextMonth} className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/50 hover:text-white/80 flex items-center justify-center transition-all" title="下个月"><ChevronRight size={15} /></button>
             <button onClick={goToday} className="px-3 py-1.5 text-[11px] rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all">今天</button>
-            <div className="flex items-center gap-1.5 ml-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-              <CalendarRange size={13} className="text-white/30" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={e => { if (e.target.value) setSelectedDate(e.target.value); }}
-                className="bg-transparent text-[11px] text-white/70 outline-none [color-scheme:dark]"
-              />
-            </div>
+
+            {!rangeMode ? (
+              <div className="flex items-center gap-1.5 ml-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <CalendarRange size={13} className="text-white/30" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={e => { if (e.target.value) setSelectedDate(e.target.value); }}
+                  className="bg-transparent text-[11px] text-white/70 outline-none [color-scheme:dark]"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 ml-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <CalendarRange size={13} className="text-white/30" />
+                <input
+                  type="date"
+                  value={rangeSel?.start || ''}
+                  onChange={e => onRangeInput('start', e.target.value)}
+                  className="bg-transparent text-[11px] text-white/70 outline-none [color-scheme:dark]"
+                />
+                <span className="text-white/25 text-[11px]">→</span>
+                <input
+                  type="date"
+                  value={rangeSel?.end || ''}
+                  onChange={e => onRangeInput('end', e.target.value)}
+                  className="bg-transparent text-[11px] text-white/70 outline-none [color-scheme:dark]"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -181,21 +312,32 @@ export default function AnalyticsPage() {
             const d = daily[iso];
             const hasData = d && (d.registrations > 0 || d.recharge_amount > 0 || d.consumed_tokens > 0 || d.api_keys_created > 0);
             const isToday = iso === todayISO;
-            const isSelected = iso === selectedDate;
+            const isSelected = !rangeMode && iso === selectedDate;
+            const isStart = rangeMode && rangeSel?.start === iso;
+            const isEnd = rangeMode && rangeSel?.end === iso;
+            const isRange = inRange(iso);
             return (
               <button
                 key={iso}
-                onClick={() => setSelectedDate(iso)}
+                onClick={() => onCellClick(iso)}
                 className={`h-[92px] overflow-hidden rounded-xl p-2 text-left transition-all border ${
                   isSelected
                     ? 'bg-emerald-500/[0.12] border-emerald-500/40'
-                    : isToday
-                      ? 'bg-white/[0.05] border-white/15'
-                      : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05]'
+                    : isStart || isEnd
+                      ? 'bg-emerald-500/20 border-emerald-500/60'
+                      : isRange
+                        ? 'bg-emerald-500/[0.08] border-emerald-500/25'
+                        : isToday
+                          ? 'bg-white/[0.05] border-white/15'
+                          : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-medium ${isToday ? 'text-emerald-400' : 'text-white/50'}`}>{Number(iso.slice(8))}</span>
+                  <span className={`text-[11px] font-medium ${isToday ? 'text-emerald-400' : (isStart || isEnd) ? 'text-white' : 'text-white/50'}`}>
+                    {Number(iso.slice(8))}
+                    {isStart && <span className="ml-1 text-[8px] text-emerald-300/80">起</span>}
+                    {isEnd && <span className="ml-1 text-[8px] text-emerald-300/80">止</span>}
+                  </span>
                   {loadingDaily && <span className="w-1.5 h-1.5 rounded-full bg-white/10 animate-pulse" />}
                 </div>
                 <div className="mt-1.5 space-y-0.5">
@@ -215,30 +357,73 @@ export default function AnalyticsPage() {
           })}
         </div>
 
-        {/* 选中日期明细 */}
-        <div className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3 rounded-xl bg-white/[0.02] border border-white/[0.06] p-4">
-          <div className="col-span-2 lg:col-span-1 flex items-center">
-            <div>
-              <div className="text-[10px] text-white/30 uppercase mb-1">选中日期</div>
-              <div className="text-[16px] font-semibold text-white">{selectedDate || '—'}</div>
-              {selectedDate === todayISO && <div className="text-[10px] text-emerald-400 mt-0.5">今天（进行中）</div>}
-            </div>
+        {/* 选中结果：单日明细 或 区间汇总 */}
+        {rangeMode ? (
+          <div className="mt-4 rounded-xl bg-white/[0.02] border border-white/[0.06] p-4">
+            {rangeActive && rangeSummary ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div>
+                    <div className="text-[10px] text-white/30 uppercase mb-1">区间汇总</div>
+                    <div className="text-[15px] font-semibold text-white">
+                      {rangeSummary.start} → {rangeSummary.end}
+                      <span className="text-white/30 text-[12px] ml-2">共 {rangeSummary.days} 天</span>
+                    </div>
+                  </div>
+                  <button onClick={resetRange} className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all">
+                    <X size={11} /> 清除区间
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { label: '新增注册', value: fmt(rangeSummary.registrations), color: 'text-emerald-400' },
+                    { label: '充值金额 (¥)', value: '¥' + rangeSummary.recharge_amount.toFixed(2), color: 'text-blue-400', sub: rangeSummary.recharge_count + ' 笔' },
+                    { label: '消耗 Token', value: fmt(rangeSummary.consumed_tokens), color: 'text-purple-400' },
+                    { label: '新增 API Key', value: fmt(rangeSummary.api_keys_created), color: 'text-teal-400' },
+                  ].map(m => (
+                    <div key={m.label} className="rounded-lg bg-white/[0.02] px-3 py-2">
+                      <div className="text-[9px] text-white/30 uppercase mb-1">{m.label}</div>
+                      <div className={`text-[16px] font-semibold ${m.color}`}>{m.value}</div>
+                      {m.sub && <div className="text-[9px] text-white/25 mt-0.5">{m.sub}</div>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : rangeError ? (
+              <div className="text-red-400 text-sm py-2">{rangeError}</div>
+            ) : rangeSel?.start && !rangeSel.end ? (
+              <div className="text-white/40 text-sm py-2">
+                已选开始日期 <span className="text-emerald-400 font-medium">{rangeSel.start}</span>，请在日历上点选结束日期（或在上方输入结束日期）
+              </div>
+            ) : (
+              <div className="text-white/40 text-sm py-2">区间模式：点击日历上的开始日期和结束日期，或直接用上方日期输入框选择起止日期</div>
+            )}
           </div>
-          {[
-            { label: '注册人数', value: selected ? fmt(selected.registrations) : '0', color: 'text-emerald-400' },
-            { label: '充值金额 (¥)', value: selected ? '¥' + selected.recharge_amount.toFixed(2) : '¥0.00', color: 'text-blue-400' },
-            { label: '消耗 Token', value: selected ? fmt(selected.consumed_tokens) : '0', color: 'text-purple-400' },
-            { label: '新增 API Key', value: selected ? fmt(selected.api_keys_created) : '0', color: 'text-teal-400' },
-          ].map(m => (
-            <div key={m.label} className="rounded-lg bg-white/[0.02] px-3 py-2">
-              <div className="text-[9px] text-white/30 uppercase mb-1">{m.label}</div>
-              <div className={`text-[16px] font-semibold ${m.color}`}>{m.value}</div>
-              {m.label === '充值金额 (¥)' && selected && (
-                <div className="text-[9px] text-white/25 mt-0.5">{selected.recharge_count} 笔</div>
-              )}
+        ) : (
+          <div className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3 rounded-xl bg-white/[0.02] border border-white/[0.06] p-4">
+            <div className="col-span-2 lg:col-span-1 flex items-center">
+              <div>
+                <div className="text-[10px] text-white/30 uppercase mb-1">选中日期</div>
+                <div className="text-[16px] font-semibold text-white">{selectedDate || '—'}</div>
+                {selectedDate === todayISO && <div className="text-[10px] text-emerald-400 mt-0.5">今天（进行中）</div>}
+              </div>
             </div>
-          ))}
-        </div>
+            {[
+              { label: '注册人数', value: selected ? fmt(selected.registrations) : '0', color: 'text-emerald-400' },
+              { label: '充值金额 (¥)', value: selected ? '¥' + selected.recharge_amount.toFixed(2) : '¥0.00', color: 'text-blue-400' },
+              { label: '消耗 Token', value: selected ? fmt(selected.consumed_tokens) : '0', color: 'text-purple-400' },
+              { label: '新增 API Key', value: selected ? fmt(selected.api_keys_created) : '0', color: 'text-teal-400' },
+            ].map(m => (
+              <div key={m.label} className="rounded-lg bg-white/[0.02] px-3 py-2">
+                <div className="text-[9px] text-white/30 uppercase mb-1">{m.label}</div>
+                <div className={`text-[16px] font-semibold ${m.color}`}>{m.value}</div>
+                {m.label === '充值金额 (¥)' && selected && (
+                  <div className="text-[9px] text-white/25 mt-0.5">{selected.recharge_count} 笔</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
