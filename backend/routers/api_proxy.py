@@ -299,10 +299,14 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
     _need = estimate_request_cost(model, req.messages, req.max_tokens or req.max_completion_tokens)
     _need_balance = max(0, _need - _quota_remaining)
+    # 2026-08-22 管理员免扣费：管理员调用（含看图/测试）不预扣、不结算扣费，仅记录用量
+    _admin_free = bool(getattr(_u, "is_admin", False))
+    if _admin_free:
+        _need_balance = 0
 
     if req.stream:
         # 先预扣（仅预扣超出免费配额的部分），防止断连/超长输出白嫖
-        if _u.token_balance < _need_balance:
+        if not _admin_free and _u.token_balance < _need_balance:
             raise HTTPException(status_code=402, detail=f"余额不足：本次调用预计需 {_need_balance} token（当前 {_u.token_balance:.0f}）。¥1=100 token 仅够低价模型（v4-flash/v3.2），旗舰模型请充值或改用低价模型")
         _res = reserve_token(_uid, _need_balance, db, f"API预扣: {model}")
         if not _res["success"]:
@@ -340,7 +344,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
                         _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                         _q_covered = min(_tc, _q_rem)
-                        _balance_charge = max(0, _tc - _q_covered)
+                        _balance_charge = 0 if _admin_free else max(0, _tc - _q_covered)
                         if _sub and _balance_charge > 0:
                             _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
                         if _tc > 0:
@@ -426,7 +430,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
             raise HTTPException(status_code=502, detail=str(e))
 
     # 非流式：同样先预扣（仅预扣超出免费配额的部分），返回前按实际用量结算
-    if _u.token_balance < _need_balance:
+    if not _admin_free and _u.token_balance < _need_balance:
         raise HTTPException(status_code=402, detail=f"余额不足：本次调用预计需 {_need_balance} token（当前 {_u.token_balance:.0f}）。¥1=100 token 仅够低价模型（v4-flash/v3.2），旗舰模型请充值或改用低价模型")
     _res = reserve_token(_uid, _need_balance, db, f"API预扣: {model}")
     if not _res["success"]:
@@ -450,7 +454,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
-    _balance_charge = max(0, token_cost - _q_covered)
+    _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
     if _sub and _balance_charge > 0:
         _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
     _deduct = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
@@ -508,7 +512,10 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
     _need = estimate_request_cost(_model_t, req.messages, req.max_tokens or req.max_completion_tokens)
     _need_balance = max(0, _need - _quota_remaining)
-    if user.token_balance < _need_balance:
+    _admin_free = bool(getattr(user, "is_admin", False))
+    if _admin_free:
+        _need_balance = 0
+    if not _admin_free and user.token_balance < _need_balance:
         return {"success": False, "detail": f"余额不足：本次测试预计需 {_need_balance} token（当前 {user.token_balance:.0f}）。¥1=100 token 仅够低价模型（v4-flash/v3.2），旗舰模型请充值或改用低价模型"}
     _res = reserve_token(user.id, _need_balance, db, f"API预扣: {_model_t}")
     if not _res["success"]:
@@ -532,7 +539,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
     _q_covered = min(token_cost, _q_rem)
-    _balance_charge = max(0, token_cost - _q_covered)
+    _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
     if _sub and _balance_charge > 0:
         _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
     _deduct = settle_reserved(user.id, _need_balance, _balance_charge, db, f"API: {model}")
@@ -581,7 +588,10 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
     _need = estimate_request_cost(model, messages, req.max_output_tokens)
     _need_balance = max(0, _need - _quota_remaining)
-    if _u.token_balance < _need_balance:
+    _admin_free = bool(getattr(_u, "is_admin", False))
+    if _admin_free:
+        _need_balance = 0
+    if not _admin_free and _u.token_balance < _need_balance:
         raise HTTPException(status_code=402, detail=f"余额不足：本次调用预计需 {_need_balance} token（当前 {_u.token_balance:.0f}）。¥1=100 token 仅够低价模型（v4-flash/v3.2），旗舰模型请充值或改用低价模型")
     _res = reserve_token(_uid, _need_balance, db, f"API预扣: {model}")
     if not _res["success"]:
@@ -642,7 +652,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
                 _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
                 _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
                 _q_covered = min(_tc, _q_rem)
-                _balance_charge = max(0, _tc - _q_covered)
+                _balance_charge = 0 if _admin_free else max(0, _tc - _q_covered)
                 if _sub and _balance_charge > 0:
                     _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
                 if ok and _tc > 0:
