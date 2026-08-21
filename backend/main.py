@@ -86,6 +86,13 @@ async def _startup_tasks():
     asyncio.create_task(_cleanup_conversation_logs())
 
 
+@app.on_event("shutdown")
+async def _shutdown_close_http():
+    """关闭上游 HTTP 连接池（ai_service 共享 AsyncClient）。"""
+    from services.ai_service import close_http_client
+    await close_http_client()
+
+
 async def _cleanup_conversation_logs():
     """每天清理超过 12 个月的对话存档（与《隐私政策》留存期限一致，控制库增长）"""
     import logging

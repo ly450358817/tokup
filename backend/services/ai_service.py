@@ -2,6 +2,7 @@
 AI API 路由服务 — 根据模型自动选择最优上游
 """
 import os
+import asyncio
 import httpx
 
 
@@ -152,6 +153,36 @@ def _deepseek_fallback(model: str, provider: str):
     return None
 
 
+
+# ── 上游 HTTP 连接复用（P1 延迟优化）─────────────────────────────
+# 全局共享 AsyncClient：复用 TCP/TLS 连接池，避免每个请求都重建连接。
+# lazy 初始化 + asyncio.Lock 防止多协程并发重复创建；进程退出时由 main.py shutdown 钩子关闭。
+_HTTP_CLIENT = None
+_HTTP_CLIENT_LOCK = None
+
+
+async def _get_http_client():
+    global _HTTP_CLIENT, _HTTP_CLIENT_LOCK
+    if _HTTP_CLIENT is None or _HTTP_CLIENT.is_closed:
+        if _HTTP_CLIENT_LOCK is None:
+            _HTTP_CLIENT_LOCK = asyncio.Lock()
+        async with _HTTP_CLIENT_LOCK:
+            if _HTTP_CLIENT is None or _HTTP_CLIENT.is_closed:
+                _HTTP_CLIENT = httpx.AsyncClient(
+                    timeout=httpx.Timeout(600.0, connect=30.0),
+                    limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+                )
+    return _HTTP_CLIENT
+
+
+async def close_http_client():
+    """释放上游连接池（app 退出时调用）。"""
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is not None and not _HTTP_CLIENT.is_closed:
+        await _HTTP_CLIENT.aclose()
+    _HTTP_CLIENT = None
+
+
 async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None) -> dict:
     """
     转发请求到上游；deepseek 模型在七牛失败时自动切到 DeepSeek 官方兜底。
@@ -184,20 +215,23 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
 
         for attempt in range(3):
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=30.0)) as client:
-                    resp = await client.post(u, headers=headers, json=payload)
-                    if resp.status_code >= 400:
-                        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
-                    result = resp.json()
-                    usage = result.get("usage", {})
-                    input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
-                    output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0))
-                    cost = calculate_cost(model, input_tokens, output_tokens)
-                    return {
-                        "success": True,
-                        "data": result,
-                        "usage": {"input": input_tokens, "output": output_tokens, "cost": cost},
-                    }
+                client = await _get_http_client()
+                resp = await client.post(u, headers=headers, json=payload, timeout=httpx.Timeout(300.0, connect=30.0))
+                if resp.status_code >= 400:
+                    err_text = resp.text[:200]
+                    await resp.aclose()
+                    raise RuntimeError(f"HTTP {resp.status_code}: {err_text}")
+                result = resp.json()
+                await resp.aclose()
+                usage = result.get("usage", {})
+                input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
+                output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0))
+                cost = calculate_cost(model, input_tokens, output_tokens)
+                return {
+                    "success": True,
+                    "data": result,
+                    "usage": {"input": input_tokens, "output": output_tokens, "cost": cost},
+                }
             except Exception as e:
                 last_err = str(e)
                 if attempt < 2:
@@ -250,54 +284,54 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
 
         for attempt in range(2):
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
-                    async with client.stream("POST", u, headers=headers, json=payload) as resp:
-                        input_tok = 0
-                        output_tok = 0
-                        full_content = ""
-                        full_reasoning = ""
-                        started = False      # 出现 reasoning 或 content 即开始转发
-                        pending = b""        # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
-                        async for chunk in resp.aiter_bytes():
-                            usage_tag = b""
-                            try:
-                                text = chunk.decode("utf-8")
-                                for line in text.split("\n"):
-                                    if line.startswith("data: ") and "[DONE]" not in line:
-                                        data_str = line[6:]
-                                        data = _json.loads(data_str)
-                                        usage = data.get("usage", {})
-                                        if usage:
-                                            input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
-                                            output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
-                                        delta = data.get("choices", [{}])[0].get("delta", {}) or {}
-                                        rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
-                                        dc = delta.get("content") or ""
-                                        has_tc = bool(delta.get("tool_calls"))
-                                        if rc:
-                                            full_reasoning += rc
-                                        if dc:
-                                            full_content += dc
-                                        # 工具调用也是有效输出：立即开始转发，避免被当成空流
-                                        if (rc or dc or has_tc) and not started:
-                                            started = True
-                                        if data.get("choices", [{}])[0].get("finish_reason"):
-                                            cost_val = calculate_cost(model, input_tok, output_tok)
-                                            usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
-                            except Exception:
-                                pass
-                            if started:
-                                if usage_tag:
-                                    yield usage_tag
-                                yield chunk
-                            else:
-                                pending += chunk
-                        if not started:
-                            # 整段流既无 reasoning 也无 content -> 视为空流，触发重试（客户端尚未收到任何字节）
-                            raise RuntimeError("上游流式返回为空（无内容）")
-                        if pending:
-                            yield pending
-                        return
+                client = await _get_http_client()
+                async with client.stream("POST", u, headers=headers, json=payload, timeout=httpx.Timeout(600.0, connect=30.0)) as resp:
+                    input_tok = 0
+                    output_tok = 0
+                    full_content = ""
+                    full_reasoning = ""
+                    started = False      # 出现 reasoning 或 content 即开始转发
+                    pending = b""        # 首个内容出现前的缓冲：上游偶发空流时可在转发前重试
+                    async for chunk in resp.aiter_bytes():
+                        usage_tag = b""
+                        try:
+                            text = chunk.decode("utf-8")
+                            for line in text.split("\n"):
+                                if line.startswith("data: ") and "[DONE]" not in line:
+                                    data_str = line[6:]
+                                    data = _json.loads(data_str)
+                                    usage = data.get("usage", {})
+                                    if usage:
+                                        input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
+                                        output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
+                                    delta = data.get("choices", [{}])[0].get("delta", {}) or {}
+                                    rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
+                                    dc = delta.get("content") or ""
+                                    has_tc = bool(delta.get("tool_calls"))
+                                    if rc:
+                                        full_reasoning += rc
+                                    if dc:
+                                        full_content += dc
+                                    # 工具调用也是有效输出：立即开始转发，避免被当成空流
+                                    if (rc or dc or has_tc) and not started:
+                                        started = True
+                                    if data.get("choices", [{}])[0].get("finish_reason"):
+                                        cost_val = calculate_cost(model, input_tok, output_tok)
+                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
+                        except Exception:
+                            pass
+                        if started:
+                            if usage_tag:
+                                yield usage_tag
+                            yield chunk
+                        else:
+                            pending += chunk
+                    if not started:
+                        # 整段流既无 reasoning 也无 content -> 视为空流，触发重试（客户端尚未收到任何字节）
+                        raise RuntimeError("上游流式返回为空（无内容）")
+                    if pending:
+                        yield pending
+                    return
             except Exception as e:
                 last_err = e
                 logging.getLogger(__name__).warning(
