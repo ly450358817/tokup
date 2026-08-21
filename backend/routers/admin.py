@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -33,6 +34,118 @@ def admin_stats(user: User = Depends(get_current_user), db: Session = Depends(ge
         "total_consumed": total_consumed,
         "total_keys": total_keys,
         "active_keys": active_keys,
+    }
+
+
+@router.get("/stats/daily")
+def admin_daily_stats(
+    days: int = 30,
+    start: str = "",
+    end: str = "",
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """管理员每日数据：注册数 / 充值金额 / 消耗 token / 新增 API Key（按北京时间自然日汇总）。
+
+    查询方式（二选一）：
+      - days=N：返回最近 N 天（含今天），默认 30
+      - start=YYYY-MM-DD&end=YYYY-MM-DD：返回指定日期区间（日历按月查询用；end 缺省为今天）
+
+    口径与 /stats 汇总保持一致：
+      - 充值：type=recharge、status=completed、且带支付方式（排除赠送/邀请提成等非真实充值）
+      - 消耗：type=consume、status=completed 的 token_amount 合计
+      - 注册 / API Key：按创建时间计数
+    日期按北京时间（UTC+8）切分；created_at 存的是 UTC，SQLite 里 +8 小时后再取日期。
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="仅管理员可操作")
+    tz = timezone(timedelta(hours=8))
+    today = datetime.now(timezone.utc).astimezone(tz).date()
+
+    # ── 确定查询区间 ──
+    if start:
+        try:
+            start_day = datetime.strptime(start, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="start 格式应为 YYYY-MM-DD")
+        end_day = today
+        if end:
+            try:
+                end_day = datetime.strptime(end, "%Y-%m-%d").date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail="end 格式应为 YYYY-MM-DD")
+        if end_day < start_day:
+            start_day, end_day = end_day, start_day
+        if (end_day - start_day).days > 366:
+            raise HTTPException(status_code=400, detail="单次查询最多 366 天")
+    else:
+        days = max(1, min(int(days), 365))
+        end_day = today
+        start_day = today - timedelta(days=days - 1)
+
+    # 北京自然日 0 点对应的 UTC 时刻
+    start_utc = datetime(start_day.year, start_day.month, start_day.day, tzinfo=tz).astimezone(timezone.utc)
+
+    def _bday(col):
+        # SQLite 专用：UTC 时间 +8 小时取日期，得到北京时间自然日
+        return func.date(col, "+8 hours").label("d")
+
+    registrations = dict(
+        db.query(_bday(User.created_at), func.count(User.id))
+        .filter(User.created_at >= start_utc)
+        .group_by("d")
+        .all()
+    )
+    recharges = {
+        d: (float(amt or 0), int(cnt or 0))
+        for d, amt, cnt in db.query(
+            _bday(Transaction.created_at),
+            func.coalesce(func.sum(Transaction.amount), 0),
+            func.count(Transaction.id),
+        )
+        .filter(
+            Transaction.type == "recharge",
+            Transaction.status == "completed",
+            Transaction.payment_method != "",
+            Transaction.created_at >= start_utc,
+        )
+        .group_by("d")
+        .all()
+    }
+    consumed = dict(
+        db.query(_bday(Transaction.created_at), func.coalesce(func.sum(Transaction.token_amount), 0))
+        .filter(
+            Transaction.type == "consume",
+            Transaction.status == "completed",
+            Transaction.created_at >= start_utc,
+        )
+        .group_by("d")
+        .all()
+    )
+    api_keys = dict(
+        db.query(_bday(ApiKey.created_at), func.count(ApiKey.id))
+        .filter(ApiKey.created_at >= start_utc)
+        .group_by("d")
+        .all()
+    )
+
+    daily = []
+    for i in range((end_day - start_day).days + 1):
+        day = (start_day + timedelta(days=i)).isoformat()
+        amt, cnt = recharges.get(day, (0.0, 0))
+        daily.append({
+            "date": day,
+            "registrations": int(registrations.get(day, 0)),
+            "recharge_amount": round(amt, 2),
+            "recharge_count": cnt,
+            "consumed_tokens": float(consumed.get(day, 0)),
+            "api_keys_created": int(api_keys.get(day, 0)),
+        })
+
+    return {
+        "range_days": (end_day - start_day).days + 1,
+        "timezone": "Asia/Shanghai (UTC+8)",
+        "daily": daily,
     }
 
 
