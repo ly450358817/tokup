@@ -67,7 +67,7 @@ export default function PricingPage() {
     try {
       const res = await subscriptionApi.purchase(planId);
       if (res.success) {
-        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${new Date(res.expires).toLocaleDateString()}，每日 ${(res.daily_limit || 0).toLocaleString()} Token 免费额度` });
+        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${new Date(res.expires).toLocaleDateString()}，每日 ${(res.daily_limit || 0).toLocaleString()} 模型 Token 免费额度` });
         const d = await subscriptionApi.status();
         setSubStatus(d);
       } else {
@@ -144,6 +144,7 @@ export default function PricingPage() {
         {quotaModels.length > 0 && (
           <p className="text-[10px] text-white/30 mb-5">当前适用：{quotaModels.join(' / ')}（以实际扣费规则为准）</p>
         )}
+        <p className="text-[10px] text-white/30 mb-5">注：免费额度按模型 Token（输入+输出）计，与充值余额点数（1 元=100 Token）为不同单位；低价模型单价约 ¥1.5~¥4 / 百万 Token。</p>
         {loadingPlans ? (
           <div className="text-[12px] text-white/30">加载中...</div>
         ) : (
