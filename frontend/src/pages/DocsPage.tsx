@@ -86,11 +86,11 @@ export default function DocsPage() {
               </tr>
               <tr className="border-b border-white/[0.04]">
                 <td className="px-4 py-2.5 text-white/60">API Key</td>
-                <td className="px-4 py-2.5 font-mono text-white/40">刚才复制的那个 Key</td>
+                <td className="px-4 py-2.5 font-mono text-white/40">刚才复制的 Key（以 <strong className="text-emerald-400">tok-</strong> 开头）</td>
               </tr>
               <tr>
                 <td className="px-4 py-2.5 text-white/60">模型选择</td>
-                <td className="px-4 py-2.5 font-mono text-emerald-400/80">gpt-5.5、deepseek-v4-pro / v4-flash、claude-fable-5、kimi-k2.6 等</td>
+                <td className="px-4 py-2.5 font-mono text-emerald-400/80">deepseek/deepseek-v4-flash（快）· gpt-5.5（强）· kimi-k2.6 等，见下方「快模型推荐」</td>
               </tr>
             </tbody>
           </table>
@@ -190,13 +190,105 @@ export default function DocsPage() {
           </p>
         </div>
 
-        {/* 其他客户端 */}
+        {/* 常用软件速查 */}
         <div className="bg-[#13131D] rounded-xl p-4 mb-3">
-          <h4 className="text-[12px] font-medium text-white/60 mb-2">其他客户端</h4>
-          <p className="text-[12px] text-white/40 leading-relaxed">
-            Cursor / Chatbox / LobeChat / OpenCat / CC Switch 等<br />
-            设置 → 自定义 API / 添加供应商 → 填上面三个配置项 → 保存
+          <h4 className="text-[12px] font-medium text-white/60 mb-2">常用软件速查（都是同一套参数）</h4>
+          <p className="text-[12px] text-white/40 leading-relaxed mb-3">
+            所有软件统一用「<strong className="text-white/70">自定义 / OpenAI 兼容</strong>」类型，地址填{" "}
+            <code className="font-mono text-emerald-400">https://tokup.net/v1</code>（或 /api/v1），Key 填 tok- 开头，
+            模型填 <code className="font-mono text-emerald-400">deepseek/deepseek-v4-flash</code>。
+            <strong className="text-amber-400/90">千万别选软件自带的「DeepSeek / OpenAI 官方预设」</strong>，那会请求官方服务器、不认 TokUp 的 Key。
           </p>
+          <div className="bg-[#13131D] rounded-xl overflow-hidden">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="border-b border-white/[0.04]">
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">软件</th>
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">入口</th>
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">要点</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 text-white/70">Chatbox（电脑/手机）</td>
+                  <td className="px-4 py-2 text-white/40">设置 → 模型提供方 → 添加自定义提供方</td>
+                  <td className="px-4 py-2 text-white/40">别选 DeepSeek 预设；模型手动填</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 text-white/70">RikkaHub（安卓）</td>
+                  <td className="px-4 py-2 text-white/40">设置 → 提供商 → 添加，类型选 OpenAI</td>
+                  <td className="px-4 py-2 text-white/40">Base URL 填 https://tokup.net/api/v1</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 text-white/70">恋语 LianYu（安卓）</td>
+                  <td className="px-4 py-2 text-white/40">我的 → API 设置 → 添加/编辑</td>
+                  <td className="px-4 py-2 text-white/40">类型选 OpenAI 兼容/Custom；只让填 Key 没地址框 = 选错预设了</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 text-white/70">Cursor</td>
+                  <td className="px-4 py-2 text-white/40">Settings → Models → OpenAI API Key</td>
+                  <td className="px-4 py-2 text-white/40">地址填 https://tokup.net/api/v1</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 text-white/70">LobeChat / NextChat / OpenCat / Cherry Studio</td>
+                  <td className="px-4 py-2 text-white/40">设置 → 自定义模型服务商 / 添加供应商</td>
+                  <td className="px-4 py-2 text-white/40">OpenAI 兼容，地址 https://tokup.net/v1</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 text-white/70">沉浸式翻译 / 其他 OpenAI 兼容工具</td>
+                  <td className="px-4 py-2 text-white/40">自定义 API / 中转地址</td>
+                  <td className="px-4 py-2 text-white/40">同上，一套参数通用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 快模型推荐 */}
+        <div className="bg-[#13131D] rounded-xl p-4 mb-3">
+          <h4 className="text-[12px] font-medium text-white/60 mb-2">快模型推荐（日常聊天选这些）</h4>
+          <p className="text-[12px] text-white/40 leading-relaxed mb-3">
+            觉得回复慢？先换快模型。价格为 ¥/百万 Token（输入/输出）。gpt-5.5、claude-fable-5、deepseek-v4-pro
+            是「思考型」模型，想得久、回复慢是正常的，追求速度别选它们。
+          </p>
+          <div className="bg-[#13131D] rounded-xl overflow-hidden">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="border-b border-white/[0.04]">
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">模型（原样填写，区分大小写）</th>
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">价格</th>
+                  <th className="text-left px-4 py-2 text-white/40 font-medium">定位</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 font-mono text-emerald-400">deepseek/deepseek-v4-flash</td>
+                  <td className="px-4 py-2 text-white/60">¥1.5 / ¥3</td>
+                  <td className="px-4 py-2 text-white/60">最快 · 最便宜 · 首选</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 font-mono text-emerald-400/80">qwen3.5-397b-a17b</td>
+                  <td className="px-4 py-2 text-white/60">¥4 / ¥24</td>
+                  <td className="px-4 py-2 text-white/60">快 · 性价比高</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 font-mono text-emerald-400/80">minimax/minimax-m3</td>
+                  <td className="px-4 py-2 text-white/60">¥6 / ¥24</td>
+                  <td className="px-4 py-2 text-white/60">快 · 均衡</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="px-4 py-2 font-mono text-emerald-400/80">openai/gpt-5.6-luna</td>
+                  <td className="px-4 py-2 text-white/60">¥10 / ¥55</td>
+                  <td className="px-4 py-2 text-white/60">快 · 质量更好</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-mono text-white/40">gpt-5.5 / claude-fable-5 / deepseek-v4-pro</td>
+                  <td className="px-4 py-2 text-white/40">较贵</td>
+                  <td className="px-4 py-2 text-white/40">思考型 · 慢 · 追求速度别选</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* 说明 */}
@@ -234,6 +326,14 @@ export default function DocsPage() {
             <p className="text-[12px] text-white/40">
               一键导入默认填的是 gpt-5.5。想用其他模型，在供应商编辑页的模型输入框右侧点「获取模型列表」，
               会自动拉取 TokUp 全部模型，从下拉里选一个即可
+            </p>
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-white/60 mb-1">Chatbox / 恋语连不上，提示 Key 无效或 role 报错？</p>
+            <p className="text-[12px] text-white/40">
+              八成是选了软件自带的「DeepSeek / OpenAI 官方预设」——它请求的是官方服务器，不认 TokUp 的 tok- Key。
+              改用「自定义 / OpenAI 兼容」服务商，地址填 https://tokup.net/v1（或 /api/v1），
+              Key 填 tok- 开头的那个，模型填 deepseek/deepseek-v4-flash 即可。
             </p>
           </div>
           <div>
