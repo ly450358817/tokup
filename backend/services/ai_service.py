@@ -176,11 +176,16 @@ async def _get_http_client():
 
 
 async def close_http_client():
-    """释放上游连接池（app 退出时调用）。"""
+    """释放上游连接池（app 退出时调用）。失败仅记录，不阻断退出。"""
     global _HTTP_CLIENT
-    if _HTTP_CLIENT is not None and not _HTTP_CLIENT.is_closed:
-        await _HTTP_CLIENT.aclose()
+    client = _HTTP_CLIENT
     _HTTP_CLIENT = None
+    if client is not None and not client.is_closed:
+        try:
+            await client.aclose()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("关闭上游连接池失败（忽略）", exc_info=True)
 
 
 async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None) -> dict:

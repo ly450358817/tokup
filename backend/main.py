@@ -88,9 +88,13 @@ async def _startup_tasks():
 
 @app.on_event("shutdown")
 async def _shutdown_close_http():
-    """关闭上游 HTTP 连接池（ai_service 共享 AsyncClient）。"""
-    from services.ai_service import close_http_client
-    await close_http_client()
+    """关闭上游 HTTP 连接池（ai_service 共享 AsyncClient）。失败不影响退出。"""
+    try:
+        from services.ai_service import close_http_client
+        await close_http_client()
+    except Exception:
+        import logging
+        logging.getLogger("tokup").warning("关闭 HTTP 连接池失败（忽略）", exc_info=True)
 
 
 async def _cleanup_conversation_logs():
