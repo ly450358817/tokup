@@ -10,23 +10,32 @@
 # 用法:  bash scripts/tokup-deploy-verify.sh
 # 退出码: 0=生产与本地一致；1=存在漂移/未上线/健康异常
 #
-# 可配置环境变量（默认按当前生产拓扑）:
+# 可配置环境变量（默认按当前生产拓扑，默认直连，无需跳板）:
 #   TOKUP_SSH_TARGET=ubuntu@101.32.189.59
-#   TOKUP_SSH_JUMP=-J root@173.254.234.42
+#   TOKUP_SSH_JUMP=-J root@173.254.234.42   # 可选：仅在直连不通时用作跳板
 set -uo pipefail
 
 SSH_TARGET="${TOKUP_SSH_TARGET:-ubuntu@101.32.189.59}"
-SSH_JUMP="${TOKUP_SSH_JUMP:--J root@173.254.234.42}"
+SSH_JUMP="${TOKUP_SSH_JUMP:-}"   # 默认直连；需要跳板时设 TOKUP_SSH_JUMP=-J user@host
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 FAIL=0
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=15)
+
+# 生产 SSH：默认直连腾讯云；设置了 TOKUP_SSH_JUMP 时走跳板
+ssh_prod() {
+  if [ -n "$SSH_JUMP" ]; then
+    ssh "${SSH_OPTS[@]}" -J "$SSH_JUMP" "$SSH_TARGET" "$@"
+  else
+    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "$@"
+  fi
+}
 
 echo "== 1/3 生产源码 vs 本地 git HEAD =="
 ( cd "$REPO" && git ls-files 'backend/*.py' 'frontend/src/*.tsx' 'frontend/src/*.ts' | while read -r f; do
     git show "HEAD:$f" 2>/dev/null | md5 -q | awk -v p="$f" '{print $1"  "p}'
   done | sort ) > /tmp/tokup_local.md5
 
-ssh "${SSH_OPTS[@]}" "$SSH_JUMP" "$SSH_TARGET" \
+ssh_prod \
   "cd /opt/tokup && find frontend/src backend -type f \( -name '*.tsx' -o -name '*.ts' -o -name '*.py' \) \
      ! -path '*/venv/*' ! -path '*/__pycache__/*' ! -name '*.bak*' ! -name '*_bak*' \
      -exec md5sum {} + 2>/dev/null | sort" > /tmp/tokup_server.md5
@@ -53,7 +62,7 @@ PY
 
 echo
 echo "== 2/3 公网 bundle == 生产 dist 最新 bundle =="
-SERVER_BUNDLE=$(ssh "${SSH_OPTS[@]}" "$SSH_JUMP" "$SSH_TARGET" \
+SERVER_BUNDLE=$(ssh_prod \
   "ls -t /opt/tokup/frontend/dist/assets/index-*.js 2>/dev/null | head -1 | xargs basename" 2>/dev/null)
 LIVE_BUNDLE=$(curl -s -m 20 "https://tokup.net/?cb=$(date +%s)" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1 | xargs basename 2>/dev/null)
 echo "  生产 dist: ${SERVER_BUNDLE:-无}"
