@@ -139,7 +139,7 @@ export default function PricingPage() {
         <p className="text-[12px] text-white/30 mb-2">用余额开通：配额内调用不扣余额，超出后按量计费 · 北京时间 0 点重置</p>
         <p className="text-[11px] text-amber-300/60 mb-1">免费配额仅适用低价模型；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
         <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[12px] text-emerald-300/90 leading-relaxed">
-          💡 <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度 + 全模型 9 折，月调用量大的用户比按量散充划算；越买越多——月卡 30万/季卡 35万/年卡 40万，日均价逐级更低。
+          💡 <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度 + 所有模型余额消费 9 折，月调用量大的用户比按量散充划算。越买越多——月卡每天 30万 / 季卡每天 35万 / 年卡每天 40万（月 ¥99 / 季 ¥199 / 年 ¥499），折合单价逐级更低；额度按日重置不累积，日用量越大越划算。
         </div>
         {quotaModels.length > 0 && (
           <p className="text-[10px] text-white/30 mb-5">当前适用：{quotaModels.join(' / ')}（以实际扣费规则为准）</p>
@@ -168,7 +168,7 @@ export default function PricingPage() {
                   </span>
                 </div>
                 <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-semibold">
-                  全模型 9 折
+                  余额消费 9 折
                 </span>
                 <p className="text-[12px] text-white/50 mt-2">{plan.desc}</p>
                 <div className="mt-4 space-y-2 text-[12px] text-white/50">
