@@ -81,7 +81,7 @@ MODEL_COST = {
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
-    "anthropic/claude-fable-5": (90.0, 450.0),  # 上游实测 ¥69/¥345
+    "anthropic/claude-fable-5": (90.0, 500.0),   # 2026-08-22 输出+11% 保险（上游计费>API返回约10%，实测毛利仅13%）  # 上游实测 ¥69/¥345
     "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
     "moonshotai/kimi-k3": (26.0, 130.0),        # 上游 ¥20/¥100
@@ -293,6 +293,8 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                 async with client.stream("POST", u, headers=headers, json=payload, timeout=httpx.Timeout(600.0, connect=30.0)) as resp:
                     input_tok = 0
                     output_tok = 0
+                    usage_seen = False   # 已捕获到 usage（防止 usage 与 finish_reason 分帧导致漏记）
+                    usage_emitted = False
                     full_content = ""
                     full_reasoning = ""
                     started = False      # 出现 reasoning 或 content 即开始转发
@@ -305,10 +307,14 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                                 if line.startswith("data: ") and "[DONE]" not in line:
                                     data_str = line[6:]
                                     data = _json.loads(data_str)
-                                    usage = data.get("usage", {})
+                                    # OpenAI 风格顶层 usage；Anthropic 风格在 message.usage（message_start/message_delta）
+                                    usage = data.get("usage") or (data.get("message") or {}).get("usage") or {}
                                     if usage:
-                                        input_tok = usage.get("prompt_tokens", usage.get("input_tokens", 0))
-                                        output_tok = usage.get("completion_tokens", usage.get("output_tokens", 0))
+                                        _u_in = usage.get("prompt_tokens", usage.get("input_tokens", 0))
+                                        _u_out = usage.get("completion_tokens", usage.get("output_tokens", 0))
+                                        if _u_in or _u_out:
+                                            input_tok, output_tok = _u_in, _u_out
+                                            usage_seen = True
                                     delta = data.get("choices", [{}])[0].get("delta", {}) or {}
                                     rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
                                     dc = delta.get("content") or ""
@@ -323,6 +329,7 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                                     if data.get("choices", [{}])[0].get("finish_reason"):
                                         cost_val = calculate_cost(model, input_tok, output_tok)
                                         usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
+                                        usage_emitted = True
                         except Exception:
                             pass
                         if started:
@@ -336,6 +343,10 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                         raise RuntimeError("上游流式返回为空（无内容）")
                     if pending:
                         yield pending
+                    # 兜底：usage 与 finish_reason 分帧时，流结束后补发 usage，避免回退到字符估算导致少计费
+                    if usage_seen and not usage_emitted:
+                        cost_val = calculate_cost(model, input_tok, output_tok)
+                        yield f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
                     return
             except Exception as e:
                 last_err = e

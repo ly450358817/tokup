@@ -100,6 +100,34 @@ def load_sell():
     return parse_py_dict(src, "MODEL_COST")
 
 
+def fetch_real_income(day, db_path=None):
+    """返回 {平台模型key: 真实收入¥}（生产库 usage_records.cost_cny，按北京时间日窗口）。
+    优先 --db 本地库；否则 SSH 生产；失败返回 {}（调用方回退估算）。"""
+    import subprocess, sqlite3
+    d = dt.date.fromisoformat(day)
+    start = (d - dt.timedelta(days=1)).isoformat() + " 16:00:00"
+    end = d.isoformat() + " 16:00:00"
+    sql = ("SELECT model, ROUND(SUM(cost_cny),2) FROM usage_records "
+           f"WHERE created_at>='{start}' AND created_at<'{end}' GROUP BY model;")
+    rows = []
+    try:
+        if db_path:
+            conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+            rows = conn.execute(sql).fetchall()
+            conn.close()
+        else:
+            out = subprocess.run(
+                ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "ubuntu@101.32.189.59",
+                 f"sqlite3 -readonly /opt/tokup/backend/tokup.db \"{sql}\""],
+                capture_output=True, text=True, timeout=30)
+            if out.returncode == 0:
+                rows = [ln.split("|", 1) for ln in out.stdout.splitlines() if "|" in ln]
+                rows = [(k.strip(), float(v)) for k, v in rows if v.strip()]
+    except Exception:
+        return {}
+    return {k: float(v) for k, v in rows if k and v}
+
+
 def http_get_json(url, headers=None, timeout=30):
     req = urllib.request.Request(url, headers=headers or {})
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -158,6 +186,7 @@ def main():
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--pack-tokens", type=float, default=PACK_TOKENS)
     ap.add_argument("--pack-price", type=float, default=PACK_PRICE)
+    ap.add_argument("--db", default=None, help="本地 SQLite 库路径（不填则 SSH 生产库取真实收入）")
     args = ap.parse_args()
     d = args.date or (dt.date.today() - dt.timedelta(days=1)).isoformat()
     pack_cost_per_m = args.pack_price / (args.pack_tokens / 1_000_000)
@@ -169,8 +198,11 @@ def main():
     sell = load_sell()
 
     models = fetch_day(qk, d)
+    real = fetch_real_income(d, args.db)
+    used_real_keys = set()
     rows, warns = [], []
     tot_pack = tot_bal = tot_income = 0.0
+    inc_src = "真实" if real else "估算(SSH不可达)"
     for mid in sorted(models):
         e = models[mid]
         key = BILL_TO_KEY.get(mid, mid)
@@ -183,7 +215,12 @@ def main():
         else:
             tag, bal, pack_m = "?未确认", e["fee"], 0.0   # 未确认：保守按余额
         s = sell.get(key)
-        income = (in_m * s[0] + out_m * s[1]) if s else 0.0
+        est_income = (in_m * s[0] + out_m * s[1]) if s else 0.0
+        if key in real and key not in used_real_keys:   # 同一平台key多账单行只计一次真实收入
+            income = real[key]
+            used_real_keys.add(key)
+        else:
+            income = est_income
         cost = pack_m * pack_cost_per_m + bal
         margin = (income - cost) / cost * 100 if cost else 0.0
         tot_pack += pack_m; tot_bal += bal; tot_income += income
@@ -196,6 +233,7 @@ def main():
         W = 92
         print("=" * W)
         print(f"TokUp 资源包日报  {d}   （包: {args.pack_tokens/1e6:.0f}M token / ¥{args.pack_price:.0f} = ¥{pack_cost_per_m:.2f}/百万包token）")
+        print(f"收入来源: {inc_src}{'(本地库)' if args.db else ''}")
         print("=" * W)
         print(f"{'账单模型':<34}{'包内/外':<7}{'输入M':>8}{'输出M':>7}{'包消耗M':>9}{'余额¥':>8}{'卖价¥':>8}{'毛利%':>8}")
         for r in rows:
