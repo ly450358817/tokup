@@ -79,6 +79,14 @@ export default function CompliancePage() {
         </a>
       </div>
 
+      {/* Mobile scroll hint */}
+      <div className="lg:hidden flex items-center justify-center gap-2 mb-4 text-[11px] text-white/30">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>
+        </svg>
+        共 7 项承诺 · 下滑查看更多
+      </div>
+
       {/* Compliance Items */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {COMMITMENTS.map((item, i) => (
@@ -94,7 +102,7 @@ export default function CompliancePage() {
                     {item.status}
                   </span>
                 </div>
-                <p className="text-[13px] text-white/50 leading-relaxed mb-2">{item.desc}</p>
+                <p className="text-[13px] sm:text-[12px] text-white/50 leading-relaxed mb-2">{item.desc}</p>
                 <code className="text-[11px] text-emerald-400/60 bg-emerald-500/5 px-2 py-1 rounded-md">{item.detail}</code>
               </div>
             </div>

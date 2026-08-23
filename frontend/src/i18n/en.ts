@@ -231,6 +231,8 @@ export const en = {
     edit: 'Edit',
     save: 'Save',
     close: 'Close',
+    copy: 'Copy',
+    copied: 'Copied',
   },
   settings: {
     title: "Settings",

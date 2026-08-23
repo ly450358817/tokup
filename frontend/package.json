@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cd dist/assets && ln -sf $(ls -t ThreeScene-*.js 2>/dev/null | head -1) ThreeScene.js",
+    "build": "vite build && cd dist/assets && ln -sf $(ls -t ThreeScene-*.js 2>/dev/null | head -1) ThreeScene.js && for f in *.js *.css; do gzip -k -9 -f \"$f\" 2>/dev/null || true; done",
     "preview": "vite preview"
   },
   "dependencies": {

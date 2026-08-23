@@ -236,6 +236,8 @@ export const zh = {
     edit: '编辑',
     save: '保存',
     close: '关闭',
+    copy: '复制',
+    copied: '已复制',
   },
   settings: {
     title: "设置",

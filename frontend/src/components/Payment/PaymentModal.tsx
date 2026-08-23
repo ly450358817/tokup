@@ -244,6 +244,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                         <img src={payUrl} alt="QR Code" className="w-full h-full object-contain" />
                       </div>
                       <p className="text-[12px] text-white/40 mt-3">{method === 'wechat' ? '请使用微信扫码支付' : '请使用支付宝扫码支付'}</p>
+                      <p className="lg:hidden text-[11px] text-white/30 mt-1 text-center">📱 手机端：请长按二维码识别，或截图后用微信「扫一扫」/「相册」识别</p>
                       <p className="text-[10px] text-white/20 mt-1">支付名称: TokUp脉充</p>
                       <p className="text-[11px] text-amber-300/80 mt-2 text-center">二维码有效期 5 分钟，剩余 {Math.floor(expireLeft / 60)} 分 {expireLeft % 60} 秒</p>
                       {method === 'alipay' && (

@@ -268,14 +268,14 @@ console.log(response.choices[0].message.content);`;
               <select
                 value={activeKey}
                 onChange={(e) => setActiveKey(e.target.value)}
-                className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-4 py-3 text-[12px] font-mono text-emerald-400 outline-none"
+                className="flex-1 min-w-0 bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-3 text-[12px] font-mono text-emerald-400 outline-none"
               >
                 {keys.map((k) => (
                   <option key={k.id} value={k.key} className="text-white">{k.key.substring(0, 20)}... — {k.name}</option>
                 ))}
               </select>
               <button onClick={() => handleCopy(activeKey)}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-xs hover:text-white/70 transition-all">
+                className="flex items-center gap-1.5 px-3 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-xs hover:text-white/70 transition-all shrink-0">
                 {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                 {copied ? tr("common.copied") : tr("common.copy")}
               </button>

@@ -78,7 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex w-full h-screen bg-[#13131D] relative overflow-hidden">
+    <div className="flex w-full h-screen h-dvh bg-[#13131D] relative overflow-hidden">
       <style>{`.nav-scroll::-webkit-scrollbar { width: 4px; } .nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; } .nav-scroll::-webkit-scrollbar-track { background: transparent; } .nav-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }`}</style>
       <div className="aurora-bg" />
       {sidebarOpen && (
