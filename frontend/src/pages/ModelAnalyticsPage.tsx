@@ -133,7 +133,7 @@ export default function ModelAnalyticsPage() {
           )}
 
           {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Activity size={13} className="text-emerald-400" />
@@ -173,6 +173,22 @@ export default function ModelAnalyticsPage() {
               </div>
               <p className="text-[24px] font-bold text-white">{loading ? '—' : (data?.avg_rpm ?? 0).toFixed(2)}</p>
               <p className="text-[10px] text-white/20 mt-1">请求 / 分钟</p>
+            </div>
+            <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity size={13} className="text-emerald-400" />
+                <span className="text-[10px] text-white/30 uppercase">成功率</span>
+              </div>
+              <p className="text-[24px] font-bold text-white">{loading ? '—' : (data?.success_rate ?? 100) + '%'}</p>
+              <p className="text-[10px] text-white/20 mt-1">近 {days} 天</p>
+            </div>
+            <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Gauge size={13} className="text-purple-400" />
+                <span className="text-[10px] text-white/30 uppercase">平均响应</span>
+              </div>
+              <p className="text-[24px] font-bold text-white">{loading ? '—' : data?.avg_response_ms ? <>{data.avg_response_ms}<span className="text-[14px] text-white/30">ms</span></> : '—'}</p>
+              <p className="text-[10px] text-white/20 mt-1">近 {days} 天</p>
             </div>
           </div>
 
@@ -247,14 +263,21 @@ export default function ModelAnalyticsPage() {
             )}
 
             {/* Model legend breakdown */}
-            <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {chartModels.map((m: any, i: number) => (
                 <div key={m.model} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.02]">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                     <span className="text-[11px] text-white/60 truncate">{m.label}</span>
                   </div>
-                  <span className="text-[10px] text-white/30 shrink-0 ml-2">{fmtTokens(m.tokens)}</span>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {m.error_rate > 0 && (
+                      <span className={`text-[10px] ${m.error_rate < 1.5 ? 'text-emerald-400/70' : m.error_rate < 5 ? 'text-yellow-400/70' : 'text-red-400/70'}`}>
+                        {m.error_rate}% 错
+                      </span>
+                    )}
+                    <span className="text-[10px] text-white/30">{fmtTokens(m.tokens)}</span>
+                  </div>
                 </div>
               ))}
             </div>

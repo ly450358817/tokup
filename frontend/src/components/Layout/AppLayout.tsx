@@ -32,7 +32,6 @@ const navItems = [
   { id: 'transactions', labelKey: 'nav.transactions' as const, icon: History, href: '/transactions' },
   { id: 'integration', labelKey: 'nav.integration', icon: BookOpen, href: '/integration' },
   { id: 'docs', labelKey: 'nav.docs', icon: Code, href: '/docs' },
-  { id: 'monitor', labelKey: 'nav.monitor', icon: Activity, href: '/monitor' },
   { id: 'settings', labelKey: 'nav.settings' as const, icon: Settings, href: '/settings' },
   { id: 'analytics', labelKey: 'nav.analytics', icon: Activity, href: '/analytics' },
   { id: 'usage', labelKey: '消费明细', icon: BarChart3, href: '/usage' },
@@ -80,6 +79,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex w-full h-screen bg-[#13131D] relative overflow-hidden">
+      <style>{`.nav-scroll::-webkit-scrollbar { width: 4px; } .nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; } .nav-scroll::-webkit-scrollbar-track { background: transparent; } .nav-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }`}</style>
       <div className="aurora-bg" />
       {sidebarOpen && (
         <div
@@ -117,7 +117,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1 nav-scroll">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavActive(item);

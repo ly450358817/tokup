@@ -59,15 +59,23 @@ def analytics_overview(
     minutes = _minutes_in_range(days)
     avg_tpm = round(total_tokens / minutes, 1)
     avg_rpm = round(total_calls / minutes, 2)
+    total_success = sum(1 for r in records if r.status == "success")
+    success_rate = round((total_success / max(total_calls, 1)) * 100, 1)
+    _lats = [r.latency_ms for r in records if r.latency_ms and r.latency_ms > 0]
+    avg_response_ms = round(sum(_lats) / len(_lats), 1) if _lats else 0
 
     # 按模型聚合
     model_stats = {}
     for r in records:
         m = r.model or "unknown"
-        s = model_stats.setdefault(m, {"calls": 0, "tokens": 0, "cost": 0.0})
+        s = model_stats.setdefault(m, {"calls": 0, "tokens": 0, "cost": 0.0, "errors": 0, "latencies": []})
         s["calls"] += 1
         s["tokens"] += (r.input_tokens or 0) + (r.output_tokens or 0)
         s["cost"] += r.cost_cny or 0
+        if r.status != "success":
+            s["errors"] += 1
+        if r.latency_ms and r.latency_ms > 0:
+            s["latencies"].append(r.latency_ms)
     models = [
         {
             "model": m,
@@ -75,6 +83,8 @@ def analytics_overview(
             "calls": s["calls"],
             "tokens": s["tokens"],
             "cost": round(s["cost"], 4),
+            "error_rate": round((s["errors"] / max(s["calls"], 1)) * 100, 2),
+            "avg_latency_ms": round(sum(s["latencies"]) / len(s["latencies"]), 1) if s["latencies"] else 0,
         }
         for m, s in sorted(model_stats.items(), key=lambda kv: -kv[1]["calls"])
     ]
@@ -108,6 +118,8 @@ def analytics_overview(
         "avg_tpm": avg_tpm,
         "avg_rpm": avg_rpm,
         "total_cost": total_cost,
+        "success_rate": success_rate,
+        "avg_response_ms": avg_response_ms,
         "currency": "CNY",
         "models": models,
         "series": series,
