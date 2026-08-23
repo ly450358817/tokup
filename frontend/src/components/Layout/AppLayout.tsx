@@ -36,6 +36,7 @@ const navItems = [
   { id: 'settings', labelKey: 'nav.settings' as const, icon: Settings, href: '/settings' },
   { id: 'analytics', labelKey: 'nav.analytics', icon: Activity, href: '/analytics' },
   { id: 'usage', labelKey: '消费明细', icon: BarChart3, href: '/usage' },
+  { id: 'model-analytics', labelKey: '模型调用分析', icon: BarChart3, href: '/model-analytics' },
   { id: 'compliance', labelKey: '合规声明', icon: Shield, href: '/compliance' },
   { id: 'invite', labelKey: '邀请好友', icon: Gift, href: '/invite' },
   { id: 'admin-conversations', labelKey: '对话存档', icon: Database, href: '/admin/conversations' },
