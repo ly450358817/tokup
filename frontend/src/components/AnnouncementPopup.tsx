@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v8');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v9');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v8', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v9', Date.now().toString());
     setVisible(false);
   };
 
@@ -33,17 +33,17 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">价格调整公告</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🎉 新功能上线：模型调用分析</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>📢 <span className="text-white/80 font-medium">DeepSeek V4 Pro 实行峰谷计价</span>（同步 DeepSeek 官方 2026-08-17 调价）</p>
+          <p>🎯 <span className="text-white/80 font-medium">新增「模型调用分析」页面</span>（左侧导航进入）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">高峰时段</span> — 每日 9:00–12:00、14:00–18:00（北京时间）</li>
-            <li><span className="text-emerald-400 font-medium">闲时价格</span> — 输入 ¥6 / 输出 ¥18（每百万 token）</li>
-            <li><span className="text-emerald-400 font-medium">高峰价格</span> — 输入 ¥12 / 输出 ¥36（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">调用总览</span> — 总数 / 总TOKEN / 平均TPM / 平均RPM / 总额度 / 成功率 / 平均响应</li>
+            <li><span className="text-emerald-400 font-medium">消耗分布图</span> — 柱状图 / 面积图切换，按模型分色，时间范围可筛选（1/3/7/30/90 天）</li>
+            <li><span className="text-emerald-400 font-medium">分流视图</span> — 每个模型走哪个上游渠道、真实调用量与费用一目了然</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">🔧 调用模型名不变（deepseek-v4-pro），无需任何改动；建议错峰调用更省钱。DeepSeek V4 Flash 等其余模型价格不变。</p>
+            <p className="text-white/40 text-[11px]">📢 原「实时监控」已并入「模型调用分析」，导航更简洁。DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
