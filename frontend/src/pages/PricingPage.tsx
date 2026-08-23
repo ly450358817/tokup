@@ -200,11 +200,12 @@ export default function PricingPage() {
 
       {/* Pricing table */}
       <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[0px] md:min-w-[560px]">
           <thead>
             <tr className="border-b border-white/[0.06]">
               <th className="px-6 py-4 text-[11px] text-white/30 font-medium tracking-[0.05em] uppercase">{tr('pricing.model')}</th>
-              <th className="px-6 py-4 text-[11px] text-white/30 font-medium tracking-[0.05em] uppercase">{tr('pricing.provider')}</th>
+              <th className="hidden md:table-cell px-6 py-4 text-[11px] text-white/30 font-medium tracking-[0.05em] uppercase">{tr('pricing.provider')}</th>
               <th className="px-6 py-4 text-[11px] text-white/30 font-medium tracking-[0.05em] uppercase">{tr('pricing.input')}</th>
               <th className="px-6 py-4 text-[11px] text-white/30 font-medium tracking-[0.05em] uppercase">{tr('pricing.output')}</th>
             </tr>
@@ -212,8 +213,8 @@ export default function PricingPage() {
           <tbody className="divide-y divide-white/[0.04]">
             {MODELS.map((m, i) => (
               <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-               <td className="px-6 py-4 text-[13px] text-white/80">{m.name}{m.note ? <span className="ml-2 text-[10px] text-white/30">{m.note}</span> : null}</td>
-                <td className="px-6 py-4">
+               <td className="px-3 sm:px-6 py-4 text-[12px] sm:text-[13px] text-white/80">{m.name}{m.note ? <span className="hidden sm:inline ml-2 text-[10px] text-white/30">{m.note}</span> : null}</td>
+                <td className="hidden md:table-cell px-6 py-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] text-white/40">{m.provider}</span>
                     {m.badge && (
@@ -224,12 +225,13 @@ export default function PricingPage() {
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-[13px] text-white/70">{m.input}</td>
-                <td className="px-6 py-4 text-[13px] text-white/70">{m.output}</td>
+                <td className="px-3 sm:px-6 py-4 text-[12px] sm:text-[13px] text-white/70 whitespace-nowrap">{m.input}</td>
+                <td className="px-3 sm:px-6 py-4 text-[12px] sm:text-[13px] text-white/70 whitespace-nowrap">{m.output}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       <p className="px-6 py-3 text-[11px] text-white/35 border-t border-white/[0.06]">DeepSeek V4 Pro 为峰谷计价：斜杠前为闲时价、后为高峰价（高峰时段：每日 9:00–12:00、14:00–18:00 北京时间）；其余模型为一口价。</p>
       </div>
 

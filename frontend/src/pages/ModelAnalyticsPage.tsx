@@ -308,7 +308,7 @@ export default function ModelAnalyticsPage() {
           {/* Routing table */}
           <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
             <h3 className="text-[13px] font-medium text-white/70 mb-4">
-              <span className="flex items-center gap-2"><Route size={14} /> 模型 → 上游路由</span>
+              <span className="flex items-center gap-2"><Route size={14} /> 模型 → 路由</span>
             </h3>
             {loadingRoutes ? (
               <div className="flex items-center justify-center py-10">
@@ -320,8 +320,8 @@ export default function ModelAnalyticsPage() {
                   <thead>
                     <tr className="border-b border-white/[0.04]">
                       <th className="text-left text-white/30 font-medium pb-3 pr-4">模型</th>
-                      <th className="text-left text-white/30 font-medium pb-3 px-4">上游渠道</th>
-                      <th className="text-left text-white/30 font-medium pb-3 px-4">上游模型名</th>
+                      <th className="text-left text-white/30 font-medium pb-3 px-4">渠道</th>
+                      <th className="text-left text-white/30 font-medium pb-3 px-4">模型名</th>
                       <th className="text-right text-white/30 font-medium pb-3 px-4">调用次数</th>
                       <th className="text-right text-white/30 font-medium pb-3 px-4">Token</th>
                       <th className="text-right text-white/30 font-medium pb-3 pl-4">费用</th>

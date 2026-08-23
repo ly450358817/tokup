@@ -15,13 +15,14 @@ from services.ai_service import MODEL_ROUTES, MODEL_COST, UPSTREAM_MODEL_NAME, Q
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
+# 上游商家名不对外暴露，统一显示为 TokUp（商业保密 + 防止用户绕过平台直连上游）
 PROVIDER_LABELS = {
-    "qiniu": "七牛云",
-    "zhipu": "智谱",
-    "openai": "OpenAI",
-    "anthropic": "Anthropic",
-    "deepseek": "DeepSeek",
-    "": "未知",
+    "qiniu": "TokUp",
+    "zhipu": "TokUp",
+    "openai": "TokUp",
+    "anthropic": "TokUp",
+    "deepseek": "TokUp",
+    "": "TokUp",
 }
 
 

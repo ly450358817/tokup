@@ -113,7 +113,7 @@ export default function LandingPage() {
   if (loading) return null;
 
   return (
-    <div style={{ background: '#13131D', minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, color: '#fff', fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+    <div style={{ background: '#13131D', minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, color: '#fff', fontFamily: "-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif", WebkitFontSmoothing: 'antialiased' }}>
       <Suspense fallback={<ThreeSceneFallback />}><ThreeScene /></Suspense>
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(6,6,11,0.4) 100%)' }} />
 
