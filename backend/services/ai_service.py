@@ -33,6 +33,7 @@ MODEL_ROUTES = {
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4-flash-vision-exp": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "glm-5.2": ("qiniu", QINIU_ENDPOINT),
     "glm-5.3": ("qiniu", QINIU_ENDPOINT),
@@ -80,6 +81,7 @@ MODEL_COST = {
     # V4 Pro 走七牛 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
     "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游无日期别名仍 ¥1/¥2 一口价（8/17-8/19 账单实测），不受 8/17 峰谷公告影响
+    "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（七牛未公开价，待账单验证）
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
     "glm-5.3": (11.0, 37.0),                    # 上游 ¥8/¥28（与 glm-5.2 同价）
@@ -147,6 +149,7 @@ DEEPSEEK_MODEL_MAP = {
     # deepseek-chat 现在解析为 v4-flash，Pro 兜底必须走 deepseek-v4-pro，否则付费用户拿到 Flash
     "deepseek/deepseek-v4-pro": "deepseek-v4-pro",
     "deepseek/deepseek-v4-flash": "deepseek-chat",
+    "deepseek/deepseek-v4-flash-vision-exp": "deepseek-v4-flash-vision-exp",
     "deepseek/deepseek-v4-flash-20260731": "deepseek-chat",
 }
 

@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v11');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v12');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v11', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v12', Date.now().toString());
     setVisible(false);
   };
 
@@ -36,13 +36,14 @@ export default function AnnouncementPopup() {
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">本周新增 2 个模型</span>（已在全部页面同步上线）</p>
+          <p>🎯 <span className="text-white/80 font-medium">本周新增 3 个模型</span>（已在全部页面同步上线）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><span className="text-emerald-400 font-medium">Qwen 3.7 Plus</span> — 通义千问高性价比中杯，输入 ¥8 / 输出 ¥32（每百万 token）</li>
             <li><span className="text-emerald-400 font-medium">GLM-5.3</span> — 智谱AI 最新一代旗舰，输入 ¥11 / 输出 ¥37（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">DeepSeek V4 Flash Vision</span> — 视觉理解实验版，输入 ¥4 / 输出 ¥12（每百万 token）</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 说明：DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
+            <p className="text-white/40 text-[11px]">📢 说明：DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。DeepSeek V4 Flash Vision 为实验版视觉模型，统一按高峰价计费，图片会按尺寸换算成 token。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
