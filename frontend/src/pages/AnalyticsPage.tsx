@@ -97,16 +97,24 @@ export default function AnalyticsPage() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => { loadDaily(); }, [loadDaily]);
 
-  // 趋势数据（时间范围可选）
+  // 趋势数据（联动日历区间，否则用快捷档位）
   const loadTrend = useCallback(() => {
     setLoadingTrend(true);
     const token = localStorage.getItem('tokup_token');
     if (!token) { setLoadingTrend(false); return; }
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - (trendDays - 1));
     const fmtDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    fetch(`/api/admin/stats/daily?start=${fmtDate(start)}&end=${fmtDate(end)}`, {
+    let start: string, end: string;
+    if (rangeMode && rangeSel && rangeSel.start && rangeSel.end) {
+      start = rangeSel.start;
+      end = rangeSel.end;
+    } else {
+      const e = new Date();
+      const st = new Date();
+      st.setDate(st.getDate() - (trendDays - 1));
+      start = fmtDate(st);
+      end = fmtDate(e);
+    }
+    fetch(`/api/admin/stats/daily?start=${start}&end=${end}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(r => r.json())
@@ -116,7 +124,7 @@ export default function AnalyticsPage() {
         setLoadingTrend(false);
       })
       .catch(() => { setTrend([]); setLoadingTrend(false); });
-  }, [trendDays]);
+  }, [trendDays, rangeMode, rangeSel]);
 
   useEffect(() => { loadTrend(); }, [loadTrend]);
 
@@ -263,20 +271,28 @@ export default function AnalyticsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             <TrendingUp size={15} className="text-emerald-400" />
-            <h3 className="text-[13px] font-medium text-white/70">近 {trendDays} 天趋势</h3>
+            <h3 className="text-[13px] font-medium text-white/70">
+              {rangeActive ? `区间趋势 ${rangeSel?.start} → ${rangeSel?.end}` : `近 ${trendDays} 天趋势`}
+            </h3>
             <span className="text-[10px] text-white/30">充值金额（柱）· 新注册（线）</span>
           </div>
-          <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-lg p-1">
-            {[7, 30, 90].map(d => (
-              <button
-                key={d}
-                onClick={() => setTrendDays(d)}
-                className={`px-3 py-1.5 rounded-md text-[11px] transition-all ${trendDays === d ? 'bg-emerald-500/20 text-emerald-400 font-medium' : 'text-white/40 hover:text-white/70'}`}
-              >
-                近 {d} 天
-              </button>
-            ))}
-          </div>
+          {rangeActive ? (
+            <button onClick={resetRange} className="flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] bg-white/[0.03] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all">
+              <X size={12} /> 取消联动
+            </button>
+          ) : (
+            <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-lg p-1">
+              {[7, 30, 90].map(d => (
+                <button
+                  key={d}
+                  onClick={() => setTrendDays(d)}
+                  className={`px-3 py-1.5 rounded-md text-[11px] transition-all ${trendDays === d ? 'bg-emerald-500/20 text-emerald-400 font-medium' : 'text-white/40 hover:text-white/70'}`}
+                >
+                  近 {d} 天
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         {loadingTrend ? (
           <div className="flex items-center justify-center h-56"><div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" /></div>
