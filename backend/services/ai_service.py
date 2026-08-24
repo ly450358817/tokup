@@ -102,6 +102,9 @@ MODEL_COST_PEAK = {
     "deepseek/deepseek-v4-pro": (12.0, 36.0),   # 上游高峰 ¥9/¥27
 }
 
+# 私有/内部模型：仍可调用（用户自用），但不在 /models 公开列表中展示
+PRIVATE_MODELS = {"glm-4.6v-flash"}
+
 
 def _is_beijing_peak_hour() -> bool:
     """当前是否处于高峰时段：每日 9:00-12:00、14:00-18:00（北京时间）"""

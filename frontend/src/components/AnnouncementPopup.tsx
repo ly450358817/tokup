@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v10');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v11');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v10', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v11', Date.now().toString());
     setVisible(false);
   };
 
@@ -42,7 +42,7 @@ export default function AnnouncementPopup() {
             <li><span className="text-emerald-400 font-medium">GLM-5.3</span> — 智谱AI 最新一代旗舰，输入 ¥11 / 输出 ¥37（每百万 token）</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 说明：免费视觉模型 GLM-4.6V Flash 继续可用（智谱直连）；实验版 DeepSeek V4 Flash Vision 因上游价格未公开，暂不接入。DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
+            <p className="text-white/40 text-[11px]">📢 说明：DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>

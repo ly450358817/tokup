@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from database import get_db
 from models import User, ApiKey, UsageRecord, ConversationLog
-from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES
+from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES, PRIVATE_MODELS
 from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
@@ -879,5 +879,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 def list_models():
     models = []
     for model, (provider, _) in MODEL_ROUTES.items():
+        if model in PRIVATE_MODELS:
+            continue
         models.append({"id": model, "provider": provider, "object": "model"})
     return {"data": models}
