@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, Users, DollarSign, Key, RefreshCw, ChevronLeft, ChevronRight, CalendarDays, CalendarRange, X } from 'lucide-react';
+import { Activity, Users, DollarSign, Key, RefreshCw, ChevronLeft, ChevronRight, CalendarDays, CalendarRange, X, TrendingUp } from 'lucide-react';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 type DayStat = {
   date: string;
@@ -45,6 +46,8 @@ export default function AnalyticsPage() {
   const [selectedDate, setSelectedDate] = useState(toISODate(now));
   const [daily, setDaily] = useState<Record<string, DayStat>>({});
   const [loadingDaily, setLoadingDaily] = useState(false);
+  const [trend, setTrend] = useState<any[]>([]);
+  const [loadingTrend, setLoadingTrend] = useState(false);
 
   // 区间选择状态
   const [rangeMode, setRangeMode] = useState(false);
@@ -92,6 +95,29 @@ export default function AnalyticsPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => { loadDaily(); }, [loadDaily]);
+
+  // 近30天趋势数据
+  const loadTrend = useCallback(() => {
+    setLoadingTrend(true);
+    const token = localStorage.getItem('tokup_token');
+    if (!token) { setLoadingTrend(false); return; }
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 29);
+    const fmtDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    fetch(`/api/admin/stats/daily?start=${fmtDate(start)}&end=${fmtDate(end)}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(r => r.json())
+      .then(d => {
+        const rows = (d.daily || []) as DayStat[];
+        setTrend(rows.map(r => ({ date: r.date.slice(5), recharge_amount: r.recharge_amount || 0, registrations: r.registrations || 0 })));
+        setLoadingTrend(false);
+      })
+      .catch(() => { setTrend([]); setLoadingTrend(false); });
+  }, []);
+
+  useEffect(() => { loadTrend(); }, [loadTrend]);
 
   // 区间汇总：start/end 都确定时拉取
   useEffect(() => {
@@ -229,6 +255,39 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-2 mb-3"><Key size={14} className="text-teal-400" /><span className="text-[10px] text-white/30 uppercase">API Key</span></div>
           <p className="text-[28px] font-bold text-white">{fmt(stats.total_keys)}<span className="text-[14px] text-white/30 ml-1">/ {fmt(stats.active_keys)} active</span></p>
         </div>
+      </div>
+
+      {/* 近 30 天趋势 */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp size={15} className="text-emerald-400" />
+          <h3 className="text-[13px] font-medium text-white/70">近 30 天趋势</h3>
+          <span className="text-[10px] text-white/30">充值金额（柱）· 新注册（线）</span>
+        </div>
+        {loadingTrend ? (
+          <div className="flex items-center justify-center h-56"><div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" /></div>
+        ) : trend.length === 0 ? (
+          <div className="flex items-center justify-center h-56 text-white/30 text-xs">暂无趋势数据</div>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
+                <YAxis yAxisId="left" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => '¥' + fmt(v)} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmt(v)} />
+                <Tooltip
+                  contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
+                  labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
+                  formatter={(value: any, name: any) => name === '充值金额' ? ['¥' + fmt(Number(value)), name] : [fmt(Number(value)), name]}
+                />
+                <Legend wrapperStyle={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }} />
+                <Bar yAxisId="left" dataKey="recharge_amount" name="充值金额" fill="#38BDF8" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                <Line yAxisId="right" type="monotone" dataKey="registrations" name="新注册" stroke="#10B981" strokeWidth={2} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* 日历查询 */}
