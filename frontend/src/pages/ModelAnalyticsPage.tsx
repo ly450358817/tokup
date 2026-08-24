@@ -321,8 +321,7 @@ export default function ModelAnalyticsPage() {
                     <tr className="border-b border-white/[0.04]">
                       <th className="text-left text-white/30 font-medium pb-3 pr-4">模型</th>
                       <th className="text-left text-white/30 font-medium pb-3 px-4">渠道</th>
-                      <th className="text-left text-white/30 font-medium pb-3 px-4">模型名</th>
-                      <th className="text-right text-white/30 font-medium pb-3 px-4">调用次数</th>
+                                            <th className="text-right text-white/30 font-medium pb-3 px-4">调用次数</th>
                       <th className="text-right text-white/30 font-medium pb-3 px-4">Token</th>
                       <th className="text-right text-white/30 font-medium pb-3 pl-4">费用</th>
                     </tr>
@@ -337,8 +336,7 @@ export default function ModelAnalyticsPage() {
                         <td className="py-3 px-4">
                           <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/80 text-[10px]">{r.provider_label}</span>
                         </td>
-                        <td className="py-3 px-4 text-white/40 font-mono text-[10px]">{r.upstream_model}</td>
-                        <td className="py-3 px-4 text-right text-white/60">{r.usage.calls.toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right text-white/60">{r.usage.calls.toLocaleString()}</td>
                         <td className="py-3 px-4 text-right text-white/60">{fmtTokens(r.usage.tokens)}</td>
                         <td className="py-3 pl-4 text-right text-emerald-400/70">¥{r.usage.cost.toFixed(2)}</td>
                       </tr>

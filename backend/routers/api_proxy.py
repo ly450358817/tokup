@@ -881,5 +881,5 @@ def list_models():
     for model, (provider, _) in MODEL_ROUTES.items():
         if model in PRIVATE_MODELS:
             continue
-        models.append({"id": model, "provider": provider, "object": "model"})
+        models.append({"id": model, "provider": "tokup", "object": "model"})
     return {"data": models}

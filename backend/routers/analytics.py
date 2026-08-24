@@ -150,32 +150,28 @@ def analytics_routes(
         for m, c, t, cost in usage_rows
     }
 
-    # 路由表（真实 MODEL_ROUTES）
+    # 路由表（真实 MODEL_ROUTES；不暴露上游名/URL/版本号，渠道统一 TokUp）
     routes = []
     for model, (provider, endpoint) in sorted(MODEL_ROUTES.items()):
         costs = MODEL_COST.get(model)
         routes.append({
             "model": model,
             "label": _model_label(model),
-            "provider": provider,
-            "provider_label": PROVIDER_LABELS.get(provider, provider),
-            "endpoint": endpoint,
-            "upstream_model": UPSTREAM_MODEL_NAME.get(model, model),
+            "provider_label": "TokUp",
             "cost_in": costs[0] if costs else None,
             "cost_out": costs[1] if costs else None,
             "usage": usage_map.get(model, {"calls": 0, "tokens": 0, "cost": 0.0}),
         })
 
-    # 渠道汇总
-    channels = {}
+    # 渠道汇总（合并为单一 TokUp，不暴露 qiniu/zhipu/deepseek 上游名）
+    ch = {"provider": "tokup", "label": "TokUp", "calls": 0, "tokens": 0, "cost": 0.0, "models": []}
     for model, (provider, endpoint) in MODEL_ROUTES.items():
         u = usage_map.get(model, {"calls": 0, "tokens": 0, "cost": 0.0})
-        ch = channels.setdefault(provider, {"provider": provider, "label": PROVIDER_LABELS.get(provider, provider), "calls": 0, "tokens": 0, "cost": 0.0, "models": []})
         ch["calls"] += u["calls"]
         ch["tokens"] += u["tokens"]
         ch["cost"] += u["cost"]
         ch["models"].append({"model": model, "label": _model_label(model), **u})
-    channels = [ch for _, ch in sorted(channels.items(), key=lambda kv: -kv[1]["calls"])]
+    channels = [ch]
 
     return {
         "days": days,

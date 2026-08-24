@@ -42,7 +42,7 @@ def get_usage_records(
             {
                 "id": r.id,
                 "model": r.model,
-                "provider": r.provider,
+                "provider": "tokup",
                 "input_tokens": r.input_tokens,
                 "output_tokens": r.output_tokens,
                 "cost_cny": r.cost_cny,
@@ -78,7 +78,7 @@ def export_usage_csv(
     for r in records:
         writer.writerow([
             r.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            r.model, r.provider, r.input_tokens, r.output_tokens,
+            r.model, "tokup", r.input_tokens, r.output_tokens,
             r.cost_cny, r.latency_ms or "", r.status,
         ])
     csv_content = output.getvalue()
