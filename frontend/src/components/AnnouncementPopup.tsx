@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v9');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v10');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v9', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v10', Date.now().toString());
     setVisible(false);
   };
 
@@ -33,17 +33,16 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🎉 新功能上线：模型调用分析</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">新增「模型调用分析」页面</span>（左侧导航进入）</p>
+          <p>🎯 <span className="text-white/80 font-medium">本周新增 2 个模型</span>（已在全部页面同步上线）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">调用总览</span> — 总数 / 总TOKEN / 平均TPM / 平均RPM / 总额度 / 成功率 / 平均响应</li>
-            <li><span className="text-emerald-400 font-medium">消耗分布图</span> — 柱状图 / 面积图切换，按模型分色，时间范围可筛选（1/3/7/30/90 天）</li>
-            <li><span className="text-emerald-400 font-medium">分流视图</span> — 每个模型走哪个上游渠道、真实调用量与费用一目了然</li>
+            <li><span className="text-emerald-400 font-medium">Qwen 3.7 Plus</span> — 通义千问高性价比中杯，输入 ¥8 / 输出 ¥32（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">GLM-5.3</span> — 智谱AI 最新一代旗舰，输入 ¥11 / 输出 ¥37（每百万 token）</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 原「实时监控」已并入「模型调用分析」，导航更简洁。DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
+            <p className="text-white/40 text-[11px]">📢 说明：免费视觉模型 GLM-4.6V Flash 继续可用（智谱直连）；实验版 DeepSeek V4 Flash Vision 因上游价格未公开，暂不接入。DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>

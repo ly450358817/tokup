@@ -1,0 +1,368 @@
+{
+  "date": "2026-08-24",
+  "fetched_at": "2026-08-24T09:32:44.095590+08:00",
+  "min_margin": 1.3,
+  "errors": {},
+  "issues": [],
+  "detail": [
+    {
+      "model": "MiniMax-M1",
+      "billed_as": [
+        "MiniMax-M1"
+      ],
+      "sell": [
+        8.0,
+        32.0
+      ],
+      "cost": [
+        4.0,
+        16.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "anthropic/claude-fable-5",
+      "billed_as": [
+        "anthropic/claude-fable-5"
+      ],
+      "sell": [
+        90.0,
+        500.0
+      ],
+      "cost": [
+        69.00347851010332,
+        344.89500977641757
+      ],
+      "source": "账单实测",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "deepseek-v3",
+      "billed_as": [
+        "deepseek-v3"
+      ],
+      "sell": [
+        3.0,
+        11.0
+      ],
+      "cost": [
+        2.0,
+        8.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "deepseek/deepseek-v3.2",
+      "billed_as": [
+        "deepseek/deepseek-v3.2-exp"
+      ],
+      "sell": [
+        3.0,
+        4.0
+      ],
+      "cost": [
+        2.0,
+        3.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "billed_as": [
+        "deepseek/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash-202605",
+        "deepseek/deepseek-v4-flash-20260731"
+      ],
+      "sell": [
+        1.5,
+        3.0
+      ],
+      "cost": [
+        1.0,
+        2.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "billed_as": [
+        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-v4-pro-0813",
+        "deepseek/deepseek-v4-pro-202606"
+      ],
+      "sell": [
+        6.0,
+        18.0
+      ],
+      "cost": [
+        9.0,
+        27.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "glm-5.2",
+      "billed_as": [
+        "z-ai/glm-5.2"
+      ],
+      "sell": [
+        11.0,
+        37.0
+      ],
+      "cost": [
+        8.0,
+        28.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "gpt-5.5",
+      "billed_as": [
+        "openai/gpt-5.5"
+      ],
+      "sell": [
+        45.0,
+        270.0
+      ],
+      "cost": [
+        34.49977993495855,
+        206.99115943501675
+      ],
+      "source": "账单实测",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "minimax/minimax-m3",
+      "billed_as": [
+        "minimax/minimax-m3"
+      ],
+      "sell": [
+        6.0,
+        24.0
+      ],
+      "cost": [
+        4.2,
+        16.8
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "moonshotai/kimi-k2.6",
+      "billed_as": [
+        "moonshotai/kimi-k2.6"
+      ],
+      "sell": [
+        9.0,
+        36.0
+      ],
+      "cost": [
+        6.5,
+        27.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "moonshotai/kimi-k2.7-code",
+      "billed_as": [
+        "moonshotai/kimi-k2.7-code"
+      ],
+      "sell": [
+        9.0,
+        36.0
+      ],
+      "cost": [
+        6.5,
+        27.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "moonshotai/kimi-k3",
+      "billed_as": [
+        "moonshotai/kimi-k3"
+      ],
+      "sell": [
+        26.0,
+        130.0
+      ],
+      "cost": [
+        20.0,
+        100.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "openai/gpt-5.6-luna",
+      "billed_as": [
+        "openai/gpt-5.6-luna"
+      ],
+      "sell": [
+        10.0,
+        55.0
+      ],
+      "cost": [
+        2.8593508500772793,
+        36.09221466364324
+      ],
+      "source": "账单实测",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "openai/gpt-5.6-sol",
+      "billed_as": [
+        "openai/gpt-5.6-sol"
+      ],
+      "sell": [
+        45.0,
+        270.0
+      ],
+      "cost": [
+        34.47115564362358,
+        206.89655172413794
+      ],
+      "source": "账单实测",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "openai/gpt-5.6-terra",
+      "billed_as": [
+        "openai/gpt-5.6-terra"
+      ],
+      "sell": [
+        18.0,
+        110.0
+      ],
+      "cost": [
+        13.794940696812453,
+        83.25041459369817
+      ],
+      "source": "账单实测",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "qwen/qwen3.7-max",
+      "billed_as": [
+        "qwen/qwen3.7-max"
+      ],
+      "sell": [
+        16.0,
+        48.0
+      ],
+      "cost": [
+        12.0,
+        36.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "qwen/qwen3.8-max",
+      "billed_as": [
+        "qwen/qwen3.8-max"
+      ],
+      "sell": [
+        16.0,
+        48.0
+      ],
+      "cost": [
+        12.0,
+        36.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "qwen3-max",
+      "billed_as": [
+        "qwen3-max"
+      ],
+      "sell": [
+        20.0,
+        80.0
+      ],
+      "cost": [
+        15.0,
+        60.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "qwen3.5-397b-a17b",
+      "billed_as": [
+        "qwen3.5-397b-a17b"
+      ],
+      "sell": [
+        4.0,
+        24.0
+      ],
+      "cost": [
+        3.0,
+        18.0
+      ],
+      "source": "广场价(当前上游)",
+      "issue": [],
+      "has_billing": true
+    },
+    {
+      "model": "glm-4.6v-flash",
+      "billed_as": [],
+      "sell": [
+        0.0,
+        0.0
+      ],
+      "cost": [
+        0.0,
+        0.0
+      ],
+      "source": "免费(智谱直连)",
+      "issue": [],
+      "has_billing": false
+    },
+    {
+      "model": "deepseek-r1",
+      "billed_as": [
+        "deepseek-r1"
+      ],
+      "sell": [
+        6.0,
+        21.0
+      ],
+      "cost": [
+        4.0,
+        16.0
+      ],
+      "source": "广场价",
+      "issue": [],
+      "has_billing": false
+    }
+  ]
+}

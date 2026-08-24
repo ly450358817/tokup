@@ -35,7 +35,9 @@ MODEL_ROUTES = {
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "glm-5.2": ("qiniu", QINIU_ENDPOINT),
+    "glm-5.3": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
+    "qwen/qwen3.7-plus": ("qiniu", QINIU_ENDPOINT),
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
     "qwen3-max": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
@@ -80,7 +82,9 @@ MODEL_COST = {
     "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游无日期别名仍 ¥1/¥2 一口价（8/17-8/19 账单实测），不受 8/17 峰谷公告影响
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
+    "glm-5.3": (11.0, 37.0),                    # 上游 ¥8/¥28（与 glm-5.2 同价）
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
+    "qwen/qwen3.7-plus": (8.0, 32.0),        # 上游 ¥6/¥24
     "anthropic/claude-fable-5": (90.0, 500.0),   # 2026-08-22 输出+11% 保险（上游计费>API返回约10%，实测毛利仅13%）  # 上游实测 ¥69/¥345
     "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
