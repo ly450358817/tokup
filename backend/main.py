@@ -5,7 +5,9 @@ import os
 import secrets
 from dotenv import load_dotenv
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine, Base, SessionLocal
@@ -46,6 +48,27 @@ if ADMIN_EMAIL and ADMIN_PASSWORD:
         db.close()
 
 app = FastAPI(title="TokUp API", version="0.2.0")
+
+@app.exception_handler(HTTPException)
+async def _http_exc_handler(request: Request, exc: HTTPException):
+    """402 统一返回 OpenAI 兼容 error 格式，openai SDK 能正确解析 message（否则报 402 status code (no body)）"""
+    if exc.status_code == 402:
+        return JSONResponse(
+            status_code=402,
+            content={
+                "error": {
+                    "message": str(exc.detail),
+                    "type": "insufficient_balance",
+                    "param": None,
+                    "code": 402,
+                }
+            },
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None),
+    )
 
 app.add_middleware(
     CORSMiddleware,
