@@ -142,22 +142,16 @@ export default function PricingPage() {
 
         {/* 订阅规则说明 */}
         <div className="mb-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3">
-          <div className="flex gap-2.5">
-            <span className="mt-0.5 shrink-0 text-[13px] leading-relaxed">⚙️</span>
-            <p className="text-[12px] text-white/70 leading-relaxed">
-              用余额开通后，订阅期内每天自动获得免费额度：<span className="text-white/90 font-medium">配额内调用不扣余额</span>，超出部分按量从余额扣费，<span className="text-white/90 font-medium">北京时间 0 点重置</span>（当日额度不累积到次日）。
-            </p>
-          </div>
+          <p className="text-[12px] text-white/70 leading-relaxed">
+            用余额开通后，订阅期内每天自动获得免费额度：<span className="text-white/90 font-medium">配额内调用不扣余额</span>，超出部分按量从余额扣费，<span className="text-white/90 font-medium">北京时间 0 点重置</span>（当日额度不累积到次日）。
+          </p>
 
-          <div className="flex gap-2.5">
-            <span className="mt-0.5 shrink-0 text-[13px] leading-relaxed">🎯</span>
-            <p className="text-[12px] text-white/70 leading-relaxed">
-              免费配额<span className="text-amber-300/90 font-medium">仅适用低价模型</span>（当前：{quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V4 Flash / DeepSeek V3.2'}）；<span className="text-white/90 font-medium">GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额</span>。
-            </p>
-          </div>
+          <p className="text-[12px] text-white/70 leading-relaxed">
+            免费配额<span className="text-amber-300/90 font-medium">仅适用低价模型</span>（当前：{quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V4 Flash / DeepSeek V3.2'}）；<span className="text-white/90 font-medium">GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额</span>。
+          </p>
 
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-[12px] text-emerald-200/90 leading-relaxed">
-            💡 <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度 + 所有模型余额消费 9 折；月卡 30万/天、季卡 35万/天、年卡 40万/天（¥99 / ¥199 / ¥499），折合单价逐级更低，日用量越大越划算。
+            <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度 + 所有模型余额消费 9 折；月卡 30万/天、季卡 35万/天、年卡 40万/天（¥99 / ¥199 / ¥499），折合单价逐级更低，日用量越大越划算。
           </div>
 
           <p className="text-[10px] text-white/30 leading-relaxed">
