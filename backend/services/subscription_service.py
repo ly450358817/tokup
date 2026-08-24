@@ -17,7 +17,7 @@ FREE_QUOTA_MAX_OUTPUT_COST = float(os.getenv("FREE_QUOTA_MAX_OUTPUT_COST", "15")
 # 不参与订阅免费配额（旗舰/高价模型一律走余额），可用环境变量 FREE_QUOTA_EXCLUDE_MODELS 逗号分隔覆盖
 FREE_QUOTA_EXCLUDE_MODELS = set(
     m.strip() for m in os.getenv("FREE_QUOTA_EXCLUDE_MODELS", "").split(",") if m.strip()
-) or {"deepseek/deepseek-v4-pro", "deepseek-v3"}  # v3 排除：保证年度 400K/天配额最坏情况也不亏本（v3 走余额享订阅折扣）
+) or {"deepseek/deepseek-v4-pro", "deepseek-v3", "deepseek/deepseek-v4-flash-vision-exp"}  # v3/视觉实验版排除：视觉模型图片按尺寸换算 token、最坏成本高，走余额享订阅折扣
 
 
 # 订阅余额消费折扣（默认 9 折：毛利 1.3x → 1.17x，仍盈利；可用环境变量覆盖）
