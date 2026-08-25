@@ -228,20 +228,28 @@ export default function ModelAnalyticsPage() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === 'bar' ? (
-                    <BarChart data={data?.series || []} stackOffset="sign">
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                      <XAxis dataKey="bucket" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
-                      <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtTokens(v)} />
-                      <Tooltip
-                        contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
-                        labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
-                        formatter={(value: any, name: any) => [fmtTokens(Number(value)), String(name)]}
-                      />
-                      <Legend wrapperStyle={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }} />
-                      {chartModels.map((m: any, i: number) => (
-                        <Bar key={m.model} dataKey={m.model} name={m.label} stackId="a" fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </BarChart>
+                      <BarChart data={data?.series || []} stackOffset="sign" barCategoryGap="30%" maxBarSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                        <XAxis dataKey="bucket" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
+                        <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtTokens(v)} />
+                        <Tooltip
+                          contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
+                          labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
+                          formatter={(value: any, name: any) => [fmtTokens(Number(value)), String(name)]}
+                        />
+                        <Legend wrapperStyle={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }} />
+                        {chartModels.map((m: any, i: number) => (
+                          <Bar
+                            key={m.model}
+                            dataKey={m.model}
+                            name={m.label}
+                            stackId="a"
+                            fill={COLORS[i % COLORS.length]}
+                            radius={i === chartModels.length - 1 ? [4, 4, 0, 0] : undefined}
+                            maxBarSize={28}
+                          />
+                        ))}
+                      </BarChart>
                   ) : (
                     <ReAreaChart data={data?.series || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
