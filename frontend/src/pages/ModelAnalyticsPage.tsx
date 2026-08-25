@@ -228,11 +228,12 @@ export default function ModelAnalyticsPage() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === 'bar' ? (
-                      <BarChart data={data?.series || []} stackOffset="sign" barCategoryGap="30%" maxBarSize={28}>
+                      <BarChart data={data?.series || []} stackOffset="sign" barCategoryGap="12%" maxBarSize={28}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                         <XAxis dataKey="bucket" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
                         <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtTokens(v)} />
                         <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                           contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
                           labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
                           formatter={(value: any, name: any) => [fmtTokens(Number(value)), String(name)]}
@@ -256,6 +257,7 @@ export default function ModelAnalyticsPage() {
                       <XAxis dataKey="bucket" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
                       <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtTokens(v)} />
                       <Tooltip
+                        cursor={{ stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1 }}
                         contentStyle={{ background: '#22222C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px' }}
                         labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
                         formatter={(value: any, name: any) => [fmtTokens(Number(value)), String(name)]}
