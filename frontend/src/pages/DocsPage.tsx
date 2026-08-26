@@ -338,7 +338,7 @@ export default function DocsPage() {
           </div>
           <div>
             <p className="text-[12px] font-medium text-white/60 mb-1">没用完能退吗？</p>
-            <p className="text-[12px] text-white/40">不支持退款，但 Token 长期有效不过期</p>
+            <p className="text-[12px] text-white/40">数字商品不适用七天无理由退货；未使用余额原则上不退，平台原因、错误扣款、未成年人等法定情形除外，可联系客服处理。Token 长期有效不过期。</p>
           </div>
         </div>
       </div>
