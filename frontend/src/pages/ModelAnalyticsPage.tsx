@@ -29,18 +29,32 @@ export default function ModelAnalyticsPage() {
   const [tab, setTab] = useState<'analysis' | 'routes'>('analysis');
   const [chartType, setChartType] = useState<'bar' | 'area'>('bar');
   const [days, setDays] = useState(7);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [data, setData] = useState<any>(null);
   const [routesData, setRoutesData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [error, setError] = useState('');
   const [showFilter, setShowFilter] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  const buildRangeQuery = () => {
+    const params = new URLSearchParams();
+    if (startDate && endDate) {
+      params.set('start_date', startDate);
+      params.set('end_date', endDate);
+    } else {
+      params.set('days', String(days));
+    }
+    return params.toString();
+  };
 
   const loadOverview = () => {
     setLoading(true);
     const token = localStorage.getItem('tokup_token');
     if (!token) { setLoading(false); return; }
-    fetch(`/api/analytics/overview?days=${days}`, { headers: { Authorization: 'Bearer ' + token } })
+    fetch(`/api/analytics/overview?${buildRangeQuery()}`, { headers: { Authorization: 'Bearer ' + token } })
       .then(r => r.json())
       .then(d => { setData(d); setError(''); setLoading(false); })
       .catch(() => { setError('加载失败，请重试'); setLoading(false); });
@@ -50,14 +64,14 @@ export default function ModelAnalyticsPage() {
     setLoadingRoutes(true);
     const token = localStorage.getItem('tokup_token');
     if (!token) { setLoadingRoutes(false); return; }
-    fetch(`/api/analytics/routes?days=${days}`, { headers: { Authorization: 'Bearer ' + token } })
+    fetch(`/api/analytics/routes?${buildRangeQuery()}`, { headers: { Authorization: 'Bearer ' + token } })
       .then(r => r.json())
       .then(d => { setRoutesData(d); setLoadingRoutes(false); })
       .catch(() => setLoadingRoutes(false));
   };
 
-  useEffect(() => { loadOverview(); }, [days]);
-  useEffect(() => { if (tab === 'routes') loadRoutes(); }, [tab, days]);
+  useEffect(() => { loadOverview(); }, [days, startDate, endDate, refreshTick]);
+  useEffect(() => { if (tab === 'routes') loadRoutes(); }, [tab, days, startDate, endDate, refreshTick]);
 
   const chartModels = useMemo(() => {
     if (!data?.models) return [];
@@ -120,14 +134,43 @@ export default function ModelAnalyticsPage() {
                 {DAY_OPTIONS.map(d => (
                   <button
                     key={d}
-                    onClick={() => setDays(d)}
+                    onClick={() => {
+                      setDays(d);
+                      setStartDate('');
+                      setEndDate('');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
-                      days === d ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/30 hover:text-white/50'
+                      !startDate && days === d ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/30 hover:text-white/50'
                     }`}
                   >
                     {d}天
                   </button>
                 ))}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-white/30">自定义</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  max={endDate || undefined}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-[#13131D] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] text-white/70 outline-none focus:border-emerald-500/40 [color-scheme:dark]"
+                />
+                <span className="text-[10px] text-white/25">至</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-[#13131D] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] text-white/70 outline-none focus:border-emerald-500/40 [color-scheme:dark]"
+                />
+                <button
+                  onClick={() => { if (startDate && endDate) { setDays(0); setRefreshTick(t => t + 1); } }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs hover:bg-emerald-500/25 transition-all"
+                >
+                  应用
+                </button>
               </div>
             </div>
           )}
@@ -228,7 +271,7 @@ export default function ModelAnalyticsPage() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === 'bar' ? (
-                      <BarChart data={data?.series || []} stackOffset="sign" barCategoryGap="12%" maxBarSize={28}>
+                      <BarChart data={data?.series || []} stackOffset="sign" barCategoryGap="6%" maxBarSize={26}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                         <XAxis dataKey="bucket" tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={24} />
                         <YAxis tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtTokens(v)} />

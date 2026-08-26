@@ -26,14 +26,16 @@ PROVIDER_LABELS = {
 }
 
 
-def _minutes_in_range(days: int) -> int:
+def _minutes_in_range(days: int = 0, start: datetime | None = None, end: datetime | None = None) -> int:
     """范围内实际分钟数（用于 TPM/RPM 分母，至少 1 分钟）"""
+    if start and end and end > start:
+        return max(1, int((end - start).total_seconds() // 60))
     return max(1, days * 24 * 60)
 
 
-def _bucket_format(days: int, dt: datetime) -> str:
+def _bucket_format(span_days: float, dt: datetime) -> str:
     """根据时间范围选择聚合粒度：<=3天按小时，否则按天"""
-    if days <= 3:
+    if span_days <= 3:
         return dt.strftime("%m-%d %H:00")
     return dt.strftime("%m-%d")
 
@@ -41,23 +43,50 @@ def _bucket_format(days: int, dt: datetime) -> str:
 @router.get("/overview")
 def analytics_overview(
     days: int = Query(7, ge=1, le=365),
+    start_date: str = Query("", description="自由起止：开始日期 YYYY-MM-DD（与 end_date 同时传）"),
+    end_date: str = Query("", description="自由起止：结束日期 YYYY-MM-DD（含当天）"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """模型调用分析：统计卡片 + 消耗分布时序（按模型分色）"""
+    """模型调用分析：统计卡片 + 消耗分布时序（按模型分色）。
+    支持两种模式：days=N（最近 N 天）或 start_date/end_date（自由区间，含两端）。"""
     now = datetime.now(timezone.utc)
-    cutoff = now - timedelta(days=days)
+    range_start = None
+    range_end = None
+    span_days = float(days)
 
-    records = (
-        db.query(UsageRecord)
-        .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= cutoff)
-        .all()
-    )
+    if start_date and end_date:
+        # 自由区间：北京时间 0 点 -> 结束日 23:59:59（UTC 换算）
+        tz8 = timezone(timedelta(hours=8))
+        try:
+            sd = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=tz8)
+            ed = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=tz8, hour=23, minute=59, second=59)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="日期格式应为 YYYY-MM-DD")
+        if ed < sd:
+            raise HTTPException(status_code=400, detail="结束日期不能早于开始日期")
+        range_start = sd.astimezone(timezone.utc)
+        range_end = ed.astimezone(timezone.utc)
+        if range_end > now:
+            range_end = now
+        span_days = max((range_end - range_start).total_seconds() / 86400, 0.01)
+        query = db.query(UsageRecord).filter(
+            UsageRecord.user_id == user.id,
+            UsageRecord.created_at >= range_start,
+            UsageRecord.created_at <= range_end,
+        )
+    else:
+        cutoff = now - timedelta(days=days)
+        query = db.query(UsageRecord).filter(
+            UsageRecord.user_id == user.id,
+            UsageRecord.created_at >= cutoff,
+        )
+    records = query.all()
 
     total_calls = len(records)
     total_tokens = sum((r.input_tokens or 0) + (r.output_tokens or 0) for r in records)
     total_cost = round(sum(r.cost_cny or 0 for r in records), 4)
-    minutes = _minutes_in_range(days)
+    minutes = _minutes_in_range(days, range_start, range_end)
     avg_tpm = round(total_tokens / minutes, 1)
     avg_rpm = round(total_calls / minutes, 2)
     total_success = sum(1 for r in records if r.status == "success")
@@ -93,27 +122,32 @@ def analytics_overview(
     # 消耗分布时序：bucket → {model: tokens}
     buckets = {}
     for r in records:
-        key = _bucket_format(days, r.created_at)
+        key = _bucket_format(span_days, r.created_at)
         b = buckets.setdefault(key, {})
         m = r.model or "unknown"
         b[m] = b.get(m, 0) + (r.input_tokens or 0) + (r.output_tokens or 0)
 
     # 保证时间轴连续（按天/按小时补零）
     series = []
-    if days <= 3:
-        total_hours = days * 24
+    if span_days <= 3:
+        total_hours = int(max(span_days * 24, 1))
+        end_anchor = range_end if range_end else now
         for i in range(total_hours - 1, -1, -1):
-            t = now - timedelta(hours=i)
+            t = end_anchor - timedelta(hours=i)
             key = t.strftime("%m-%d %H:00")
             series.append({"bucket": key, **(buckets.get(key, {}))})
     else:
-        for i in range(days - 1, -1, -1):
-            t = now - timedelta(days=i)
+        total_days = max(int(round(span_days)), 1)
+        end_anchor = range_end if range_end else now
+        for i in range(total_days - 1, -1, -1):
+            t = end_anchor - timedelta(days=i)
             key = t.strftime("%m-%d")
             series.append({"bucket": key, **(buckets.get(key, {}))})
 
     return {
         "days": days,
+        "start_date": range_start.strftime("%Y-%m-%d") if range_start else "",
+        "end_date": range_end.strftime("%Y-%m-%d") if range_end else "",
         "total_calls": total_calls,
         "total_tokens": total_tokens,
         "avg_tpm": avg_tpm,
@@ -132,16 +166,39 @@ def analytics_overview(
 @router.get("/routes")
 def analytics_routes(
     days: int = Query(7, ge=1, le=365),
+    start_date: str = Query("", description="自由起止：开始日期 YYYY-MM-DD"),
+    end_date: str = Query("", description="自由起止：结束日期 YYYY-MM-DD"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """分流：模型→上游渠道路由表 + 各渠道真实调用统计"""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    """分流：模型→上游渠道路由表 + 各渠道真实调用统计（支持 days 或自由区间）"""
+    now = datetime.now(timezone.utc)
+    range_start = None
+    range_end = None
+    if start_date and end_date:
+        tz8 = timezone(timedelta(hours=8))
+        try:
+            sd = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=tz8)
+            ed = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=tz8, hour=23, minute=59, second=59)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="日期格式应为 YYYY-MM-DD")
+        if ed < sd:
+            raise HTTPException(status_code=400, detail="结束日期不能早于开始日期")
+        range_start = sd.astimezone(timezone.utc)
+        range_end = ed.astimezone(timezone.utc)
+        if range_end > now:
+            range_end = now
+        cutoff = range_start
+        end_cut = range_end
+    else:
+        cutoff = now - timedelta(days=days)
+        end_cut = now
+    
 
     # 各模型实际使用量（用于渠道统计）
     usage_rows = (
         db.query(UsageRecord.model, func.count(UsageRecord.id), func.sum(UsageRecord.input_tokens + UsageRecord.output_tokens), func.sum(UsageRecord.cost_cny))
-        .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= cutoff)
+        .filter(UsageRecord.user_id == user.id, UsageRecord.created_at >= cutoff, UsageRecord.created_at <= end_cut)
         .group_by(UsageRecord.model)
         .all()
     )
@@ -175,6 +232,8 @@ def analytics_routes(
 
     return {
         "days": days,
+        "start_date": range_start.strftime("%Y-%m-%d") if range_start else "",
+        "end_date": range_end.strftime("%Y-%m-%d") if range_end else "",
         "channels": channels,
         "routes": routes,
         "updated_at": datetime.now(timezone.utc).isoformat(),
