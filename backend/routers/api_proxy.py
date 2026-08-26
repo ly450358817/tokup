@@ -365,6 +365,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                             input_tokens=_input_tok, output_tokens=_output_tok, cost_cny=_cost,
                         )
                         _r = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
+                        db.commit()  # 管理员免扣费时 settle 不触发 commit，此处统一落库（用量/对话存档）
                         _balance_after = _r.get("balance", _initial_balance)
                     except Exception as _se:
                         # 结算异常时退回预扣，避免用户余额被无声冻结
@@ -574,6 +575,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                             input_tokens=_input_tok, output_tokens=_output_tok, cost_cny=_cost,
                         )
                         _r = settle_reserved(user.id, _need_balance, _balance_charge, db, f"API: {model}")
+                        db.commit()  # 管理员免扣费时 settle 不触发 commit，此处统一落库（用量/对话存档）
                         _balance_after = _r.get("balance")
                     except Exception as _se:
                         try:
