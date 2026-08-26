@@ -2,16 +2,11 @@ import { en } from './en';
 import { zh } from './zh';
 import { ja } from './ja';
 import { ko } from './ko';
-import { fr } from './fr';
-import { de } from './de';
-import { es } from './es';
-import { pt } from './pt';
-import { ru } from './ru';
 
-export type Lang = 'en' | 'zh' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'pt' | 'ru';
+export type Lang = 'en' | 'zh' | 'ja' | 'ko';
 export type TranslationKeys = typeof en;
 
-const translations: Record<Lang, TranslationKeys> = { en, zh, ja, ko, fr, de, es, pt, ru };
+const translations: Record<Lang, TranslationKeys> = { en, zh, ja, ko };
 
 function deepMerge(target: any, source: any): any {
   const result = { ...target };
@@ -42,11 +37,6 @@ export const LANGUAGES: LangOption[] = [
   { code: 'en', label: 'English', flag: '🇺🇸' },
   { code: 'ja', label: '日本語', flag: '🇯🇵' },
   { code: 'ko', label: '한국어', flag: '🇰🇷' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
 ];
 
-export { en, zh, ja, ko, fr, de, es, pt, ru };
+export { en, zh, ja, ko };

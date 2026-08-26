@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from database import get_db
 from models import User, ApiKey, UsageRecord, ConversationLog
-from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES, PRIVATE_MODELS
+from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES, PRIVATE_MODELS, MODEL_META, MODEL_COST, MODEL_COST_PEAK
 from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
@@ -45,7 +45,23 @@ def authenticate_api_key(
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key 无效")
+    _check_key_rate(api_key.id, api_key.rate_limit or 0)
     return api_key
+
+
+# 按 API Key 的每分钟请求上限做滑动窗口限速（仅 rate_limit>0 生效；多 worker 下为近似值）
+_RATE_STORE: dict = {}
+
+def _check_key_rate(api_key_id: str, rpm: int):
+    if not rpm or rpm <= 0:
+        return
+    now = time.time()
+    key = "rl:" + api_key_id
+    ts = [t for t in _RATE_STORE.get(key, []) if now - t < 60]
+    if len(ts) >= rpm:
+        raise HTTPException(status_code=429, detail=f"请求过于频繁：该 Key 每分钟上限 {rpm} 次，请降低频率或调高额度")
+    ts.append(now)
+    _RATE_STORE[key] = ts
 
 
 def _ensure_paid(api_key, db):
@@ -990,9 +1006,23 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 
 @router.get("/models")
 def list_models():
+    """模型目录（单一数据源）：OpenAI 兼容 id/object，另附展示用的名称/品牌/价格/备注/徽章"""
     models = []
     for model, (provider, _) in MODEL_ROUTES.items():
         if model in PRIVATE_MODELS:
             continue
-        models.append({"id": model, "provider": "tokup", "object": "model"})
+        meta = MODEL_META.get(model, {})
+        costs = MODEL_COST.get(model, (0.0, 0.0))
+        peak = MODEL_COST_PEAK.get(model)
+        models.append({
+            "id": model,
+            "object": "model",
+            "provider": meta.get("provider", provider),
+            "name": meta.get("name", model),
+            "note": meta.get("note", ""),
+            "badge": meta.get("badge", ""),
+            "input": costs[0],
+            "output": costs[1],
+            "peak": list(peak) if peak else None,
+        })
     return {"data": models}

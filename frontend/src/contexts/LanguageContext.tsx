@@ -15,7 +15,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('tokup_lang') as Lang | null;
-    if (saved && ['en', 'zh', 'ja', 'ko', 'fr', 'de', 'es', 'pt', 'ru'].includes(saved)) setLangState(saved);
+    if (saved && ['en', 'zh', 'ja', 'ko'].includes(saved)) setLangState(saved);
   }, []);
 
   const setLang = (l: Lang) => {

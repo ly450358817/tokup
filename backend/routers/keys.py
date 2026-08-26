@@ -15,6 +15,7 @@ class KeyCreateReq(BaseModel):
     name: str = ""
     monthly_cap: float = 0
     daily_cap: float = 0
+    rate_limit: int = 0
 
 
 class KeyResp(BaseModel):
@@ -58,6 +59,7 @@ def create_key(req: KeyCreateReq, user: User = Depends(get_current_user), db: Se
         name=req.name or "New Key",
         monthly_cap=req.monthly_cap,
         daily_cap=req.daily_cap,
+        rate_limit=max(0, int(req.rate_limit or 0)),
     )
     db.add(api_key)
     db.commit()

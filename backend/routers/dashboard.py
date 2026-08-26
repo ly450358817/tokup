@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, case
 
 from database import get_db
 from models import User, Transaction, ApiKey, UsageRecord
@@ -50,8 +50,22 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
         )
         daily.append({"date": (day + timedelta(hours=8)).strftime("%m-%d"), "usage": float(used)})
 
-    # 各模型用量占比
+    # 各模型近24h健康状态（按真实调用错误率；无调用=unknown，不做假绿点）
     key_count = db.query(ApiKey).filter(ApiKey.user_id == user.id, ApiKey.is_active).count()
+    model_health = {}
+    for _m, _cnt, _errs in (
+        db.query(
+            UsageRecord.model,
+            func.count(UsageRecord.id),
+            func.sum(case((UsageRecord.status != "success", 1), else_=0)),
+        )
+        .filter(UsageRecord.created_at >= now - timedelta(hours=24))
+        .group_by(UsageRecord.model)
+        .all()
+    ):
+        _cnt = int(_cnt or 0)
+        _errs = int(_errs or 0)
+        model_health[_m] = "degraded" if (_cnt > 0 and _errs / _cnt > 0.02) else "healthy"
 
     # 今日请求数 / 平均响应（真实 usage_records）
     today_records = (
@@ -75,7 +89,7 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
         "today_requests": today_requests_est,
         "avg_response_ms": avg_response,
         "status": "online",  # 模拟 API 状态
-        "models": {m: True for m in MODEL_ROUTES},
+        "models": model_health,
     }
 
 

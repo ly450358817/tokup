@@ -17,7 +17,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
-const MODELS = [
+const DEFAULT_MODELS = [
   { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'OpenAI', cost: '¥18/1M input' },
   { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '¥45/1M input' },
   { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', cost: '¥10/1M input' },
@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const [days, setDays] = useState(7);
   const [lastSync, setLastSync] = useState('');
   const [showAllModels, setShowAllModels] = useState(false);
+  const [models, setModels] = useState(DEFAULT_MODELS);
 
   const tr = (key: string): string => {
     const ks = key.split('.');
@@ -86,6 +87,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
+  }, []);
+
+  // 模型目录：从后端单一数据源拉取（含价格/品牌），失败时回退内置列表
+  useEffect(() => {
+    fetch('/api/v1/models')
+      .then(r => r.json())
+      .then((d: any) => {
+        const list = Array.isArray(d?.data) ? d.data : [];
+        if (list.length) {
+          setModels(list.map((m: any) => {
+            const inp = Number(m.input) || 0;
+            const peak = Array.isArray(m.peak) ? Number(m.peak[0]) || 0 : 0;
+            return {
+              id: m.id,
+              label: m.name || m.id,
+              provider: m.provider || '',
+              cost: peak ? `¥${inp}~¥${peak}/1M input (闲时~高峰)` : `¥${inp}/1M input`,
+            };
+          }));
+        }
+      })
+      .catch(() => { /* 保留内置列表 */ });
   }, []);
 
   if (loading && !stats) {
@@ -289,8 +312,10 @@ export default function DashboardPage() {
           <h3 className="text-[13px] font-medium text-white/70 mb-1">{tr('dashboard.supportedModels')}</h3>
           <p className="text-[10px] text-white/20 mb-4">{tr('dashboard.modelsDesc')}</p>
                     <div className="space-y-2">
-            {(showAllModels ? MODELS : MODELS.slice(0, 5)).map((m) => {
-              const isOnline = stats?.models?.[m.id] !== false;
+            {(showAllModels ? models : models.slice(0, 5)).map((m) => {
+              const health = (stats?.models?.[m.id] as string) || 'unknown';
+              const online = health === 'healthy';
+              const degraded = health === 'degraded';
               return (
                 <div key={m.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.02]">
                   <div>
@@ -302,9 +327,9 @@ export default function DashboardPage() {
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-red-500/10 border-red-500/20 text-red-400">{m.status}</span>
                     ) : (
                       <>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]' : 'bg-gray-500'}`} />
-                    <span className={`text-[10px] ${isOnline ? 'text-emerald-400' : 'text-gray-500'}`}>
-                      {isOnline ? tr('dashboard.available') : 'Unavailable'}
+                    <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]' : degraded ? 'bg-amber-400' : 'bg-gray-500'}`} />
+                    <span className={`text-[10px] ${online ? 'text-emerald-400' : degraded ? 'text-amber-400' : 'text-gray-500'}`}>
+                      {online ? tr('dashboard.available') : degraded ? '异常' : '暂无数据'}
                     </span>
                     </>
                     )}
@@ -312,12 +337,12 @@ export default function DashboardPage() {
                 </div>
               );
             })}
-            {MODELS.length > 5 && (
+            {models.length > 5 && (
               <button
                 onClick={() => setShowAllModels(!showAllModels)}
                 className="w-full py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[10px] text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all mt-1"
               >
-                {showAllModels ? '收起' : '查看全部 ' + MODELS.length + ' 个模型'}
+                {showAllModels ? '收起' : '查看全部 ' + models.length + ' 个模型'}
               </button>
             )}
           </div>

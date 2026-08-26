@@ -24,6 +24,7 @@ import { useLang } from '../contexts/LanguageContext';
    const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [newMonthlyCap, setNewMonthlyCap] = useState<string>("");
   const [newDailyCap, setNewDailyCap] = useState<string>("");
+  const [newRateLimit, setNewRateLimit] = useState<string>("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
     const [newlyCreatedKey, setNewlyCreatedKey] = useState('');
@@ -47,12 +48,13 @@ import { useLang } from '../contexts/LanguageContext';
    const handleCreate = async () => {
      setCreating(true);
      try {
-      const result = await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0);
+      const result = await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0, Number(newRateLimit) || 0);
         setNewlyCreatedKey(result.key);
         setShowQuickstart(true);
       setNewName('');
       setNewMonthlyCap('');
       setNewDailyCap('');
+      setNewRateLimit('');
        await loadKeys();
      } catch (err) {
        console.error('Failed to create key', err);
@@ -125,6 +127,13 @@ import { useLang } from '../contexts/LanguageContext';
                  value={newDailyCap}
                  onChange={(e) => setNewDailyCap(e.target.value)}
                  className="glass-input w-1/2 text-[11px]"
+               />
+               <input
+                 type="number"
+                 placeholder="每分钟上限（次，0=不限）"
+                 value={newRateLimit}
+                 onChange={(e) => setNewRateLimit(e.target.value)}
+                 className="glass-input w-full text-[11px]"
                />
              </div>
            </div>
@@ -254,6 +263,7 @@ import { useLang } from '../contexts/LanguageContext';
                    <span>速率限制：{k.rate_limit} 次/分钟</span>
                    {(k.monthly_cap || 0) > 0 && <span className="text-white/30">月：{(k.monthly_cap || 0).toLocaleString()} Token</span>}
                    {(k.daily_cap || 0) > 0 && <span className="text-white/30">日：{(k.daily_cap || 0).toLocaleString()} Token</span>}
+                   {(k.rate_limit || 0) > 0 && <span className="text-white/30">限速：{k.rate_limit}/分</span>}
                    <span>|</span>
                    <span className={k.is_active ? 'text-emerald-400' : 'text-red-400'}>
                      {k.is_active ? '正常' : '停用'}

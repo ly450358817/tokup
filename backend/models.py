@@ -79,7 +79,7 @@ class ApiKey(Base):
     key = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, default="Default Key")
     is_active = Column(Boolean, default=True)
-    rate_limit = Column(Integer, default=60)  # requests per minute
+    rate_limit = Column(Integer, default=0)  # 每分钟请求上限（0=不限；用户显式设置后才生效）
     monthly_cap = Column(Float, default=0)  # 0 = unlimited
     daily_cap = Column(Float, default=0)  # 0 = unlimited
     last_used_at = Column(DateTime, nullable=True)

@@ -28,7 +28,7 @@ interface ModelPrice {
   badge?: string;
 }
 
-const models: ModelPrice[] = [
+const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', note: '旗舰 Terra', badge: 'New' },
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', note: '最新旗舰', badge: 'Hot' },
   { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', note: '最新旗舰 Luna', badge: 'New' },
@@ -80,6 +80,7 @@ export default function TransferStationPage() {
   const [loading, setLoading] = useState(true);
   const [activeKey, setActiveKey] = useState('');
   const [testModel, setTestModel] = useState('gpt-5.5');
+  const [models, setModels] = useState<ModelPrice[]>(DEFAULT_MODELS);
   const [testInput, setTestInput] = useState('');
   const [testResponse, setTestResponse] = useState('');
   const [testReasoning, setTestReasoning] = useState('');
@@ -149,6 +150,33 @@ export default function TransferStationPage() {
 
 
   useEffect(() => { loadData(); }, []);
+
+  // 模型目录：从后端单一数据源拉取（名称/品牌/价格/备注），失败回退内置列表
+  useEffect(() => {
+    fetch('/api/v1/models')
+      .then(r => r.json())
+      .then((d: any) => {
+        const list = Array.isArray(d?.data) ? d.data : [];
+        if (list.length) {
+          setModels(list.map((m: any) => {
+            const inp = Number(m.input) || 0;
+            const out = Number(m.output) || 0;
+            const peak = Array.isArray(m.peak) ? [Number(m.peak[0]) || 0, Number(m.peak[1]) || 0] : null;
+            const fmt = (v: number, p?: number) => p ? `¥${v} / ¥${p}` : `¥${v}`;
+            return {
+              id: m.id,
+              name: m.name || m.id,
+              provider: m.provider || '',
+              input: fmt(inp, peak ? peak[0] : undefined),
+              output: fmt(out, peak ? peak[1] : undefined),
+              note: m.note || '',
+              badge: m.badge || undefined,
+            };
+          }));
+        }
+      })
+      .catch(() => { /* 保留内置列表 */ });
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('tokup_token');

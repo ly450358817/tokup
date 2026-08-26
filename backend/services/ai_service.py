@@ -107,6 +107,36 @@ MODEL_COST_PEAK = {
 # 私有/内部模型：仍可调用（用户自用），但不在 /models 公开列表中展示
 PRIVATE_MODELS = {"glm-4.6v-flash"}
 
+# 模型展示元数据（单一数据源，前端模型目录/仪表盘/工作台统一从这里拉取）
+# provider 为展示品牌（非实际路由上游）；note/badge 用于控制台与文档
+MODEL_META = {
+    "openai/gpt-5.6-terra": {"name": "GPT-5.6 Terra", "provider": "OpenAI", "note": "旗舰 Terra", "badge": "New"},
+    "gpt-5.5": {"name": "GPT-5.5", "provider": "OpenAI", "note": "最新旗舰", "badge": "Hot"},
+    "openai/gpt-5.6-luna": {"name": "GPT-5.6 Luna", "provider": "OpenAI", "note": "最新旗舰 Luna", "badge": "New"},
+    "openai/gpt-5.6-sol": {"name": "GPT-5.6 Sol", "provider": "OpenAI", "note": "高效推理 Sol", "badge": "New"},
+    "anthropic/claude-fable-5": {"name": "Claude Fable 5", "provider": "Anthropic", "note": "最新 Claude", "badge": "New"},
+    "moonshotai/kimi-k3": {"name": "Kimi K3", "provider": "月之暗面", "note": "最新旗舰 · 中国开源", "badge": "New"},
+    "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
+    "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
+    "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "极致性价比", "badge": ""},
+    "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 实验版", "badge": "New"},
+    "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "通用模型", "badge": ""},
+    "deepseek/deepseek-v3.2": {"name": "DeepSeek V3.2", "provider": "DeepSeek", "note": "达 GPT-5 水平", "badge": "New"},
+    "deepseek-r1": {"name": "DeepSeek R1", "provider": "DeepSeek", "note": "深度推理", "badge": ""},
+    "qwen/qwen3.7-max": {"name": "Qwen 3.7 Max", "provider": "通义千问", "note": "通义旗舰", "badge": ""},
+    "qwen/qwen3.8-max": {"name": "Qwen3.8 Max", "provider": "通义千问", "note": "2.4T 参数新旗舰", "badge": "New"},
+    "qwen/qwen3.7-plus": {"name": "Qwen 3.7 Plus", "provider": "通义千问", "note": "高性价比中杯", "badge": "New"},
+    "glm-5.2": {"name": "GLM-5.2", "provider": "智谱AI", "note": "1M 上下文旗舰", "badge": "New"},
+    "glm-5.3": {"name": "GLM-5.3", "provider": "智谱AI", "note": "最新一代旗舰", "badge": "New"},
+    "qwen3-max": {"name": "Qwen3 Max", "provider": "通义千问", "note": "通义旗舰 · 全量版", "badge": "New"},
+    "qwen3.5-397b-a17b": {"name": "Qwen3.5 397B", "provider": "通义千问", "note": "397B 超大杯旗舰", "badge": "New"},
+    "MiniMax-M1": {"name": "MiniMax M1", "provider": "MiniMax", "note": "顶级推理旗舰", "badge": "New"},
+    "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "最新旗舰", "badge": "New"},
+    "moonshotai/kimi-k2.7-code": {"name": "Kimi K2.7 Code", "provider": "月之暗面", "note": "代码最强", "badge": "New"},
+    "glm-4.6v-flash": {"name": "GLM-4.6V Flash", "provider": "智谱AI", "note": "视觉 · 免费", "badge": "Free"},
+}
+
+
 
 def _is_beijing_peak_hour() -> bool:
     """当前是否处于高峰时段：每日 9:00-12:00、14:00-18:00（北京时间）"""
