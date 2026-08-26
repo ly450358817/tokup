@@ -313,8 +313,9 @@ export default function DashboardPage() {
           <p className="text-[10px] text-white/20 mb-4">{tr('dashboard.modelsDesc')}</p>
                     <div className="space-y-2">
             {(showAllModels ? models : models.slice(0, 5)).map((m) => {
-              const health = (stats?.models?.[m.id] as string) || 'unknown';
-              const online = health === 'healthy';
+              // 无调用数据 = 无证据表明不可用，默认按可用（绿）展示；仅近24h有调用且错误率>2% 标异常
+              const health = (stats?.models?.[m.id] as string) || 'healthy';
+              const online = health !== 'degraded';
               const degraded = health === 'degraded';
               return (
                 <div key={m.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.02]">
@@ -327,9 +328,9 @@ export default function DashboardPage() {
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-red-500/10 border-red-500/20 text-red-400">{m.status}</span>
                     ) : (
                       <>
-                    <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]' : degraded ? 'bg-amber-400' : 'bg-gray-500'}`} />
-                    <span className={`text-[10px] ${online ? 'text-emerald-400' : degraded ? 'text-amber-400' : 'text-gray-500'}`}>
-                      {online ? tr('dashboard.available') : degraded ? '异常' : '暂无数据'}
+                    <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`} />
+                    <span className={`text-[10px] ${online ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {online ? tr('dashboard.available') : '异常'}
                     </span>
                     </>
                     )}
