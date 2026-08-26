@@ -11,7 +11,7 @@ from sqlalchemy import func
 from database import get_db
 from models import User, UsageRecord
 from routers.auth import get_current_user
-from services.ai_service import MODEL_ROUTES, MODEL_COST, UPSTREAM_MODEL_NAME, QINIU_ENDPOINT, ZHIPU_ENDPOINT
+from services.ai_service import MODEL_ROUTES, MODEL_COST, UPSTREAM_MODEL_NAME, QINIU_ENDPOINT, ZHIPU_ENDPOINT, MODEL_META
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -207,28 +207,30 @@ def analytics_routes(
         for m, c, t, cost in usage_rows
     }
 
-    # 路由表（真实 MODEL_ROUTES；不暴露上游名/URL/版本号，渠道统一 TokUp）
+    # 路由表（真实 MODEL_ROUTES；渠道显示模型对应品牌提供商，不暴露上游名/URL/版本号）
     routes = []
     for model, (provider, endpoint) in sorted(MODEL_ROUTES.items()):
         costs = MODEL_COST.get(model)
         routes.append({
             "model": model,
             "label": _model_label(model),
-            "provider_label": "TokUp",
+            "provider_label": MODEL_META.get(model, {}).get("provider", "TokUp"),
             "cost_in": costs[0] if costs else None,
             "cost_out": costs[1] if costs else None,
             "usage": usage_map.get(model, {"calls": 0, "tokens": 0, "cost": 0.0}),
         })
 
-    # 渠道汇总（合并为单一 TokUp，不暴露 qiniu/zhipu/deepseek 上游名）
-    ch = {"provider": "tokup", "label": "TokUp", "calls": 0, "tokens": 0, "cost": 0.0, "models": []}
+    # 渠道汇总：按模型品牌提供商分组（如 OpenAI/DeepSeek/月之暗面，不暴露 qiniu/zhipu 上游名）
+    channels_map = {}
     for model, (provider, endpoint) in MODEL_ROUTES.items():
         u = usage_map.get(model, {"calls": 0, "tokens": 0, "cost": 0.0})
+        prov = MODEL_META.get(model, {}).get("provider", "TokUp")
+        ch = channels_map.setdefault(prov, {"provider": prov, "label": prov, "calls": 0, "tokens": 0, "cost": 0.0, "models": []})
         ch["calls"] += u["calls"]
         ch["tokens"] += u["tokens"]
         ch["cost"] += u["cost"]
         ch["models"].append({"model": model, "label": _model_label(model), **u})
-    channels = [ch]
+    channels = sorted(channels_map.values(), key=lambda c: -c["calls"])
 
     return {
         "days": days,
