@@ -57,10 +57,9 @@ def quota_eligible_models() -> list:
 
 
 def beijing_day_start() -> datetime:
-    """最近一次北京时间 0 点对应的 UTC 时间"""
+    """最近一次北京时间 0 点对应的 UTC 时间（北京 0 点 = UTC 前一日 16:00）"""
     now = datetime.now(timezone.utc)
-    shifted = now - timedelta(hours=8)  # 北京 = UTC+8
-    return shifted.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=8)
+    return (now + timedelta(hours=8)).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=8)
 
 
 def get_active_subscription(user_id: str, db: Session):
