@@ -50,7 +50,7 @@ export default function SettingsPage() {
     setChatLoading(false);
   };
   const [searchParams] = useSearchParams();
-  const [ticketCategory, setTicketCategory] = useState('refund');
+  const [ticketCategory, setTicketCategory] = useState('question');
   const [ticketOrder, setTicketOrder] = useState(searchParams.get('order') || '');
   const [ticketMessage, setTicketMessage] = useState('');
   const [ticketSubject, setTicketSubject] = useState('');
@@ -189,10 +189,10 @@ export default function SettingsPage() {
               onChange={(e) => setTicketCategory(e.target.value)}
               className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white/60 outline-none"
             >
-              <option value="refund">退款申请</option>
-              <option value="complaint">投诉</option>
               <option value="question">功能/使用问题</option>
+              <option value="complaint">投诉</option>
               <option value="other">其他</option>
+              <option value="refund">退款申请</option>
             </select>
             <input
               type="text"
