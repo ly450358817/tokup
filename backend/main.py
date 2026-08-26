@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine, Base, SessionLocal
 from models import User
-from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, analytics, ws as ws_router
+from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, analytics, support, ws as ws_router
 from services.security_service import AISecurityMiddleware, ip_tracker
 
 # ── 加载 .env 文件 ──
@@ -25,8 +25,11 @@ ALLOWED_HOSTS = os.getenv("TOKUP_ALLOWED_HOSTS", "localhost,tokup.io,api.tokup.i
 ADMIN_EMAIL = os.getenv("TOKUP_ADMIN_EMAIL", "")
 ADMIN_PASSWORD = os.getenv("TOKUP_ADMIN_PASSWORD", "")
 
-# 建表
-Base.metadata.create_all(bind=engine)
+# 建表（多 worker 并发启动时可能撞"已存在"，忽略即可）
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception:
+    pass
 
 # 创建默认管理员（仅当配置了管理员账号时）
 if ADMIN_EMAIL and ADMIN_PASSWORD:
