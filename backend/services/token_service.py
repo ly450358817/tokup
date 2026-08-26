@@ -184,6 +184,7 @@ def get_transactions(user_id: str, db: Session, limit: int = 50, type_filter: st
             "type": t.type,
             "status": t.status,
             "payment_method": t.payment_method,
+            "payment_id": t.payment_id,
             "description": t.description,
             "created_at": t.created_at.isoformat(),
         }

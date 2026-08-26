@@ -52,6 +52,21 @@ class Transaction(Base):
     user = relationship("User", back_populates="transactions")
 
 
+class SupportTicket(Base):
+    """客服工单：用户提交退款/投诉/问题，管理员在后台查看回复"""
+    __tablename__ = "support_tickets"
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    category = Column(String, default="other")  # refund | complaint | question | other
+    subject = Column(String, default="")
+    message = Column(Text, default="")
+    order_id = Column(String, default="")  # 关联充值订单号（选填）
+    status = Column(String, default="new")  # new | processing | closed
+    admin_reply = Column(Text, default="")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
 class ApiKeyRate(Base):
     """API Key 每分钟限速计数（SQLite 原子 upsert，跨 worker 生效）"""
     __tablename__ = "api_key_rate"

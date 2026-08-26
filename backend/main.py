@@ -100,6 +100,7 @@ app.include_router(usage.router)
 app.include_router(invite.router)
 app.include_router(subscription.router)
 app.include_router(analytics.router)
+app.include_router(support.router)
 
 
 @app.on_event("startup")

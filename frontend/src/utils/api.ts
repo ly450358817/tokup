@@ -39,6 +39,13 @@ export const authApi = {
   acceptTerms: () => api.post('/auth/accept-terms').then((r) => r.data),
 };
 
+export const supportApi = {
+  create: (data: any) => api.post('/support/tickets', data).then((r) => r.data),
+  list: (status = '') => api.get('/support/tickets', { params: { status } }).then((r) => r.data),
+  unread: () => api.get('/support/tickets/unread-count').then((r) => r.data),
+  reply: (id: string, data: any) => api.post(`/support/tickets/${id}/reply`, data).then((r) => r.data),
+};
+
 export const adminApi = {
   conversations: (params: Record<string, any>) =>
     api.get('/admin/conversations', { params }).then((r) => r.data),

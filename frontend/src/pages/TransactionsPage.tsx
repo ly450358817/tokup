@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LanguageContext';
 import { dashboardApi } from '../utils/api';
-import { Download, Search, Filter } from 'lucide-react';
+import { Download, Search, Filter, Headset } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function TransactionsPage() {
   const { t } = useLang();
+  const navigate = useNavigate();
   const [txns, setTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -134,6 +136,15 @@ export default function TransactionsPage() {
               }`}>
                 {tx.type === 'recharge' ? '+' : '-'}¥{Math.abs(tx.amount || tx.token_amount / 100).toFixed(2)}
               </span>
+              {tx.type === 'recharge' && tx.status === 'completed' && (
+                <button
+                  onClick={() => navigate('/settings?order=' + (tx.payment_id || ''))}
+                  className="ml-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-[11px] text-white/50 hover:text-emerald-400 hover:border-emerald-500/30 transition-all shrink-0"
+                  title="联系客服（退款/问题）"
+                >
+                  <Headset size={12} /> 联系客服
+                </button>
+              )}
             </div>
           ))}
         </div>

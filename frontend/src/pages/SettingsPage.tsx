@@ -1,9 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LanguageContext';
-import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, Users } from 'lucide-react';
+import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, Users, Headset, Send } from 'lucide-react';
 import { streamTestChat } from '../lib/streamTestChat';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { supportApi } from '../utils/api';
 
 export default function SettingsPage() {
   const [showHelp, setShowHelp] = useState(false);
@@ -47,6 +49,36 @@ export default function SettingsPage() {
     }
     setChatLoading(false);
   };
+  const [searchParams] = useSearchParams();
+  const [ticketCategory, setTicketCategory] = useState('refund');
+  const [ticketOrder, setTicketOrder] = useState(searchParams.get('order') || '');
+  const [ticketMessage, setTicketMessage] = useState('');
+  const [ticketSubject, setTicketSubject] = useState('');
+  const [ticketSending, setTicketSending] = useState(false);
+  const [ticketMsg, setTicketMsg] = useState<{ type: string; text: string } | null>(null);
+  const [myTickets, setMyTickets] = useState<any[]>([]);
+
+  const loadMyTickets = () => {
+    supportApi.list().then((d: any) => setMyTickets(d?.items || [])).catch(() => {});
+  };
+  useEffect(() => { loadMyTickets(); }, []);
+
+  const submitTicket = async () => {
+    if (!ticketMessage.trim()) { setTicketMsg({ type: 'error', text: '请填写留言内容' }); return; }
+    setTicketSending(true);
+    setTicketMsg(null);
+    try {
+      await supportApi.create({ category: ticketCategory, subject: ticketSubject, message: ticketMessage, order_id: ticketOrder });
+      setTicketMsg({ type: 'success', text: '已提交，客服会尽快处理（退款/投诉按平台政策人工核实）。' });
+      setTicketMessage(''); setTicketSubject(''); setTicketOrder('');
+      loadMyTickets();
+    } catch (e: any) {
+      setTicketMsg({ type: 'error', text: e?.response?.data?.detail || '提交失败，请稍后再试' });
+    } finally {
+      setTicketSending(false);
+    }
+  };
+
   const copyGroupId = async () => {
     try {
       await navigator.clipboard.writeText('1102529130');
@@ -141,6 +173,84 @@ export default function SettingsPage() {
               <p className="text-[11px] text-white/40">{tr('settings.aiQuestionDesc')}</p>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* 联系客服 / 提交工单（退款、投诉、问题） */}
+      <div className="backdrop-blur-xl bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-[13px] font-medium text-white/70 mb-1">
+          <span className="flex items-center gap-2"><Headset size={14} /> 联系客服 / 提交工单</span>
+        </h3>
+        <p className="text-[11px] text-white/30 mb-4">退款申请、投诉、功能问题都走这里提交，客服会在后台看到并处理（按平台政策人工核实）。</p>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <select
+              value={ticketCategory}
+              onChange={(e) => setTicketCategory(e.target.value)}
+              className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white/60 outline-none"
+            >
+              <option value="refund">退款申请</option>
+              <option value="complaint">投诉</option>
+              <option value="question">功能/使用问题</option>
+              <option value="other">其他</option>
+            </select>
+            <input
+              type="text"
+              value={ticketOrder}
+              onChange={(e) => setTicketOrder(e.target.value)}
+              placeholder="关联订单号（选填）"
+              className="flex-1 bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white/60 outline-none"
+            />
+          </div>
+          <input
+            type="text"
+            value={ticketSubject}
+            onChange={(e) => setTicketSubject(e.target.value)}
+            placeholder="标题（选填，如：充值未到账）"
+            className="w-full bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white/60 outline-none"
+          />
+          <textarea
+            value={ticketMessage}
+            onChange={(e) => setTicketMessage(e.target.value)}
+            placeholder="请描述你的问题或退款原因（必填）"
+            rows={3}
+            className="w-full bg-[#13131D] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white/60 outline-none resize-none"
+          />
+          {ticketMsg && (
+            <p className={`text-[11px] ${ticketMsg.type === 'success' ? 'text-emerald-400' : 'text-red-300'}`}>{ticketMsg.text}</p>
+          )}
+          <button
+            onClick={submitTicket}
+            disabled={ticketSending}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[12px] hover:bg-emerald-500/20 transition-all disabled:opacity-40"
+          >
+            <Send size={13} /> {ticketSending ? '提交中...' : '提交'}
+          </button>
+
+          {myTickets.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-[11px] text-white/40">我的工单（{myTickets.length}）</p>
+              {myTickets.map((t: any) => (
+                <div key={t.id} className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-white/60">{t.category_label || t.category}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      t.status === 'new' ? 'bg-amber-500/10 text-amber-400' : t.status === 'processing' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.06] text-white/40'
+                    }`}>
+                      {t.status === 'new' ? '待处理' : t.status === 'processing' ? '处理中' : '已关闭'}
+                    </span>
+                  </div>
+                  {t.subject && <p className="text-[11px] text-white/70">{t.subject}</p>}
+                  <p className="text-[11px] text-white/40">{t.message}</p>
+                  {t.order_id && <p className="text-[10px] text-white/25">订单：{t.order_id}</p>}
+                  {t.admin_reply && (
+                    <p className="text-[11px] text-emerald-300/80 mt-1">客服回复：{t.admin_reply}</p>
+                  )}
+                  <p className="text-[10px] text-white/20">{new Date(t.created_at).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

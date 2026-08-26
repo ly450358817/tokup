@@ -279,6 +279,10 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                 <p className="text-[12px] text-red-400 text-center">{error}</p>
               )}
 
+              <p className="text-[10px] text-white/25 leading-relaxed text-center">
+                充值即同意：数字商品不适用七天无理由退货；未使用余额原则上不退，平台原因、错误扣款、未成年人等法定情形除外，可联系客服处理。Token 长期有效不过期。
+              </p>
+
               <div className="flex justify-center gap-3 text-[10px] text-white/25">
                 <span>1 元 = 100 Token</span>
                 <span>|</span>

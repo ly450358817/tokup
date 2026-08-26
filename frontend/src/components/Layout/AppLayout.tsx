@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { supportApi } from '../../utils/api';
 import { useRecharge } from '../../contexts/RechargeContext';
 import { useLang } from '../../contexts/LanguageContext';
 import {
@@ -42,6 +43,15 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const [ticketUnread, setTicketUnread] = useState(0);
+  useEffect(() => {
+    if (user?.is_admin) {
+      const load = () => supportApi.unread().then((d: any) => setTicketUnread(d?.count || 0)).catch(() => {});
+      load();
+      const iv = setInterval(load, 60000);
+      return () => clearInterval(iv);
+    }
+  }, [user?.is_admin]);
   const { user, logout } = useAuth();
   const { openRecharge } = useRecharge();
   const { t } = useLang();
@@ -149,6 +159,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <Icon size={18} />
                 {tr(item.labelKey)}
+                {item.id === 'admin-conversations' && ticketUnread > 0 && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {ticketUnread}
+                  </span>
+                )}
               </a>
             );
           })}
