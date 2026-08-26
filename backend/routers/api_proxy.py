@@ -431,6 +431,20 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                     pass
                 except Exception:
                     import json as _j, time as _t
+                    # 整段流无任何内容产出 → 记为失败（有部分产出则由 _settle 记成功，不重复记）
+                    if not _fwd_content and not _fwd_reasoning:
+                        try:
+                            db.add(UsageRecord(
+                                user_id=_uid, api_key_id=_kid, model=model,
+                                provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                                input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+                                output_tokens=0, cost_cny=0.0, status="error",
+                                latency_ms=int((time.monotonic() - _t0) * 1000),
+                                created_at=datetime.now(timezone.utc),
+                            ))
+                            db.commit()
+                        except Exception:
+                            pass
                     _e = _j.dumps({"id": f"cmpl-{int(_t.time()*1000)}", "object": "chat.completion.chunk", "created": int(_t.time()), "model": model, "choices": [{"index": 0, "delta": {}, "logprobs": None, "finish_reason": "stop"}]})
                     yield f"data: {_e}\n\n"
                 finally:
@@ -470,6 +484,15 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                           request_messages=req.messages, response_content={"error": result["error"]},
                           status="error")
         settle_reserved(_uid, _need_balance, 0, db, f"API退回: {model}")
+        # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+        db.add(UsageRecord(
+            user_id=_uid, api_key_id=_kid, model=model,
+            provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+            input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+            output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+            created_at=datetime.now(timezone.utc),
+        ))
+        db.commit()
         raise HTTPException(status_code=502, detail=result["error"])
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost")
@@ -638,6 +661,20 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                 except StopAsyncIteration:
                     pass
                 except Exception as _e:
+                    # 整段流无任何内容产出 → 记为失败（有部分产出则由 _settle 记成功，不重复记）
+                    if not _fwd_content and not _fwd_reasoning:
+                        try:
+                            db.add(UsageRecord(
+                                user_id=user.id, api_key_id=None, model=model,
+                                provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                                input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+                                output_tokens=0, cost_cny=0.0, status="error",
+                                latency_ms=int((time.monotonic() - _t0) * 1000),
+                                created_at=datetime.now(timezone.utc),
+                            ))
+                            db.commit()
+                        except Exception:
+                            pass
                     _ej = json.dumps({"id": f"cmpl-{int(time.time()*1000)}", "object": "chat.completion.chunk", "created": int(time.time()), "model": model, "choices": [{"index": 0, "delta": {}, "logprobs": None, "finish_reason": "stop"}], "error": str(_e)})
                     yield f"data: {_ej}\n\n"
                 finally:
@@ -667,6 +704,15 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                           request_messages=req.messages, response_content={"error": result["error"]},
                           status="error")
         settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
+        # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+        db.add(UsageRecord(
+            user_id=user.id, api_key_id=None, model=model,
+            provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+            input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+            output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+            created_at=datetime.now(timezone.utc),
+        ))
+        db.commit()
         return {"success": False, "detail": result["error"]}
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost")
