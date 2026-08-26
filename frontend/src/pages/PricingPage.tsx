@@ -165,9 +165,6 @@ export default function PricingPage() {
             注：免费额度按模型 Token（输入 + 输出）计算，与充值余额点数（1 元 = 100 Token）是不同单位；低价模型单价约 ¥1.5~¥4 / 百万 Token。
           </p>
 
-          <div className="rounded-xl bg-amber-500/[0.07] border border-amber-500/25 px-3 py-2.5 text-[11px] text-amber-200/90 leading-relaxed">
-            <span className="font-medium text-amber-300">订阅与充值说明：</span>数字商品不适用七天无理由退货；未使用余额原则上不退，平台原因、错误扣款、未成年人等法定情形除外，可联系客服处理。Token 长期有效不过期；订阅一经生效，已生效期间费用不支持退款。
-          </div>
         </div>
         {loadingPlans ? (
           <div className="text-[12px] text-white/30">加载中...</div>
@@ -220,6 +217,11 @@ export default function PricingPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* 订阅与充值说明（置于订阅区最底部） */}
+      <div className="mt-4 rounded-xl bg-amber-500/[0.07] border border-amber-500/25 px-3 py-2.5 text-[11px] text-amber-200/90 leading-relaxed">
+        <span className="font-medium text-amber-300">订阅与充值说明：</span>数字商品不适用七天无理由退货；未使用余额原则上不退，平台原因、错误扣款、未成年人等法定情形除外，可联系客服处理。Token 长期有效不过期；订阅一经生效，已生效期间费用不支持退款。
       </div>
 
       {/* Pricing table */}
