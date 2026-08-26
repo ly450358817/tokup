@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from routers.auth import get_current_user
 from services.token_service import reserve_token, settle_reserved, has_completed_recharge
 
-import secrets, time, json, asyncio
+import secrets, time, json, asyncio, uuid
 
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
@@ -45,23 +45,32 @@ def authenticate_api_key(
     api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key 无效")
-    _check_key_rate(api_key.id, api_key.rate_limit or 0)
+    _check_key_rate(api_key.id, api_key.rate_limit or 0, db)
     return api_key
 
 
-# 按 API Key 的每分钟请求上限做滑动窗口限速（仅 rate_limit>0 生效；多 worker 下为近似值）
-_RATE_STORE: dict = {}
-
-def _check_key_rate(api_key_id: str, rpm: int):
+# 按 API Key 的每分钟请求上限限速（仅 rate_limit>0 生效）。
+# 用 SQLite 原子 upsert（分钟桶计数），跨 uvicorn worker 准确；0=不限，无额外写。
+def _check_key_rate(api_key_id: str, rpm: int, db: Session):
     if not rpm or rpm <= 0:
         return
-    now = time.time()
-    key = "rl:" + api_key_id
-    ts = [t for t in _RATE_STORE.get(key, []) if now - t < 60]
-    if len(ts) >= rpm:
+    from sqlalchemy.dialects.sqlite import insert as _sqlite_insert
+    from models import ApiKeyRate
+    bucket = int(time.time() // 60)
+    stmt = _sqlite_insert(ApiKeyRate).values(
+        id=str(uuid.uuid4()), api_key_id=api_key_id, bucket=bucket, count=1,
+    )
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[ApiKeyRate.api_key_id, ApiKeyRate.bucket],
+        set_={"count": ApiKeyRate.count + 1},
+    ).returning(ApiKeyRate.count)
+    cnt = int(db.execute(stmt).scalar() or 1)
+    if cnt > rpm:
         raise HTTPException(status_code=429, detail=f"请求过于频繁：该 Key 每分钟上限 {rpm} 次，请降低频率或调高额度")
-    ts.append(now)
-    _RATE_STORE[key] = ts
+    # 低频清理：每分钟的前 5 秒顺带删掉 10 分钟前的旧桶，避免表无限增长
+    if int(time.time()) % 60 < 5:
+        db.query(ApiKeyRate).filter(ApiKeyRate.bucket < int(time.time() // 60) - 10).delete()
+    db.commit()
 
 
 def _ensure_paid(api_key, db):

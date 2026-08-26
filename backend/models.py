@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -50,6 +50,16 @@ class Transaction(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="transactions")
+
+
+class ApiKeyRate(Base):
+    """API Key 每分钟限速计数（SQLite 原子 upsert，跨 worker 生效）"""
+    __tablename__ = "api_key_rate"
+    id = Column(String, primary_key=True, default=_uuid)
+    api_key_id = Column(String, nullable=False, index=True)
+    bucket = Column(Integer, nullable=False)  # 分钟桶 = epoch // 60
+    count = Column(Integer, default=0)
+    __table_args__ = (UniqueConstraint("api_key_id", "bucket", name="uq_key_bucket"),)
 
 
 class UsageRecord(Base):
