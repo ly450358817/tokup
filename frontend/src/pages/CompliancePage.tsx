@@ -1,4 +1,5 @@
 import { Shield, Eye, Database, FileText, Lock, BarChart3, ExternalLink, ShieldCheck, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const COMMITMENTS = [
   {
@@ -53,6 +54,7 @@ const COMMITMENTS = [
 ];
 
 export default function CompliancePage() {
+  const navigate = useNavigate();
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-12">
       {/* Header */}
@@ -68,15 +70,15 @@ export default function CompliancePage() {
         </p>
       </div>
 
-      {/* Close button */}
+      {/* Close button：回上一页（SPA 后退不整页刷新）；无历史时回概览 */}
       <div className="flex justify-end -mt-4 mb-2">
-        <a
-          href="/dashboard"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/30 hover:text-white/60 hover:bg-white/[0.06] text-[11px] transition-all"
+        <button
+          onClick={() => { if (window.history.length > 1) navigate(-1); else navigate('/dashboard'); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/30 hover:text-white/60 hover:bg-white/[0.06] text-[11px] transition-all cursor-pointer"
         >
           <X size={14} />
           返回
-        </a>
+        </button>
       </div>
 
       {/* Mobile scroll hint */}
