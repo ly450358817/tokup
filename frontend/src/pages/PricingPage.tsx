@@ -140,18 +140,21 @@ export default function PricingPage() {
       <div>
         <h2 className="text-[15px] font-semibold text-white mb-3">订阅套餐（每日免费额度）</h2>
 
-        {/* 订阅规则说明（整理为 3 条规则 + 亮点 + 备注 + 政策） */}
+        {/* 订阅规则说明（余额/订阅选择提示 + 对勾规则 + 亮点 + 备注 + 政策） */}
         <div className="mb-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
+          <p className="text-[12px] text-white/80 leading-relaxed">
+            不订阅也能直接用余额调用全部模型；订阅是给高频用户的<span className="text-white font-medium">省钱选项</span>：每日免费额度 + 全模型余额消费 9 折。
+          </p>
+
           <div className="grid gap-2 text-[12px] leading-relaxed">
-            <p className="text-white/80">
-              <span className="text-white font-medium">① 免费额度怎么用：</span>订阅期内每天自动获得免费额度，<span className="text-white font-medium">配额内调用不扣余额</span>，超出部分按量从余额扣费；<span className="text-white font-medium">北京时间 0 点重置</span>，当日额度不累积到次日。
-            </p>
-            <p className="text-white/80">
-              <span className="text-white font-medium">② 免费额度适用模型：</span>仅限低价模型（当前：{quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V4 Flash / DeepSeek V3.2'}）；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。
-            </p>
-            <p className="text-white/80">
-              <span className="text-white font-medium">③ 余额消费折扣：</span>订阅期内所有模型余额消费享 9 折。
-            </p>
+            <div className="flex gap-2">
+              <Check size={14} className="text-emerald-400 mt-1 shrink-0" />
+              <p className="text-white/80"><span className="text-white font-medium">免费额度怎么用：</span>配额内调用不扣余额，超出部分按量从余额扣费；北京时间 0 点重置，当日额度不累积。</p>
+            </div>
+            <div className="flex gap-2">
+              <Check size={14} className="text-emerald-400 mt-1 shrink-0" />
+              <p className="text-white/80"><span className="text-white font-medium">适用模型：</span>仅限低价模型（当前：{quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V4 Flash / DeepSeek V3.2'}）；GPT-5.5 / Claude 等旗舰模型按余额计费、不消耗免费配额。</p>
+            </div>
           </div>
 
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-[12px] text-emerald-200/90 leading-relaxed">
