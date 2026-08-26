@@ -48,7 +48,7 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
             .scalar()
             or 0
         )
-        daily.append({"date": day.strftime("%m-%d"), "usage": float(used)})
+        daily.append({"date": (day + timedelta(hours=8)).strftime("%m-%d"), "usage": float(used)})
 
     # 各模型用量占比
     key_count = db.query(ApiKey).filter(ApiKey.user_id == user.id, ApiKey.is_active).count()

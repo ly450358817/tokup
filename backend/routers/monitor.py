@@ -143,7 +143,7 @@ def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(
         h = now - timedelta(hours=i)
         key = h.strftime("%Y-%m-%d %H")
         hourly.append({
-            "hour": h.strftime("%H:00"),
+            "hour": (h + timedelta(hours=8)).strftime("%H:00"),  # 北京时间显示
             "requests": hourly_map.get(key, 0),
             "avg_latency": 0,
         })
