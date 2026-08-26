@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRecharge } from '../contexts/RechargeContext';
 import { useLang } from '../contexts/LanguageContext';
 import { keysApi } from '../utils/api';
+import { streamTestChat } from '../lib/streamTestChat';
 import {
   Activity, Key, Copy, Check, Terminal, Code,
   Zap, Gauge, Server, BookOpen, RefreshCw, Plus,
@@ -81,6 +82,7 @@ export default function TransferStationPage() {
   const [testModel, setTestModel] = useState('gpt-5.5');
   const [testInput, setTestInput] = useState('');
   const [testResponse, setTestResponse] = useState('');
+  const [testReasoning, setTestReasoning] = useState('');
   const [testError, setTestError] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const [subStatus, setSubStatus] = useState<any>(null);
@@ -89,18 +91,20 @@ export default function TransferStationPage() {
     if (!testInput.trim()) return;
     setTestLoading(true);
     setTestResponse('');
+    setTestReasoning('');
     setTestError('');
     try {
-      const token = localStorage.getItem('tokup_token');
-      const res = await fetch('/api/v1/test/chat', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + (token || ''), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: testModel, messages: [{ role: 'user', content: testInput }] })
+      const token = localStorage.getItem('tokup_token') || '';
+      const result = await streamTestChat({
+        model: testModel,
+        messages: [{ role: 'user', content: testInput }],
+        token,
+        onDelta: (content, reasoning) => {
+          setTestResponse(content);
+          setTestReasoning(reasoning);
+        },
       });
-      const data = await res.json();
-      if (data.success) {
-        const msg = data.data?.choices?.[0]?.message?.content || JSON.stringify(data.data, null, 2);
-        setTestResponse(msg);
+      if (result.ok) {
         // 检查余额：低于最低充值档 (2990 token) 时提示（订阅用户有免费配额不提示）
         const hasQuota = subStatus?.active && (subStatus.today_remaining || 0) > 0;
         if (!hasQuota && user?.token_balance != null && user.token_balance < 2990 && user.token_balance > 0) {
@@ -110,8 +114,8 @@ export default function TransferStationPage() {
           }, 300);
         }
       } else {
-        setTestError(data.detail || '请求失败');
-        if (data.detail?.includes('余额不足')) {
+        setTestError(result.error || '请求失败');
+        if (result.error?.includes('余额不足')) {
           setTimeout(() => openRecharge(), 500);
         }
       }
@@ -332,9 +336,17 @@ console.log(response.choices[0].message.content);`;
             </button>
           </div>
           {/* Response */}
-          {testResponse && (
-            <div className="bg-[#13131D] rounded-xl p-4 max-h-64 overflow-y-auto">
-              <pre className="text-[11px] text-white/60 font-mono whitespace-pre-wrap break-all leading-relaxed">{testResponse}</pre>
+          {(testResponse || testReasoning) && (
+            <div className="bg-[#13131D] rounded-xl p-4 max-h-72 overflow-y-auto space-y-2">
+              {testReasoning && (
+                <details className="text-[10px] text-white/30">
+                  <summary className="cursor-pointer select-none">💭 思考过程（{testReasoning.length} 字）</summary>
+                  <pre className="mt-1 whitespace-pre-wrap break-all leading-relaxed max-h-32 overflow-y-auto">{testReasoning}</pre>
+                </details>
+              )}
+              {testResponse && (
+                <pre className="text-[11px] text-white/60 font-mono whitespace-pre-wrap break-all leading-relaxed">{testResponse}</pre>
+              )}
             </div>
           )}
           {/* Low balance prompt after test */}

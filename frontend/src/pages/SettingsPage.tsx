@@ -2,6 +2,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LanguageContext';
 import { Globe, MessageCircle, Zap, Shield, ExternalLink, Bell, DollarSign, Users } from 'lucide-react';
+import { streamTestChat } from '../lib/streamTestChat';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -15,26 +16,34 @@ export default function SettingsPage() {
     if (!chatInput.trim() || chatLoading) return;
     const msg = chatInput.trim();
     setChatInput('');
-    setChatMessages(prev => [...prev, {role:'user', content: msg}]);
+    // 先追加空白的 AI 气泡，流式边生成边填充
+    setChatMessages(prev => [...prev, {role:'user', content: msg}, {role:'assistant', content: ''}]);
     setChatLoading(true);
-    try {
-      const token = localStorage.getItem('tokup_token');
-      const res = await fetch('/api/v1/test/chat', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + (token || ''), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'gpt-5.5', messages: [{role:'user', content: msg}] })
+    const setLastAssistant = (content: string) => {
+      setChatMessages(prev => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last && last.role === 'assistant') next[next.length - 1] = { ...last, content };
+        return next;
       });
-      const data = await res.json();
-      if (data.success) {
-        const reply = data.data?.choices?.[0]?.message?.content || '抱歉，暂时无法回答。请稍后再试。';
-        setChatMessages(prev => [...prev, {role:'assistant', content: reply}]);
+    };
+    try {
+      const token = localStorage.getItem('tokup_token') || '';
+      const result = await streamTestChat({
+        model: 'gpt-5.5',
+        messages: [{ role: 'user', content: msg }],
+        token,
+        onDelta: (content) => setLastAssistant(content),
+      });
+      if (result.ok) {
+        setLastAssistant(result.content || '抱歉，暂时无法回答。请稍后再试。');
       } else {
-        const errDetail = data.detail || '服务暂时不可用，请稍后重试。';
-        setChatMessages(prev => [...prev, {role:'assistant', content: errDetail === 'Not authenticated' ? '请先登录后再使用AI客服。' : errDetail}]);
+        const errDetail = result.error || '服务暂时不可用，请稍后重试。';
+        setLastAssistant(errDetail === 'Not authenticated' ? '请先登录后再使用AI客服。' : errDetail);
       }
     } catch (e) {
       const errMsg = e instanceof TypeError ? '网络连接失败，请检查网络后重试。' : '服务暂时不可用，请稍后重试。';
-      setChatMessages(prev => [...prev, {role:'assistant', content: errMsg}]);
+      setLastAssistant(errMsg);
     }
     setChatLoading(false);
   };

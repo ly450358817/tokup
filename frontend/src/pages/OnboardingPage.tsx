@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Key, Send, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { streamTestChat } from '../lib/streamTestChat';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [testInput, setTestInput] = useState('你好，介绍一下你自己');
   const [testResponse, setTestResponse] = useState('');
+  const [testReasoning, setTestReasoning] = useState('');
   const [testError, setTestError] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const responseRef = useRef<HTMLDivElement>(null);
@@ -21,27 +23,26 @@ export default function OnboardingPage() {
     if (!testInput.trim()) return;
     setTestLoading(true);
     setTestResponse('');
+    setTestReasoning('');
     setTestError('');
     try {
-      const token = localStorage.getItem('tokup_token');
-      const res = await fetch('/api/v1/test/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token,
+      const token = localStorage.getItem('tokup_token') || '';
+      const result = await streamTestChat({
+        model: 'deepseek/deepseek-v4-flash',
+        messages: [{ role: 'user', content: testInput }],
+        token,
+        onDelta: (content, reasoning) => {
+          setTestResponse(content);
+          setTestReasoning(reasoning);
+          requestAnimationFrame(() => {
+            responseRef.current?.scrollTo({ top: responseRef.current.scrollHeight });
+          });
         },
-        body: JSON.stringify({
-          model: 'deepseek/deepseek-v4-flash',
-          messages: [{ role: 'user', content: testInput }],
-        }),
       });
-      const data = await res.json();
-      if (res.ok && data.data?.choices?.[0]?.message?.content) {
-        setTestResponse(data.data.choices[0].message.content);
-      } else if (data.detail) {
-        setTestError(data.detail);
+      if (result.ok) {
+        if (!result.content) setTestResponse('抱歉，暂时无法回答。请稍后再试。');
       } else {
-        setTestResponse(JSON.stringify(data, null, 2));
+        setTestError(result.error || '请求失败');
       }
     } catch (e: any) {
       setTestError(e?.message || '网络错误');
@@ -117,12 +118,18 @@ export default function OnboardingPage() {
             </button>
           </div>
           <p className="text-[10px] text-white/30 leading-relaxed">💡 未充值账号需先充值（¥1 起）才能体验；充值多少用多少，无隐藏赠送。</p>
-          {testResponse && (
+          {(testResponse || testReasoning) && (
             <div
               ref={responseRef}
-              className="p-3 rounded-xl bg-white/5 border border-white/10 max-h-[200px] overflow-y-auto"
+              className="p-3 rounded-xl bg-white/5 border border-white/10 max-h-[220px] overflow-y-auto"
             >
               <div className="text-[11px] text-white/40 mb-2">回复：</div>
+              {testReasoning && (
+                <details className="text-[10px] text-white/30 mb-2">
+                  <summary className="cursor-pointer select-none">💭 思考过程（{testReasoning.length} 字）</summary>
+                  <div className="mt-1 whitespace-pre-wrap leading-relaxed max-h-24 overflow-y-auto">{testReasoning}</div>
+                </details>
+              )}
               <div className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap">
                 {testResponse}
               </div>

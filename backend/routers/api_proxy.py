@@ -521,6 +521,117 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if not _res["success"]:
         return {"success": False, "detail": "余额不足"}
     model = _model_t
+    if req.stream:
+        # 流式测试：SSE 边生成边返回，首个字秒出；结算/记录与 /chat/completions 流式一致
+        try:
+            from services.ai_service import proxy_stream_request as _psr
+            import logging as _logging
+
+            async def _test_forward():
+                _usage_data = None
+                _fwd_content = ""
+                _fwd_reasoning = ""
+                _settled = False
+                _balance_after = None
+                _t0 = time.monotonic()
+
+                def _settle():
+                    nonlocal _settled, _balance_after
+                    if _settled:
+                        return
+                    _settled = True
+                    _latency = int((time.monotonic() - _t0) * 1000)
+                    if _usage_data:
+                        _input_tok = _usage_data.get("input", 0)
+                        _output_tok = _usage_data.get("output", 0)
+                        _cost = _usage_data.get("cost")
+                        if _cost is None:
+                            _cost = calculate_cost(model, _input_tok, _output_tok)
+                    else:
+                        _input_tok = sum(len(str(m.get("content", ""))) for m in req.messages) // 2
+                        _output_tok = max(1, len(_fwd_content) // 2) if _fwd_content else 0
+                        _cost = calculate_cost(model, _input_tok, _output_tok) if _output_tok else 0.0
+                    _tc = max(round(_cost * 100), 1) if (_output_tok and _cost > 0) else 0
+                    try:
+                        _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
+                        _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
+                        _q_covered = min(_tc, _q_rem)
+                        _balance_charge = 0 if _admin_free else max(0, _tc - _q_covered)
+                        if _sub and _balance_charge > 0:
+                            _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
+                        if _tc > 0:
+                            db.add(UsageRecord(
+                                user_id=user.id, api_key_id=None, model=model,
+                                provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                                input_tokens=_input_tok, output_tokens=_output_tok,
+                                cost_cny=_cost, status="success", latency_ms=_latency,
+                                created_at=datetime.now(timezone.utc),
+                            ))
+                        _log_conversation(
+                            db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
+                            request_messages=req.messages,
+                            response_content={"content": _fwd_content, "reasoning": _fwd_reasoning},
+                            input_tokens=_input_tok, output_tokens=_output_tok, cost_cny=_cost,
+                        )
+                        _r = settle_reserved(user.id, _need_balance, _balance_charge, db, f"API: {model}")
+                        _balance_after = _r.get("balance")
+                    except Exception as _se:
+                        try:
+                            settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
+                        except Exception:
+                            pass
+                        _logging.getLogger("tokup.payment").warning("流式测试结算失败: model=%s err=%s", model, _se)
+
+                try:
+                    async for _chunk in _psr(model, req.messages):
+                        if isinstance(_chunk, bytes):
+                            if _chunk.startswith(b"__USAGE__:"):
+                                try:
+                                    _usage_data = json.loads(_chunk[len(b"__USAGE__:"):].decode())
+                                except Exception:
+                                    pass
+                            elif b"[DONE]" in _chunk:
+                                pass  # 跳过上游 [DONE]，由我们统一发送
+                            else:
+                                _text = _chunk.decode("utf-8", errors="replace")
+                                for _ln in _text.split("\n"):
+                                    if _ln.startswith("data: ") and "[DONE]" not in _ln:
+                                        try:
+                                            _obj = json.loads(_ln[6:])
+                                            _delta = _obj.get("choices", [{}])[0].get("delta", {}) or {}
+                                            _dc = _delta.get("content") or ""
+                                            if _dc:
+                                                _fwd_content += _dc
+                                            _rc = _delta.get("reasoning_content") or _delta.get("reasoning") or ""
+                                            if _rc:
+                                                _fwd_reasoning += _rc
+                                        except Exception:
+                                            pass
+                                yield _text
+                except StopAsyncIteration:
+                    pass
+                except Exception as _e:
+                    _ej = json.dumps({"id": f"cmpl-{int(time.time()*1000)}", "object": "chat.completion.chunk", "created": int(time.time()), "model": model, "choices": [{"index": 0, "delta": {}, "logprobs": None, "finish_reason": "stop"}], "error": str(_e)})
+                    yield f"data: {_ej}\n\n"
+                finally:
+                    _settle()
+
+                if _balance_after is not None and _balance_after < 200:
+                    _w = json.dumps({
+                        "id": f"cmpl-{int(time.time()*1000)}",
+                        "object": "chat.completion.chunk",
+                        "created": int(time.time()),
+                        "model": model,
+                        "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                        "warning": f"余额不足 ({_balance_after:.0f} token)，请尽快充值",
+                        "recharge_url": "https://tokup.net",
+                    })
+                    yield f"data: {_w}\n\n"
+                yield "data: [DONE]\n\n"
+            return StreamingResponse(_test_forward(), media_type="text/event-stream")
+        except Exception as e:
+            settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
+            return {"success": False, "detail": str(e)}
     _t0 = time.monotonic()
     result = await proxy_request(model, req.messages, False)
     _latency = int((time.monotonic() - _t0) * 1000)
