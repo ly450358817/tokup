@@ -1,13 +1,14 @@
 """
 TokUp · 脉充 — Monitoring router
 真实数据：基于 usage_records 统计请求数、Token、成功率、模型分布、24h 趋势。
-（响应耗时 latency_ms 尚未采集，统一返回 0，前端显示为 "-"）
+latency_ms 已采集（>0 参与平均）。
 """
 from datetime import datetime, timedelta, timezone
 import time
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
+from services.subscription_service import beijing_day_start
 
 from database import get_db
 from models import User, UsageRecord
@@ -61,7 +62,7 @@ MODEL_LABELS = {
 def monitor_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """真实监控统计：基于 usage_records。"""
     now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = beijing_day_start()  # 北京时间自然日零点
     day_start = now - timedelta(hours=24)
 
     # 今日请求 / 成功数

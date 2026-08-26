@@ -15,7 +15,7 @@ def invite_info(user: User = Depends(get_current_user), db: Session = Depends(ge
         import uuid
         user.invite_code = uuid.uuid4().hex[:8].upper()
         db.commit()
-    # 实际到账奖励 = 注册邀请奖励（上限 5 人 × 500）+ 消费 10% 分成（提成流水）
+    # 实际到账奖励 = 注册邀请奖励（上限 5 人 × 100）+ 消费 10% 分成（提成流水）
     _comm = db.query(func.coalesce(func.sum(Transaction.token_amount), 0)).filter(
         Transaction.user_id == user.id,
         Transaction.type == "recharge",
@@ -24,7 +24,7 @@ def invite_info(user: User = Depends(get_current_user), db: Session = Depends(ge
     return {
         "invite_code": user.invite_code,
         "invite_count": user.invite_count or 0,
-        "invite_bonus": (user.paid_invite_count or 0) * 500 + int(_comm),
+        "invite_bonus": (user.paid_invite_count or 0) * 100 + int(_comm),
         "invite_link": f"https://tokup.net/register?code={user.invite_code}",
     }
 

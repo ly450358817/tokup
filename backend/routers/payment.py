@@ -549,46 +549,6 @@ def confirm_order(
     return {"success": True, "message": "收款确认成功", "user_id": txn.user_id, "amount": txn.amount}
 
 
-@router.post("/orders/{order_id}/notify-paid")
-def user_notify_paid(
-    order_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """管理员确认收款（已禁止用户自助确认，防止未支付直接到账）"""
-    from fastapi import HTTPException
-    from datetime import datetime, timezone
-
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="仅管理员可操作")
-
-    txn = db.query(Transaction).filter(
-        Transaction.payment_id == order_id,
-        Transaction.user_id == user.id,
-        Transaction.type == "recharge",
-        Transaction.status == "pending",
-    ).first()
-    
-    if not txn:
-        raise HTTPException(status_code=404, detail="订单不存在")
-    
-    # Auto-confirm: add balance immediately
-    txn.status = "completed"
-    txn_user = db.query(User).filter(User.id == user.id).first()
-    if txn_user:
-        txn_user.token_balance += txn.token_amount
-        txn_user.total_recharged += txn.amount
-        txn_user.updated_at = datetime.now(timezone.utc)
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": "收款确认成功，余额已到账。",
-        "balance": txn_user.token_balance if txn_user else 0,
-        "added": txn.amount,
-    }
-
-
 @router.get("/order/{order_id}")
 def get_order_status(
     order_id: str,

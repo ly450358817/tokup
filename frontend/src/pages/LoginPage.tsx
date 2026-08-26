@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
 
-export default function LoginPage() {
+export default function LoginPage({ defaultMode = 'login' }: { defaultMode?: 'login' | 'register' } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [searchParams] = [new URLSearchParams(window.location.search)];
   const [inviteCode, setInviteCode] = useState(searchParams.get('code') || '');
   const { login, register } = useAuth();
   const { t } = useLang();
-  const [mode, setMode] = useState<'login' | 'register'>(searchParams.get('mode') === 'register' ? 'register' : 'login');
+  const [mode, setMode] = useState<'login' | 'register'>((searchParams.get('mode') === 'register' || defaultMode === 'register') ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

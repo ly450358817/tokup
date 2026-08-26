@@ -25,7 +25,11 @@ def admin_stats(user: User = Depends(get_current_user), db: Session = Depends(ge
         Transaction.type == "recharge",
         Transaction.payment_method != "",
     ).scalar() or 0
-    total_consumed = db.query(func.coalesce(func.sum(Transaction.token_amount), 0)).filter(Transaction.type == "consume", Transaction.status == "completed").scalar() or 0
+    total_consumed = db.query(func.coalesce(func.sum(Transaction.token_amount), 0)).filter(
+        Transaction.type == "consume",
+        Transaction.status == "completed",
+        (Transaction.description.is_(None)) | (~Transaction.description.like("%订阅%")),
+    ).scalar() or 0
     total_keys = db.query(func.count(ApiKey.id)).scalar() or 0
     active_keys = db.query(func.count(ApiKey.id)).filter(ApiKey.is_active == True).scalar() or 0
     return {
@@ -53,7 +57,7 @@ def admin_daily_stats(
 
     口径与 /stats 汇总保持一致：
       - 充值：type=recharge、status=completed、且带支付方式（排除赠送/邀请提成等非真实充值）
-      - 消耗：type=consume、status=completed 的 token_amount 合计
+      - 消耗：type=consume、status=completed 的 token_amount 合计（不含购买订阅）
       - 注册 / API Key：按创建时间计数
     日期按北京时间（UTC+8）切分；created_at 存的是 UTC，SQLite 里 +8 小时后再取日期。
     """
@@ -117,6 +121,7 @@ def admin_daily_stats(
         .filter(
             Transaction.type == "consume",
             Transaction.status == "completed",
+            (Transaction.description.is_(None)) | (~Transaction.description.like("%订阅%")),
             Transaction.created_at >= start_utc,
         )
         .group_by("d")

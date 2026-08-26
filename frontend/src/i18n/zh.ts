@@ -265,10 +265,6 @@ export const zh = {
     theme: "主题",
     themeDesc: "暗色 / 亮色模式",
     themeDesc2: "切换暗色和亮色界面",
-    autoTopup: "自动续费",
-    autoTopupDesc: "余额低于阈值自动充值",
-    autoTopupDesc2: "当余额低于设定阈值时，系统将自动为您充值",
-    threshold: "阈值",
     rechargeAmount: "充值金额",
     saveBtn: "保存",
 
