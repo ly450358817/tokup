@@ -43,6 +43,7 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
   const [ticketUnread, setTicketUnread] = useState(0);
   useEffect(() => {
     if (user?.is_admin) {
@@ -52,7 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return () => clearInterval(iv);
     }
   }, [user?.is_admin]);
-  const { user, logout } = useAuth();
+
   const { openRecharge } = useRecharge();
   const { t } = useLang();
   const [sidebarOpen, setSidebarOpen] = useState(false);
