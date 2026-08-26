@@ -65,7 +65,8 @@ def get_stats(days: int = 7, user: User = Depends(get_current_user), db: Session
     ):
         _cnt = int(_cnt or 0)
         _errs = int(_errs or 0)
-        model_health[_m] = "degraded" if (_cnt > 0 and _errs / _cnt > 0.02) else "healthy"
+        # 需同时满足：24h 内至少 2 次失败 且 失败率 >2%（单次偶发抖动不标异常，避免误报）
+        model_health[_m] = "degraded" if (_cnt > 0 and _errs >= 2 and _errs / _cnt > 0.02) else "healthy"
 
     # 今日请求数 / 平均响应（真实 usage_records）
     today_records = (
