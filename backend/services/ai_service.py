@@ -49,6 +49,16 @@ MODEL_ROUTES = {
     "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
     # 智谱（直连，免费视觉模型）
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
+    # ── 2026-08-29 新增海外模型（七牛渠道）──
+    "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
+    "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
+    "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
+    "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
+    "x-ai/grok-4.3": ("qiniu", QINIU_ENDPOINT),
+    "x-ai/grok-code-fast-1": ("qiniu", QINIU_ENDPOINT),
+    "openai/gpt-5.4": ("qiniu", QINIU_ENDPOINT),
+    "openai/gpt-5-mini": ("qiniu", QINIU_ENDPOINT),
+    "gpt-oss-120b": ("qiniu", QINIU_ENDPOINT),
 }
 
 # 2026-08-20 七牛跟随 DeepSeek 官方 8/17 峰谷计价：
@@ -96,6 +106,16 @@ MODEL_COST = {
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
     "moonshotai/kimi-k2.7-code": (9.0, 36.0),   # 上游 ¥6.5/¥27
     "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
+    # ── 2026-08-29 新增海外模型（七牛资源包系数换算成本 ×≥1.3；首账单后校准）──
+    "claude-4.7-opus": (45.0, 225.0),           # 成本 ¥34.5/¥172.5
+    "claude-4.6-sonnet": (27.0, 135.0),         # 成本 ¥20.7/¥103.5
+    "gemini-2.5-pro": (24.0, 141.0),            # 成本 ¥18.0/¥108.0
+    "gemini-2.5-flash": (3.0, 23.0),            # 成本 ¥2.2/¥17.3
+    "x-ai/grok-4.3": (23.0, 45.0),              # 成本 ¥17.3/¥34.5
+    "x-ai/grok-code-fast-1": (2.0, 14.0),       # 成本 ¥1.4/¥10.4（输出≤15，进免费配额）
+    "openai/gpt-5.4": (45.0, 202.0),            # 成本 ¥34.5/¥155.3
+    "openai/gpt-5-mini": (3.0, 19.0),           # 成本 ¥1.8/¥14.4
+    "gpt-oss-120b": (2.0, 8.0),                 # 成本 ¥1.1/¥5.4（输出≤15，进免费配额）
 }
 
 
@@ -134,6 +154,16 @@ MODEL_META = {
     "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "最新旗舰", "badge": "New"},
     "moonshotai/kimi-k2.7-code": {"name": "Kimi K2.7 Code", "provider": "月之暗面", "note": "代码最强", "badge": "New"},
     "glm-4.6v-flash": {"name": "GLM-4.6V Flash", "provider": "智谱AI", "note": "视觉 · 免费", "badge": "Free"},
+    # ── 2026-08-29 新增海外模型 ──
+    "claude-4.7-opus": {"name": "Claude 4.7 Opus", "provider": "Anthropic", "note": "最新旗舰 Opus", "badge": "New"},
+    "claude-4.6-sonnet": {"name": "Claude 4.6 Sonnet", "provider": "Anthropic", "note": "旗舰 Sonnet", "badge": "New"},
+    "gemini-2.5-pro": {"name": "Gemini 2.5 Pro", "provider": "Google", "note": "谷歌旗舰", "badge": "New"},
+    "gemini-2.5-flash": {"name": "Gemini 2.5 Flash", "provider": "Google", "note": "谷歌高效", "badge": ""},
+    "x-ai/grok-4.3": {"name": "Grok 4.3", "provider": "xAI", "note": "xAI 旗舰", "badge": "New"},
+    "x-ai/grok-code-fast-1": {"name": "Grok Code Fast 1", "provider": "xAI", "note": "代码高速", "badge": "New"},
+    "openai/gpt-5.4": {"name": "GPT-5.4", "provider": "OpenAI", "note": "新一代旗舰", "badge": "New"},
+    "openai/gpt-5-mini": {"name": "GPT-5-mini", "provider": "OpenAI", "note": "轻量快速", "badge": "New"},
+    "gpt-oss-120b": {"name": "GPT-OSS 120B", "provider": "OpenAI", "note": "开源高性价比", "badge": "New"},
 }
 
 
