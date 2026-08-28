@@ -1,24 +1,43 @@
 import { useState, useEffect } from 'react';
 
+// 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
+const VERSION = 'v15';
+
+function safeGet(store: Storage, key: string): string | null {
+  try {
+    return store.getItem(key);
+  } catch {
+    return null; // 隐私模式/存储不可用时静默降级，绝不阻断页面
+  }
+}
+
+function safeSet(store: Storage, key: string, value: string): void {
+  try {
+    store.setItem(key, value);
+  } catch {
+    /* 同上：忽略存储异常 */
+  }
+}
+
 export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v14');
+    const dismissed = safeGet(localStorage, `tokup_announcement_dismissed_${VERSION}`);
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
       const fiveDays = 5 * 24 * 60 * 60 * 1000;
-      if (now - dismissedAt < fiveDays) return;
+      if (!Number.isNaN(dismissedAt) && now - dismissedAt < fiveDays) return;
     }
-    const hasSeenSession = sessionStorage.getItem('tokup_announcement_seen');
+    const hasSeenSession = safeGet(sessionStorage, `tokup_announcement_seen_${VERSION}`);
     if (hasSeenSession) return;
-    sessionStorage.setItem('tokup_announcement_seen', '1');
+    safeSet(sessionStorage, `tokup_announcement_seen_${VERSION}`, '1');
     setVisible(true);
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v14', Date.now().toString());
+    safeSet(localStorage, `tokup_announcement_dismissed_${VERSION}`, Date.now().toString());
     setVisible(false);
   };
 
@@ -35,7 +54,7 @@ export default function AnnouncementPopup() {
         </div>
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
-                    <p>尊敬的 Tokup·脉充用户，您好：</p>
+          <p>尊敬的 Tokup·脉充用户，您好：</p>
           <p>🎯 <span className="text-white/80 font-medium">本周重磅上线 7 个国际主流模型</span>（已在定价 / 工作台 / 中转站同步）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><span className="text-emerald-400 font-medium">Claude 4.7 Opus</span> — Anthropic 最新旗舰，¥45 / ¥225（每百万 token）</li>
