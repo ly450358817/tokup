@@ -21,44 +21,49 @@ QINIU_ENDPOINT = "https://api.qnaigc.com/v1/chat/completions"
 ZHIPU_ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
 MODEL_ROUTES = {
-    # OpenAI (七牛云)
-    "gpt-5.5": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "openai/gpt-5.6-luna": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "openai/gpt-5.6-sol": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "openai/gpt-5.6-terra": ("qiniu", "https://api.qnaigc.com/v1/chat/completions"),
-    "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
-    # Anthropic (直连)
-    # DeepSeek → 七牛云（合规上游）
-    "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
-    "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v4-flash-vision-exp": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
-    "glm-5.2": ("qiniu", QINIU_ENDPOINT),
-    "glm-5.3": ("qiniu", QINIU_ENDPOINT),
-    "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
-    "qwen/qwen3.7-plus": ("qiniu", QINIU_ENDPOINT),
-    "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
-    "qwen3-max": ("qiniu", QINIU_ENDPOINT),
-    "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
-    "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
-    "qwen3.5-397b-a17b": ("qiniu", QINIU_ENDPOINT),
-    "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
-    "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
-    "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
-    # 智谱（直连，免费视觉模型）
-    "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
-    # ── 2026-08-29 新增海外模型（七牛渠道）──
-    "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
-    "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
-    "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
-    "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
-    "x-ai/grok-4.3": ("qiniu", QINIU_ENDPOINT),
-    "x-ai/grok-code-fast-1": ("qiniu", QINIU_ENDPOINT),
+    # OpenAI（七牛云）
+    "openai/gpt-5.6-terra": ("qiniu", QINIU_ENDPOINT),
+    "gpt-5.5": ("qiniu", QINIU_ENDPOINT),
+    "openai/gpt-5.6-luna": ("qiniu", QINIU_ENDPOINT),
+    "openai/gpt-5.6-sol": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5.4": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5-mini": ("qiniu", QINIU_ENDPOINT),
     "gpt-oss-120b": ("qiniu", QINIU_ENDPOINT),
+    # Anthropic（七牛云）
+    "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
+    "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
+    "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
+    # Google（七牛云）
+    "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
+    "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
+    # xAI（七牛云）
+    "x-ai/grok-4.3": ("qiniu", QINIU_ENDPOINT),
+    "x-ai/grok-code-fast-1": ("qiniu", QINIU_ENDPOINT),
+    # DeepSeek → 七牛云（合规上游）
+    "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
+    "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
+    "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4-flash-vision-exp": ("qiniu", QINIU_ENDPOINT),
+    # 通义千问（七牛云）
+    "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
+    "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
+    "qwen/qwen3.7-plus": ("qiniu", QINIU_ENDPOINT),
+    "qwen3-max": ("qiniu", QINIU_ENDPOINT),
+    "qwen3.5-397b-a17b": ("qiniu", QINIU_ENDPOINT),
+    # 智谱AI（七牛云）
+    "glm-5.3": ("qiniu", QINIU_ENDPOINT),
+    "glm-5.2": ("qiniu", QINIU_ENDPOINT),
+    # 月之暗面（七牛云）
+    "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
+    # MiniMax（七牛云）
+    "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
+    "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
+    # 智谱（直连，免费视觉模型，不对外展示）
+    "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
 
 # 2026-08-20 七牛跟随 DeepSeek 官方 8/17 峰谷计价：

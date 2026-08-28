@@ -4,7 +4,7 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v13');
+    const dismissed = localStorage.getItem('tokup_announcement_dismissed_v14');
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
       const now = Date.now();
@@ -18,7 +18,7 @@ export default function AnnouncementPopup() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('tokup_announcement_dismissed_v13', Date.now().toString());
+    localStorage.setItem('tokup_announcement_dismissed_v14', Date.now().toString());
     setVisible(false);
   };
 
@@ -35,15 +35,21 @@ export default function AnnouncementPopup() {
         </div>
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
-          <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">本周新增 3 个模型</span>（已在全部页面同步上线）</p>
+                    <p>尊敬的 Tokup·脉充用户，您好：</p>
+          <p>🎯 <span className="text-white/80 font-medium">本周重磅上线 9 个国际主流模型</span>（已在定价 / 工作台 / 中转站同步）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">Qwen 3.7 Plus</span> — 通义千问高性价比中杯，输入 ¥8 / 输出 ¥32（每百万 token）</li>
-            <li><span className="text-emerald-400 font-medium">GLM-5.3</span> — 智谱AI 最新一代旗舰，输入 ¥11 / 输出 ¥37（每百万 token）</li>
-            <li><span className="text-emerald-400 font-medium">DeepSeek V4 Flash Vision</span> — 视觉理解实验版，输入 ¥4 / 输出 ¥12（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">Claude 4.7 Opus</span> — Anthropic 最新旗舰，¥45 / ¥225（每百万 token）</li>
+            <li><span className="text-emerald-400 font-medium">Claude 4.6 Sonnet</span> — Anthropic 旗舰，¥27 / ¥135</li>
+            <li><span className="text-emerald-400 font-medium">Gemini 2.5 Pro</span> — Google 旗舰，¥24 / ¥141</li>
+            <li><span className="text-emerald-400 font-medium">Gemini 2.5 Flash</span> — Google 高效，¥3 / ¥23</li>
+            <li><span className="text-emerald-400 font-medium">Grok 4.3</span> — xAI 旗舰，¥23 / ¥45</li>
+            <li><span className="text-emerald-400 font-medium">Grok Code Fast 1</span> — xAI 代码高速，¥2 / ¥14</li>
+            <li><span className="text-emerald-400 font-medium">GPT-5.4</span> — OpenAI 新一代旗舰，¥45 / ¥202</li>
+            <li><span className="text-emerald-400 font-medium">GPT-5-mini</span> — OpenAI 轻量快速，¥3 / ¥19</li>
+            <li><span className="text-emerald-400 font-medium">GPT-OSS 120B</span> — OpenAI 开源高性价比，¥2 / ¥8</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 说明：DeepSeek V4 Pro 峰谷计价规则不变（高峰 ¥12/¥36，闲时 ¥6/¥18）。DeepSeek V4 Flash Vision 为实验版视觉模型，统一按高峰价计费（¥4/¥12）；图片会按尺寸换算成 token 一并计费。</p>
+            <p className="text-white/40 text-[11px]">📢 说明：订阅用户全模型余额消费享 9 折；每日免费额度适用于低价模型（V4 Flash / V3.2 / GPT-OSS 120B / Grok Code Fast 1）。国际模型渠道偶有波动，如遇个别模型短暂不可用请稍后重试。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
