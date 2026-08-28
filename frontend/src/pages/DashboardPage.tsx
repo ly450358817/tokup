@@ -30,8 +30,6 @@ const DEFAULT_MODELS = [
   { id: 'claude-4.6-sonnet', label: 'Claude 4.6 Sonnet', provider: 'Anthropic', cost: '¥27/1M input' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google', cost: '¥24/1M input' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google', cost: '¥3/1M input' },
-  { id: 'x-ai/grok-4.3', label: 'Grok 4.3', provider: 'xAI', cost: '¥23/1M input' },
-  { id: 'x-ai/grok-code-fast-1', label: 'Grok Code Fast 1', provider: 'xAI', cost: '¥2/1M input' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥6~¥12/1M input (闲时~高峰)' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥1.5/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥3.0/1M input' },

@@ -55,6 +55,13 @@ MODEL_LABELS = {
     "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet",
     "claude-3-opus-20240229": "Claude 3 Opus",
     "claude-3-haiku-20240307": "Claude 3 Haiku",
+    "claude-4.7-opus": "Claude 4.7 Opus",
+    "claude-4.6-sonnet": "Claude 4.6 Sonnet",
+    "gemini-2.5-pro": "Gemini 2.5 Pro",
+    "gemini-2.5-flash": "Gemini 2.5 Flash",
+    "openai/gpt-5.4": "GPT-5.4",
+    "openai/gpt-5-mini": "GPT-5-mini",
+    "gpt-oss-120b": "GPT-OSS 120B",
 }
 
 

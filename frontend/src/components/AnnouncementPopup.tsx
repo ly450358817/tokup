@@ -36,20 +36,18 @@ export default function AnnouncementPopup() {
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
                     <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">本周重磅上线 9 个国际主流模型</span>（已在定价 / 工作台 / 中转站同步）</p>
+          <p>🎯 <span className="text-white/80 font-medium">本周重磅上线 7 个国际主流模型</span>（已在定价 / 工作台 / 中转站同步）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><span className="text-emerald-400 font-medium">Claude 4.7 Opus</span> — Anthropic 最新旗舰，¥45 / ¥225（每百万 token）</li>
             <li><span className="text-emerald-400 font-medium">Claude 4.6 Sonnet</span> — Anthropic 旗舰，¥27 / ¥135</li>
             <li><span className="text-emerald-400 font-medium">Gemini 2.5 Pro</span> — Google 旗舰，¥24 / ¥141</li>
             <li><span className="text-emerald-400 font-medium">Gemini 2.5 Flash</span> — Google 高效，¥3 / ¥23</li>
-            <li><span className="text-emerald-400 font-medium">Grok 4.3</span> — xAI 旗舰，¥23 / ¥45</li>
-            <li><span className="text-emerald-400 font-medium">Grok Code Fast 1</span> — xAI 代码高速，¥2 / ¥14</li>
             <li><span className="text-emerald-400 font-medium">GPT-5.4</span> — OpenAI 新一代旗舰，¥45 / ¥202</li>
             <li><span className="text-emerald-400 font-medium">GPT-5-mini</span> — OpenAI 轻量快速，¥3 / ¥19</li>
             <li><span className="text-emerald-400 font-medium">GPT-OSS 120B</span> — OpenAI 开源高性价比，¥2 / ¥8</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 说明：订阅用户全模型余额消费享 9 折；每日免费额度适用于低价模型（V4 Flash / V3.2 / GPT-OSS 120B / Grok Code Fast 1）。国际模型渠道偶有波动，如遇个别模型短暂不可用请稍后重试。</p>
+            <p className="text-white/40 text-[11px]">📢 说明：订阅用户全模型余额消费享 9 折；每日免费额度适用于低价模型（V4 Flash / V3.2 / GPT-OSS 120B）。国际模型渠道偶有波动，如遇个别模型短暂不可用请稍后重试。</p>
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>

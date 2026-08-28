@@ -251,7 +251,7 @@ export const zh = {
     howItWorks: "三步使用",
     howItWorksDesc: "充值 → 生成 API Key → 调用任何模型",
     supportedModels: "支持的模型",
-    supportedModelsDesc: "GPT-5.6 Terra / GPT-5.5 / GPT-5.6 Luna / GPT-5.6 Sol / Claude Fable 5 / Kimi K3 / Kimi K2.6 / Kimi K2.7 Code / DeepSeek V4 Pro / V4 Flash / V3.2 / V3 / R1 / Qwen3.8 Max / Qwen 3.7 Max / Qwen3 Max / Qwen3.5 397B / GLM-5.2 / MiniMax M1 / M3",
+    supportedModelsDesc: "GPT-5.6 Terra / GPT-5.5 / GPT-5.6 Luna / GPT-5.6 Sol / GPT-5.4 / GPT-5-mini / GPT-OSS 120B / Claude Fable 5 / Claude 4.7 Opus / Claude 4.6 Sonnet / Gemini 2.5 Pro / Gemini 2.5 Flash / Kimi K3 / Kimi K2.6 / Kimi K2.7 Code / DeepSeek V4 Pro / V4 Flash / V3.2 / V3 / R1 / Qwen3.8 Max / Qwen 3.7 Max / Qwen3 Max / Qwen3.5 397B / GLM-5.2 / MiniMax M1 / M3",
     quickStart: "快速开始",
     learnMore: "了解更多 →",
     comingSoon: "开发中",

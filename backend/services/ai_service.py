@@ -37,8 +37,6 @@ MODEL_ROUTES = {
     "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
     "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
     # xAI（七牛云）
-    "x-ai/grok-4.3": ("qiniu", QINIU_ENDPOINT),
-    "x-ai/grok-code-fast-1": ("qiniu", QINIU_ENDPOINT),
     # DeepSeek → 七牛云（合规上游）
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
@@ -116,8 +114,6 @@ MODEL_COST = {
     "claude-4.6-sonnet": (27.0, 135.0),         # 成本 ¥20.7/¥103.5
     "gemini-2.5-pro": (24.0, 141.0),            # 成本 ¥18.0/¥108.0
     "gemini-2.5-flash": (3.0, 23.0),            # 成本 ¥2.2/¥17.3
-    "x-ai/grok-4.3": (23.0, 45.0),              # 成本 ¥17.3/¥34.5
-    "x-ai/grok-code-fast-1": (2.0, 14.0),       # 成本 ¥1.4/¥10.4（输出≤15，进免费配额）
     "openai/gpt-5.4": (45.0, 202.0),            # 成本 ¥34.5/¥155.3
     "openai/gpt-5-mini": (3.0, 19.0),           # 成本 ¥1.8/¥14.4
     "gpt-oss-120b": (2.0, 8.0),                 # 成本 ¥1.1/¥5.4（输出≤15，进免费配额）
@@ -164,8 +160,6 @@ MODEL_META = {
     "claude-4.6-sonnet": {"name": "Claude 4.6 Sonnet", "provider": "Anthropic", "note": "旗舰 Sonnet", "badge": "New"},
     "gemini-2.5-pro": {"name": "Gemini 2.5 Pro", "provider": "Google", "note": "谷歌旗舰", "badge": "New"},
     "gemini-2.5-flash": {"name": "Gemini 2.5 Flash", "provider": "Google", "note": "谷歌高效", "badge": ""},
-    "x-ai/grok-4.3": {"name": "Grok 4.3", "provider": "xAI", "note": "xAI 旗舰", "badge": "New"},
-    "x-ai/grok-code-fast-1": {"name": "Grok Code Fast 1", "provider": "xAI", "note": "代码高速", "badge": "New"},
     "openai/gpt-5.4": {"name": "GPT-5.4", "provider": "OpenAI", "note": "新一代旗舰", "badge": "New"},
     "openai/gpt-5-mini": {"name": "GPT-5-mini", "provider": "OpenAI", "note": "轻量快速", "badge": "New"},
     "gpt-oss-120b": {"name": "GPT-OSS 120B", "provider": "OpenAI", "note": "开源高性价比", "badge": "New"},

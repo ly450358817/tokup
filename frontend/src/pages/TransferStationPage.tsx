@@ -41,8 +41,6 @@ const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'claude-4.6-sonnet', name: 'Claude 4.6 Sonnet', provider: 'Anthropic', input: '¥27', output: '¥135', note: '旗舰 Sonnet', badge: 'New' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥24', output: '¥141', note: '谷歌旗舰', badge: 'New' },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', input: '¥3.0', output: '¥23', note: '谷歌高效', badge: '' },
-  { id: 'x-ai/grok-4.3', name: 'Grok 4.3', provider: 'xAI', input: '¥23', output: '¥45', note: 'xAI 旗舰', badge: 'New' },
-  { id: 'x-ai/grok-code-fast-1', name: 'Grok Code Fast 1', provider: 'xAI', input: '¥2.0', output: '¥14', note: '代码高速', badge: 'New' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥6 / ¥12', output: '¥18 / ¥36', note: '旗舰模型 · 峰谷计价', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.5', output: '¥3.0', note: '极致性价比', badge: '' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', note: '达GPT-5水平', badge: 'New' },
