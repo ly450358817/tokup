@@ -64,6 +64,19 @@ export default function PricingPage() {
     subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
   }, []);
 
+  // 订阅状态轮询（15s）：订阅卡"今日配额/剩余"随用户调用实时变动；切回标签页时立即刷新
+  useEffect(() => {
+    let alive = true;
+    const refresh = () => {
+      subscriptionApi.status().then((d: any) => { if (alive) setSubStatus(d); }).catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    const onVis = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { alive = false; clearInterval(timer); document.removeEventListener('visibilitychange', onVis); };
+  }, []);
+
   const handlePurchase = async (planId: string) => {
     setBuying(planId);
     setMsg({ type: '', text: '' });

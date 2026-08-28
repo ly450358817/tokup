@@ -86,7 +86,16 @@ export default function DashboardPage() {
   }, [days, loadStats]);
 
   useEffect(() => {
-    subscriptionApi.status().then((d: any) => setSubStatus(d)).catch(() => {});
+    // 订阅状态轮询（15s）：让"今日免费剩余"随用户调用实时变动；切回标签页时立即刷新
+    let alive = true;
+    const refresh = () => {
+      subscriptionApi.status().then((d: any) => { if (alive) setSubStatus(d); }).catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    const onVis = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { alive = false; clearInterval(timer); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   // 模型目录：从后端单一数据源拉取（含价格/品牌），失败时回退内置列表
