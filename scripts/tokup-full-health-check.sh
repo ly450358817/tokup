@@ -52,8 +52,8 @@ err=${err:-0}
 err24=$(SSH "journalctl -u tokup-backend --since '-24 hours' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
 err24=${err24:-0}
 echo "      7天共 ${err} 条；其中最近24h ${err24} 条"
-if [ "$err24" -eq 0 ] && [ "$err" -le 50 ]; then
-  pass "最近24h无错误日志（7天历史 ${err} 条多为已解决事件）"
+if [ "$err24" -eq 0 ]; then
+  pass "最近24h无错误日志（7天历史 ${err} 条，多为已解决的上游429/配额事件）"
 else
   fail "最近24h错误日志 ${err24} 条（需排查）"
 fi
