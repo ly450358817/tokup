@@ -7,6 +7,8 @@ interface Props {
   todayUsage: number;
   todayUsageYuan: number;
   activeKeys: number;
+  quotaRemaining?: number;
+  hasQuota?: boolean;
 }
 
 export default function EnergyRing({
@@ -15,6 +17,8 @@ export default function EnergyRing({
   todayUsage,
   todayUsageYuan,
   activeKeys,
+  quotaRemaining = 0,
+  hasQuota = false,
 }: Props) {
   const [filled, setFilled] = useState(0);
   const [entryFlash, setEntryFlash] = useState(false);
@@ -143,6 +147,11 @@ export default function EnergyRing({
           <span className="text-white/10">|</span>
           <span className="text-[11px] text-white/30">{activeKeys} Keys</span>
         </div>
+        {hasQuota && (
+          <div className="mt-2 text-[10px] tracking-wide text-white/35">
+            今日免费剩余 {quotaRemaining.toLocaleString()} token
+          </div>
+        )}
       </div>
     </div>
   );

@@ -151,6 +151,8 @@ export default function DashboardPage() {
           todayUsage={todayUsage}
           todayUsageYuan={todayUsageYuan}
           activeKeys={activeKeys}
+          quotaRemaining={subStatus?.today_remaining}
+          hasQuota={!!(subStatus?.active && (subStatus?.daily_limit || 0) > 0)}
         />
 
 
