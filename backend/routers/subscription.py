@@ -108,6 +108,20 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
     """返回当前订阅状态（含当日配额使用情况）"""
     sub = get_active_subscription(user.id, db)
     if not sub:
+        # 管理员预览：无订阅时按体验订阅额度模拟显示每日免费额度（仅管理员账号可见，便于查看效果）
+        if user.is_admin:
+            _trial = PLANS["trial"]
+            _used = today_usage_tokens(user.id, db, beijing_day_start(), eligible_only=True)
+            return {
+                "active": True,
+                "plan": "trial",
+                "plan_label": "体验订阅（管理员预览）",
+                "expires_at": None,
+                "daily_limit": _trial["daily_limit"],
+                "today_used": _used,
+                "today_used_all": today_usage_tokens(user.id, db, beijing_day_start()),
+                "today_remaining": max(0.0, float(_trial["daily_limit"]) - _used),
+            }
         return {"active": False, "plan": None, "expires_at": None}
     daily_limit = sub.daily_limit or 0
     used = today_usage_tokens(user.id, db, beijing_day_start(), eligible_only=True)
