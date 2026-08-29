@@ -4,6 +4,14 @@ import { useRecharge } from '../contexts/RechargeContext';
 import { subscriptionApi } from '../utils/api';
 import { Check, Loader2 } from 'lucide-react';
 
+
+// 订阅到期日安全格式化：null/无效值显示 —（管理员预览无真实订阅时后端返回 null，new Date(null) 会显示 1970/1/1）
+const formatExpiry = (v?: string | null): string => {
+  if (!v) return '—';
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+};
+
 const MODELS = [
   { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', badge: 'New', note: '旗舰 Terra' },
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'Hot', note: '最新旗舰' },
@@ -91,7 +99,7 @@ export default function PricingPage() {
     try {
       const res = await subscriptionApi.purchase(planId);
       if (res.success) {
-        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${new Date(res.expires).toLocaleDateString()}，每日 ${(res.daily_limit || 0).toLocaleString()} 模型 Token 免费额度` });
+        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${formatExpiry(res.expires)}，每日 ${(res.daily_limit || 0).toLocaleString()} 模型 Token 免费额度` });
         const d = await subscriptionApi.status();
         setSubStatus(d);
       } else {
@@ -131,7 +139,7 @@ export default function PricingPage() {
       {subStatus?.active && (
         <div className="backdrop-blur-xl bg-emerald-500/[0.06] border border-emerald-500/20 rounded-2xl p-5 flex flex-wrap items-center gap-x-6 gap-y-2">
           <p className="text-[13px] text-emerald-300 font-medium">我的订阅：{subStatus.plan_label || subStatus.plan}</p>
-          <p className="text-[12px] text-white/50">有效期至 {new Date(subStatus.expires_at).toLocaleDateString()}</p>
+          <p className="text-[12px] text-white/50">有效期至 {formatExpiry(subStatus.expires_at)}</p>
           <p className="text-[12px] text-white/50">今日配额 {Math.round(subStatus.today_used).toLocaleString()} / {Math.round(subStatus.daily_limit).toLocaleString()} token</p>
           <p className="text-[12px] text-emerald-400/80">剩余 {Math.round(subStatus.today_remaining).toLocaleString()} token 免费</p>
         </div>

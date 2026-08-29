@@ -11,6 +11,19 @@ from services.subscription_service import get_active_subscription, beijing_day_s
 
 router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
+def _iso_utc(dt):
+    """把可能为 naive 的 UTC datetime 转成带 +00:00 的 ISO。
+
+    否则前端 new Date(无时区串) 会按浏览器本地时间解析，中国用户（UTC+8）会把
+    UTC 墙上时间当成北京时间，凌晨购买的订阅到期日会显示早 1 天。
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
 # ── 套餐定义 ──
 # 2026-08-20 订阅额度重定价 v2（用户确认方案A）：越买越多 + 日均价越低
 # 每日免费额度：体验5万 < 月30万 < 季35万 < 年40万（递增，避免"年卡不如季卡"）
@@ -98,7 +111,7 @@ def purchase_plan(plan_id: str, user: User = Depends(get_current_user), db: Sess
         "success": True,
         "balance": user.token_balance,
         "plan": plan_id,
-        "expires": sub.end_date.isoformat(),
+        "expires": _iso_utc(sub.end_date),
         "daily_limit": plan["daily_limit"],
     }
 
@@ -130,7 +143,7 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
         "active": True,
         "plan": sub.plan_id,
         "plan_label": sub.plan_label,
-        "expires_at": sub.end_date.isoformat(),
+        "expires_at": _iso_utc(sub.end_date),
         "daily_limit": daily_limit,
         "today_used": used,
         "today_used_all": used_all,
