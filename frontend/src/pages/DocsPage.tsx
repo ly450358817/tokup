@@ -10,6 +10,7 @@ export default function DocsPage() {
   const [firstKey, setFirstKey] = useState('');
   const [showDownload, setShowDownload] = useState(false);
   const [detecting, setDetecting] = useState(false);
+  const [configCopied, setConfigCopied] = useState(false);
 
   useEffect(() => {
     keysApi
@@ -48,6 +49,27 @@ export default function DocsPage() {
       if (!wentHidden) setShowDownload(true);
     }, 4000);
   }, [firstKey]);
+
+  const DIRECT_CONFIG = `model_provider = "custom"
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+disable_response_storage = true
+
+[model_providers.custom]
+name = "custom"
+base_url = "https://tokup.net/api/v1"
+wire_api = "responses"
+requires_openai_auth = true`;
+
+  const copyDirectConfig = async () => {
+    try {
+      await navigator.clipboard.writeText(DIRECT_CONFIG);
+      setConfigCopied(true);
+      window.setTimeout(() => setConfigCopied(false), 2000);
+    } catch {
+      window.prompt('请手动复制下面的配置：', DIRECT_CONFIG);
+    }
+  };
 
   return (
     <div className="w-full page-container space-y-8">
@@ -100,7 +122,9 @@ export default function DocsPage() {
         <div className="bg-[#13131D] rounded-xl p-4 mb-3">
           <h4 className="text-[12px] font-medium text-white/60 mb-2">Codex 桌面版 / CLI</h4>
           <p className="text-[12px] text-white/40 leading-relaxed mb-2">
-            Codex 设置里没有“自定义 API”入口，推荐用免费的{" "}
+            Codex 是支持直连的，只是入口藏在一个配置文件里（CC Switch 就是帮你改这个文件的小工具）。
+            两种方式任选：<strong className="text-white/70">方式一</strong>用 CC Switch 一键配置（最省事，推荐小白）；
+            <strong className="text-white/70">方式二</strong>不装软件、手动改 1 个文件（见下方）。先看方式一，用免费的{" "}
             <a
               href={CC_SWITCH_RELEASES}
               target="_blank"
@@ -188,6 +212,56 @@ export default function DocsPage() {
             <strong className="text-white/70">保留官方登录</strong>，或命令行启动 Codex 后在{" "}
             <code className="font-mono text-emerald-400">/model</code> 里选择
           </p>
+
+          {/* 方式二：不装 CC Switch 手动直连 */}
+          <div className="border-t border-white/[0.06] mt-4 pt-4">
+            <h5 className="text-[12px] font-medium text-emerald-400/90 mb-2">方式二：不想装 CC Switch？手动改一个文件就行</h5>
+            <p className="text-[12px] text-white/40 leading-relaxed mb-2">
+              其实 Codex 天生就能直连 TokUp，不需要任何中转。只是入口藏在一个配置文件里，
+              CC Switch 只是帮你改这个文件的工具。不装软件也行，照下面 5 步做：
+            </p>
+            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-1.5 mb-3">
+              <li>
+                复制你的 API Key（<code className="font-mono text-emerald-400">tok-</code> 开头那串）
+              </li>
+              <li>
+                找到 Codex 的配置文件{" "}
+                <code className="font-mono text-emerald-400">~/.codex/config.toml</code>：
+                苹果电脑打开「终端」输入{" "}
+                <code className="font-mono text-emerald-400">open ~/.codex</code> 回车；
+                Windows 在文件资源管理器地址栏输入{" "}
+                <code className="font-mono text-emerald-400">%USERPROFILE%\.codex</code> 回车
+              </li>
+              <li>
+                用「文本编辑 / 记事本」打开 config.toml，把里面的内容<strong className="text-white/70">全部删掉</strong>，
+                粘贴下面这段（点按钮一键复制）：
+              </li>
+            </ol>
+            <div className="relative mb-3">
+              <pre className="rounded-lg bg-black/40 border border-white/10 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto whitespace-pre">{DIRECT_CONFIG}</pre>
+              <button
+                type="button"
+                onClick={copyDirectConfig}
+                className="absolute top-2 right-2 rounded-md bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-black hover:bg-emerald-400"
+              >
+                {configCopied ? '已复制 ✓' : '复制配置'}
+              </button>
+            </div>
+            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-1.5 mb-2" start={4}>
+              <li>
+                告诉 Codex 你的 Key（终端里执行，把{" "}
+                <code className="font-mono text-emerald-400">tok-你的Key</code> 换成你复制的）：
+                <br />
+                苹果电脑：<code className="font-mono text-emerald-400">echo 'export OPENAI_API_KEY=tok-你的Key' &gt;&gt; ~/.zshrc &amp;&amp; source ~/.zshrc</code>
+                <br />
+                Windows：<code className="font-mono text-emerald-400">setx OPENAI_API_KEY "tok-你的Key"</code>
+              </li>
+              <li>
+                完全退出 Codex 再重新打开，就能用了。想换模型？把配置里{" "}
+                <code className="font-mono text-emerald-400">gpt-5.5</code> 换成别的（见下方「快模型推荐」）
+              </li>
+            </ol>
+          </div>
         </div>
 
         {/* 常用软件速查 */}
