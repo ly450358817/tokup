@@ -11,6 +11,7 @@ export default function DocsPage() {
   const [showDownload, setShowDownload] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [configCopied, setConfigCopied] = useState(false);
+  const [envCopied, setEnvCopied] = useState(false);
 
   useEffect(() => {
     keysApi
@@ -68,6 +69,23 @@ requires_openai_auth = true`;
       window.setTimeout(() => setConfigCopied(false), 2000);
     } catch {
       window.prompt('请手动复制下面的配置：', DIRECT_CONFIG);
+    }
+  };
+
+  // mac 命令自动带上当前用户自己的 Key，小白不用手动替换，直接粘贴回车
+  const ENV_CMD = `echo 'export OPENAI_API_KEY=${firstKey || 'tok-你的Key'}' >> ~/.zshrc && source ~/.zshrc`;
+
+  const copyEnvCmd = async () => {
+    if (!firstKey) {
+      window.prompt('请先在后台创建 API Key，然后复制这行命令：', `echo 'export OPENAI_API_KEY=tok-你的Key' >> ~/.zshrc && source ~/.zshrc`);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(ENV_CMD);
+      setEnvCopied(true);
+      window.setTimeout(() => setEnvCopied(false), 2000);
+    } catch {
+      window.prompt('请手动复制这行命令：', ENV_CMD);
     }
   };
 
@@ -215,49 +233,67 @@ requires_openai_auth = true`;
 
           {/* 方式二：不装 CC Switch 手动直连 */}
           <div className="border-t border-white/[0.06] mt-4 pt-4">
-            <h5 className="text-[12px] font-medium text-emerald-400/90 mb-2">方式二：不想装 CC Switch？手动改一个文件就行</h5>
-            <p className="text-[12px] text-white/40 leading-relaxed mb-2">
-              其实 Codex 天生就能直连 TokUp，不需要任何中转。只是入口藏在一个配置文件里，
-              CC Switch 只是帮你改这个文件的工具。不装软件也行，照下面 5 步做：
+            <h5 className="text-[12px] font-medium text-emerald-400/90 mb-2">方式二：不想装 CC Switch？改一个文件就行（约 2 分钟）</h5>
+            <p className="text-[12px] text-white/40 leading-relaxed mb-3">
+              照着做，一次就能通：
             </p>
-            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-1.5 mb-3">
+            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-2 mb-3">
               <li>
-                复制你的 API Key（<code className="font-mono text-emerald-400">tok-</code> 开头那串）
+                复制你的 API Key（<code className="font-mono text-emerald-400">tok-</code> 开头那串，后台「API 密钥」里创建）
               </li>
               <li>
-                找到 Codex 的配置文件{" "}
-                <code className="font-mono text-emerald-400">~/.codex/config.toml</code>：
-                苹果电脑打开「终端」输入{" "}
-                <code className="font-mono text-emerald-400">open ~/.codex</code> 回车；
-                Windows 在文件资源管理器地址栏输入{" "}
+                找到 Codex 的配置文件 <code className="font-mono text-emerald-400">config.toml</code>：
+                <br />
+                苹果电脑：打开「终端」，粘贴{" "}
+                <code className="font-mono text-emerald-400">open ~/.codex</code> 回车，会弹出一个文件夹，里面有它；
+                <br />
+                Windows：打开「文件资源管理器」，地址栏输入{" "}
                 <code className="font-mono text-emerald-400">%USERPROFILE%\.codex</code> 回车
               </li>
               <li>
-                用「文本编辑 / 记事本」打开 config.toml，把里面的内容<strong className="text-white/70">全部删掉</strong>，
-                粘贴下面这段（点按钮一键复制）：
+                用「文本编辑 / 记事本」打开 config.toml，把内容<strong className="text-white/70">全部删掉</strong>，
+                粘贴右边这段，保存：{" "}
+                <button
+                  type="button"
+                  onClick={copyDirectConfig}
+                  className="inline-flex items-center rounded-md bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-black hover:bg-emerald-400"
+                >
+                  {configCopied ? '已复制 ✓' : '复制这段'}
+                </button>
               </li>
             </ol>
-            <div className="relative mb-3">
-              <pre className="rounded-lg bg-black/40 border border-white/10 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto whitespace-pre">{DIRECT_CONFIG}</pre>
-              <button
-                type="button"
-                onClick={copyDirectConfig}
-                className="absolute top-2 right-2 rounded-md bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-black hover:bg-emerald-400"
-              >
-                {configCopied ? '已复制 ✓' : '复制配置'}
-              </button>
-            </div>
-            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-1.5 mb-2" start={4}>
+            <pre className="rounded-lg bg-black/40 border border-white/10 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto whitespace-pre mb-3">{DIRECT_CONFIG}</pre>
+            <p className="text-[11px] text-white/30 leading-relaxed mb-2">粘贴保存后，你的 config.toml 应该长这样（照着核对）：</p>
+            <img
+              src="/assets/direct-connect/config-toml.png"
+              alt="config.toml 粘贴保存后的样子"
+              className="w-full max-w-xl rounded-lg border border-white/10 mb-3"
+            />
+            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-2 mb-2" start={4}>
               <li>
-                告诉 Codex 你的 Key（终端里执行，把{" "}
-                <code className="font-mono text-emerald-400">tok-你的Key</code> 换成你复制的）：
+                让 Codex 认识你的 Key：苹果电脑在「终端」里粘贴下面这行回车（Key 已自动填好）：
+                <button
+                  type="button"
+                  onClick={copyEnvCmd}
+                  className="inline-flex items-center rounded-md bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-black hover:bg-emerald-400 ml-1"
+                >
+                  {envCopied ? '已复制 ✓' : '复制这行'}
+                </button>
                 <br />
-                苹果电脑：<code className="font-mono text-emerald-400">echo 'export OPENAI_API_KEY=tok-你的Key' &gt;&gt; ~/.zshrc &amp;&amp; source ~/.zshrc</code>
+                <code className="font-mono text-emerald-400 text-[11px] break-all">{ENV_CMD}</code>
                 <br />
-                Windows：<code className="font-mono text-emerald-400">setx OPENAI_API_KEY "tok-你的Key"</code>
+                Windows：按 Win 键搜「环境变量」→ 新建用户变量 <code className="font-mono text-emerald-400">OPENAI_API_KEY</code>，值填你的 Key
               </li>
+            </ol>
+            <p className="text-[11px] text-white/30 leading-relaxed mb-2">苹果电脑在终端里粘贴回车后，就是这样（Key 会自动填好，不用手打）：</p>
+            <img
+              src="/assets/direct-connect/terminal.png"
+              alt="终端里设置 Key 的命令"
+              className="w-full max-w-xl rounded-lg border border-white/10 mb-3"
+            />
+            <ol className="list-decimal list-inside text-[12px] text-white/40 leading-relaxed space-y-2 mb-2" start={5}>
               <li>
-                完全退出 Codex 再重新打开，就能用了。想换模型？把配置里{" "}
+                完全退出 Codex 再重新打开，就通了 🎉 想换模型？把配置里{" "}
                 <code className="font-mono text-emerald-400">gpt-5.5</code> 换成别的（见下方「快模型推荐」）
               </li>
             </ol>
