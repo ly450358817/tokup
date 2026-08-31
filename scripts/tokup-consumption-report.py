@@ -224,12 +224,13 @@ def main():
             if mrow["errs"] and mrow["errs"] > 20:
                 out["alerts"].append(f"模型 {mrow['model']} 近{end_iso}起失败 {mrow['errs']} 次")
         for u in users:
-            if u["is_admin"] or not u["cost_all"]:
+            if u["is_admin"] or not u["cost_period"]:
                 continue
-            # 累计消耗 > 累计充值 + 5 元 才告警（容差覆盖体验金¥1/小额测试；订阅免费配额显示 0 费用不在此列）
-            if (u["cost_all"] or 0) > (u["total_recharged"] or 0) + 5:
+            # 仅按本期消耗判断（2026-08-31 起）：本期消耗 > 累计充值 + 5 元才告警；
+            # 历史注册体验金白嫖（8/20 已取消体验金）不再累计追溯，避免旧账反复报警
+            if (u["cost_period"] or 0) > (u["total_recharged"] or 0) + 5:
                 out["alerts"].append(
-                    f"消耗超充值(>¥5): {u['email']} 累计消耗 ¥{u['cost_all']} > 充值 ¥{u['total_recharged']}（白嫖/订阅免费配额，需人工确认）")
+                    f"消耗超充值(>¥5): {u['email']} 本期消耗 ¥{u['cost_period']} > 充值 ¥{u['total_recharged']}（白嫖/订阅免费配额，需人工确认）")
     except Exception as e:
         out["db_errors"].append(f"{type(e).__name__}: {e}")
         users = models = daily = by_user_model = []
