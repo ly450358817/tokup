@@ -11,6 +11,7 @@ from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
 from services.token_service import reserve_token, settle_reserved, has_completed_recharge
+from services.email_notify import maybe_alert_low_balance
 
 import secrets, time, json, asyncio, uuid
 
@@ -392,6 +393,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _r = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
                         db.commit()  # 管理员免扣费时 settle 不触发 commit，此处统一落库（用量/对话存档）
                         _balance_after = _r.get("balance", _initial_balance)
+                        if not _admin_free:
+                            maybe_alert_low_balance(_u, _balance_after)
                     except Exception as _se:
                         # 结算异常时退回预扣，避免用户余额被无声冻结
                         try:
@@ -507,6 +510,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if _sub and _balance_charge > 0:
         _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
     _deduct = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
+    if not _admin_free and _deduct["success"]:
+        maybe_alert_low_balance(_u, _deduct.get("balance", _u.token_balance))
     if not _deduct["success"]:
         return JSONResponse(
             status_code=402,
