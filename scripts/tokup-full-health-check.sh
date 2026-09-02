@@ -47,13 +47,18 @@ if [ "${mem:-100}" -lt 90 ]; then pass "内存使用 ${mem}%"; else fail "内存
 
 # 4) 最近7天后端错误日志（仅最近24h的新错误算故障；历史错误多为已解决的上游429/配额事件）
 echo "▍4. 后端日志（7天 / 最近24h）"
+# 已知可忽略项：glm-4.6v-flash（智谱免费私有视觉模型，仅 admin 自用）429 限流 = 非故障（用户决策 2026-09-02）
+IGNORE_429='model=glm-4.6v-flash provider=zhipu err=HTTP 429'
 err=$(SSH "journalctl -u tokup-backend --since '-7 days' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
 err=${err:-0}
-err24=$(SSH "journalctl -u tokup-backend --since '-24 hours' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
-err24=${err24:-0}
-echo "      7天共 ${err} 条；其中最近24h ${err24} 条"
+err_all24=$(SSH "journalctl -u tokup-backend --since '-24 hours' 2>/dev/null | grep -cE 'ERROR|Traceback'" 2>/dev/null)
+err_all24=${err_all24:-0}
+err_ign24=$(SSH "journalctl -u tokup-backend --since '-24 hours' 2>/dev/null | grep -E 'ERROR|Traceback' | grep -c '$IGNORE_429'" 2>/dev/null)
+err_ign24=${err_ign24:-0}
+err24=$(( err_all24 - err_ign24 ))
+echo "      7天共 ${err} 条；最近24h ${err_all24} 条（可忽略 glm-4.6v 智谱429 ${err_ign24} 条；需排查 ${err24} 条）"
 if [ "$err24" -eq 0 ]; then
-  pass "最近24h无错误日志（7天历史 ${err} 条，多为已解决的上游429/配额事件）"
+  pass "最近24h无异常错误日志（glm-4.6v-flash 智谱429 已按策略忽略，非故障）"
 else
   fail "最近24h错误日志 ${err24} 条（需排查）"
 fi
