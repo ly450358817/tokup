@@ -310,6 +310,9 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
                 last_err = str(e)
                 if attempt < 2:
                     _log.warning(f"上游请求失败（{prov} 第{attempt+1}次），即将重试: model={model} err={e}")
+                    # 429 限流退避：无间隔连打只会持续撞限速（1s/2s 递增）
+                    if "HTTP 429" in str(e):
+                        await asyncio.sleep(1.0 if attempt == 0 else 2.0)
                     continue
                 _log.error(f"上游最终失败: model={model} provider={prov} err={e}")
     return {"error": last_err or "所有上游均失败"}
@@ -360,6 +363,9 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
             try:
                 client = await _get_http_client()
                 async with client.stream("POST", u, headers=headers, json=payload, timeout=httpx.Timeout(600.0, connect=30.0)) as resp:
+                    if resp.status_code >= 400:
+                        err_body = (await resp.aread()).decode("utf-8", errors="ignore")[:200]
+                        raise RuntimeError(f"HTTP {resp.status_code}: {err_body}")
                     input_tok = 0
                     output_tok = 0
                     usage_seen = False   # 已捕获到 usage（防止 usage 与 finish_reason 分帧导致漏记）
@@ -422,5 +428,8 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                 logging.getLogger(__name__).warning(
                     f"上游流式请求失败（{prov} 第{attempt+1}次），即将重试: model={model} err={e}"
                 )
+                # 429 限流退避（共2次尝试，仅第1次失败后等待）
+                if "HTTP 429" in str(e) and attempt < 1:
+                    await asyncio.sleep(1.0)
                 continue
     raise RuntimeError(f"流式请求失败（所有上游均失败）: {last_err}")
