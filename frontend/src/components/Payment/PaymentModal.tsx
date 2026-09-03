@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { paymentApi } from '../../utils/api';
 import { X, CheckCircle, Loader2 } from 'lucide-react';
+import SuccessTicket from './SuccessTicket';
 import { useLang } from '../../contexts/LanguageContext';
 
 const QUICK_AMOUNTS = [29.9, 50, 100, 200];
@@ -83,7 +84,6 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
           const data = await res.json();
           if (data.status === 'completed') {
             setPaid(true);
-            setTimeout(() => onSuccess(), 1800);
             return;
           }
         }
@@ -130,6 +130,20 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
       setPaying(false);
     }
   };
+
+  // 支付成功 → 展示「能量票券」动效（深蓝券面 + 大数字滚动 + 扫光）
+  if (paid) {
+    return (
+      <SuccessTicket
+        variant="recharge"
+        amountYuan={amountNum}
+        tokens={Math.round(amountNum * 100)}
+        orderId={orderId}
+        primaryText="开始使用"
+        onPrimary={onSuccess}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>

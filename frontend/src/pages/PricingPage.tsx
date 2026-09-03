@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLang } from '../contexts/LanguageContext';
 import { useRecharge } from '../contexts/RechargeContext';
 import { subscriptionApi } from '../utils/api';
 import { Check, Loader2 } from 'lucide-react';
+import SuccessTicket from '../components/Payment/SuccessTicket';
 
 
 // 订阅到期日安全格式化：null/无效值显示 —（管理员预览无真实订阅时后端返回 null，new Date(null) 会显示 1970/1/1）
@@ -63,6 +65,8 @@ export default function PricingPage() {
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [subStatus, setSubStatus] = useState<any>(null);
   const [quotaModels, setQuotaModels] = useState<string[]>([]);
+  const [ticket, setTicket] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     subscriptionApi.plans().then((data: any) => {
@@ -99,7 +103,8 @@ export default function PricingPage() {
     try {
       const res = await subscriptionApi.purchase(planId);
       if (res.success) {
-        setMsg({ type: 'success', text: `订阅开通成功！有效期至 ${formatExpiry(res.expires)}，每日 ${(res.daily_limit || 0).toLocaleString()} 模型 Token 免费额度` });
+        const plan = plans.find((x: any) => x.id === planId);
+        setTicket({ plan, expires: res.expires, daily: res.daily_limit || 0 });
         const d = await subscriptionApi.status();
         setSubStatus(d);
       } else {
@@ -302,6 +307,19 @@ export default function PricingPage() {
           ))}
         </div>
       </div>
+
+      {/* 订阅成功 → 「能量票券」动效 */}
+      {ticket && (
+        <SuccessTicket
+          variant="subscription"
+          planName={ticket.plan?.label || '订阅套餐'}
+          dailyLimit={ticket.daily}
+          expiresAt={formatExpiry(ticket.expires)}
+          primaryText="去工作台体验"
+          onPrimary={() => { setTicket(null); navigate('/transfer-station'); }}
+          onSecondary={() => setTicket(null)}
+        />
+      )}
     </div>
   );
 }
