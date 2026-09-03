@@ -85,17 +85,9 @@ export default function SuccessTicket({
       <div className="tk-spark tk-spark-4" />
 
       <div className="tk-stage">
-        {/* 缓慢旋转的背景光束 */}
-        <div className="tk-rays" aria-hidden />
-        {/* 环绕光点 */}
-        <div className="tk-orbit" aria-hidden>
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
-            <i key={a} style={{ transform: `rotate(${a}deg) translateY(calc(-1 * var(--orb-r)))` }} />
-          ))}
-        </div>
-        {/* 券卡（持续漂浮 + 轻微晃动） */}
-        <div className="tk-lev">
-          <div className="tk-sway">
+        {/* 券卡：入场先整卡旋转一圈，随后持续漂浮 */}
+        <div className="tk-spin">
+          <div className="tk-lev">
         <div className="tk-card">
           <div className="tk-sheen" />
           <div className="tk-sweep" />
