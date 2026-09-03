@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, BarChart3, Globe, Zap, Sparkles, Coins } from 'lucide-react';
+import LandingModelOrbit from '../components/LandingModelOrbit';
 
 function ThreeSceneFallback() {
   return (
@@ -148,22 +149,7 @@ export default function LandingPage() {
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 48, padding: '12px 24px', borderRadius: 9999, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', flexWrap: 'wrap', justifyContent: 'center' }}
-        >
-          <span style={{ fontSize: 10, color: 'rgb(16,185,129)', fontWeight: 500, letterSpacing: '0.02em' }}>GPT-5.6</span><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginLeft: 3 }}> / Codex</span>
-          <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontSize: 10, color: 'rgb(16,185,129)', fontWeight: 500 }}>DeepSeek</span><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginLeft: 3 }}>V4</span>
-          <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontSize: 10, color: 'rgb(16,185,129)', fontWeight: 500 }}>Claude</span><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginLeft: 3 }}>Fable 5</span>
-          <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontSize: 10, color: 'rgb(16,185,129)', fontWeight: 500 }}>Qwen</span><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginLeft: 3 }}>3.7 Max</span>
-          <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontSize: 10, color: 'rgb(16,185,129)', fontWeight: 500 }}>+10+</span>
-        </motion.div>
+        <LandingModelOrbit />
       </section>
 
       <section style={{ position: 'relative', zIndex: 50, maxWidth: 1000, margin: '0 auto', padding: '0 24px 80px' }}>

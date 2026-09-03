@@ -371,6 +371,15 @@ console.log(response.choices[0].message.content);`;
               {testLoading ? '发送中...' : '发送'}
             </button>
           </div>
+          {/* 调用中指示：显示正在调用的模型名 */}
+          {testLoading && !testResponse && !testError && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin shrink-0" />
+              <span className="text-[11px] text-white/45">
+                正在调用 <span className="text-emerald-400/90 font-medium">{models.find((m) => m.id === testModel)?.name || testModel}</span>，等待首字…
+              </span>
+            </div>
+          )}
           {/* Response */}
           {(testResponse || testReasoning) && (
             <div className="bg-[#13131D] rounded-xl p-4 max-h-72 overflow-y-auto space-y-2">
