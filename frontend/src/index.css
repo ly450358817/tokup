@@ -528,16 +528,16 @@ html, body, #root {
   z-index: 2;
   transform-style: preserve-3d;
   transform-origin: 50% 50%;
-  animation: tk-flip-in 1.8s cubic-bezier(0.22, 0.55, 0.3, 1) both;
+  animation: tk-flip-in 1.5s cubic-bezier(0.22, 0.55, 0.3, 1) both;
 }
 .tk-lev {
-  animation: tk-float-y 4.6s ease-in-out 2s infinite;
+  animation: tk-float-y 4.6s ease-in-out 1.65s infinite;
 }
 .tk-stage { z-index: 0; }
 .tk-actions {
   position: relative;
   z-index: 3;
-  animation: tk-fade 0.45s ease-out 1.4s both;
+  animation: tk-fade 0.45s ease-out 1.2s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
