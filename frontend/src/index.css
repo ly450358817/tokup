@@ -218,8 +218,8 @@ html, body, #root {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes tk-sweep {
-  0%   { transform: translateX(-160%) skewX(-18deg); }
-  55%, 100% { transform: translateX(260%) skewX(-18deg); }
+  0%        { transform: translateX(-170%) skewX(-18deg); }
+  9%, 100%  { transform: translateX(270%) skewX(-18deg); }
 }
 @keyframes tk-float {
   0%, 100% { transform: translateY(0) scale(1); opacity: .55; }
@@ -325,7 +325,7 @@ html, body, #root {
   transform: translateX(-160%) skewX(-18deg);
   pointer-events: none;
   z-index: 1;
-  animation: tk-sweep 1.6s ease-out 0.55s 1;
+  animation: tk-sweep 5.6s ease-in-out 0.9s infinite;
 }
 .tk-card > * { position: relative; z-index: 2; }
 
@@ -473,3 +473,90 @@ html, body, #root {
   transition: all .2s ease;
 }
 .tk-btn-ghost:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
+
+/* SuccessTicket 持续动效：漂浮 + 微晃 + 旋转光束 + 环绕光点（2026-09-03） */
+@keyframes tk-float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes tk-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(1.15deg); }
+  75%      { transform: rotate(-1.15deg); }
+}
+@keyframes tk-ray-spin   { to { transform: rotate(360deg); } }
+@keyframes tk-orbit-spin { to { transform: rotate(360deg); } }
+
+.tk-lev  { animation: tk-float-y 5.4s ease-in-out 1.1s infinite; }
+.tk-sway { animation: tk-sway 7s ease-in-out 1.1s infinite; }
+
+/* 背景旋转光束（扇形微光，中心被券卡遮住，只露出边缘光斑） */
+.tk-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.6;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 14deg,   rgba(125, 211, 252, 0.12) 20deg, transparent 26deg,
+    transparent 60deg 74deg,  rgba(99, 102, 241, 0.12) 80deg,  transparent 86deg,
+    transparent 130deg 142deg,rgba(56, 189, 248, 0.11) 148deg, transparent 154deg,
+    transparent 200deg 212deg,rgba(129, 140, 248, 0.10) 218deg, transparent 224deg,
+    transparent 270deg 282deg,rgba(125, 211, 252, 0.10) 288deg, transparent 294deg,
+    transparent 330deg 342deg,rgba(165, 243, 252, 0.10) 348deg, transparent 354deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 30%, black 78%);
+  mask-image: radial-gradient(closest-side, transparent 30%, black 78%);
+  animation: tk-ray-spin 26s linear infinite;
+  z-index: 0;
+}
+
+/* 环绕光点：绕券卡外缘缓慢旋转 */
+.tk-orbit {
+  --orb-r: 236px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  pointer-events: none;
+  animation: tk-orbit-spin 18s linear infinite;
+}
+.tk-orbit i {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e0f2fe, #7dd3fc 55%, rgba(56, 189, 248, 0.2));
+  box-shadow: 0 0 14px 2px rgba(125, 211, 252, 0.45);
+}
+.tk-orbit i:nth-child(even) {
+  width: 6px;
+  height: 6px;
+  left: -3px;
+  top: -3px;
+  background: radial-gradient(circle at 35% 35%, #ede9fe, #a5b4fc 55%, rgba(129, 140, 248, 0.2));
+  box-shadow: 0 0 12px 2px rgba(165, 180, 252, 0.4);
+}
+
+/* 让券卡盖住光束中心、浮层在光点之上 */
+.tk-stage { z-index: 0; }
+.tk-lev { position: relative; z-index: 2; }
+.tk-actions { position: relative; z-index: 3; }
+
+@media (max-width: 520px) {
+  .tk-orbit { --orb-r: 186px; }
+  .tk-rays { width: 480px; height: 480px; margin: -240px 0 0 -240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-lev, .tk-sway, .tk-rays, .tk-orbit { animation: none !important; }
+}
