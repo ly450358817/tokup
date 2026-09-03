@@ -85,9 +85,9 @@ export default function SuccessTicket({
       <div className="tk-spark tk-spark-4" />
 
       <div className="tk-stage">
-        {/* 券卡：入场先整卡旋转一圈，随后持续漂浮 */}
-        <div className="tk-spin">
-          <div className="tk-lev">
+        {/* 券卡：由小到大(远→近) + A/B正反面 3D 翻转入场，落定后漂浮 */}
+        <div className="tk-lev">
+          <div className="tk-flip">
         <div className="tk-card">
           <div className="tk-sheen" />
           <div className="tk-sweep" />
@@ -115,6 +115,13 @@ export default function SuccessTicket({
             <span className="tk-stamp">{stamp}</span>
           </div>
         </div>
+
+          {/* 背面（B面）：翻转 180° 时可见 */}
+          <div className="tk-card tk-card-back">
+            <div className="tk-back-mark" />
+            <p className="tk-back-name">TokUp</p>
+            <p className="tk-back-sub">脉充 · AI API 聚合</p>
+          </div>
           </div>
         </div>
 

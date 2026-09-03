@@ -329,6 +329,43 @@ html, body, #root {
 }
 .tk-card > * { position: relative; z-index: 2; }
 
+/* 3D 正反面：A面(内容面) + B面(背面) */
+.tk-card {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.tk-card-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.tk-back-mark {
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  transform: rotate(45deg);
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.75);
+  margin-bottom: 8px;
+}
+.tk-back-name {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.92);
+}
+.tk-back-sub {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: rgba(255, 255, 255, 0.42);
+}
+
 .tk-chip {
   display: inline-flex;
   align-items: center;
@@ -475,33 +512,34 @@ html, body, #root {
 .tk-btn-ghost:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
 
 /* SuccessTicket 持续动效 v2：整卡旋转一圈入场 + 上下漂浮（2026-09-03） */
-@keyframes tk-spin-in {
-  0%   { opacity: 0; transform: rotate(0deg) scale(0.85); }
+@keyframes tk-flip-in {
+  0%   { opacity: 0; transform: perspective(1400px) scale(0.25) rotateY(0deg); }
   8%   { opacity: 1; }
-  100% { opacity: 1; transform: rotate(360deg) scale(1); }
+  100% { opacity: 1; transform: perspective(1400px) scale(1) rotateY(360deg); }
 }
 @keyframes tk-float-y {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-15px); }
 }
 
-/* 原地顺时针旋转一圈 + 轻微居中放大（绕自身中心，无任何上下位移），落定后漂浮 */
-.tk-spin {
+/* 由小到大（远→近）+ A/B正反面 3D 翻转入场；落定后 ±15px 漂浮 */
+.tk-flip {
   position: relative;
   z-index: 2;
+  transform-style: preserve-3d;
   transform-origin: 50% 50%;
-  animation: tk-spin-in 1.3s cubic-bezier(0.2, 0.6, 0.35, 1) both;
+  animation: tk-flip-in 1.8s cubic-bezier(0.22, 0.55, 0.3, 1) both;
 }
 .tk-lev {
-  animation: tk-float-y 4.6s ease-in-out 1.4s infinite;
+  animation: tk-float-y 4.6s ease-in-out 2s infinite;
 }
 .tk-stage { z-index: 0; }
 .tk-actions {
   position: relative;
   z-index: 3;
-  animation: tk-fade 0.45s ease-out 0.75s both;
+  animation: tk-fade 0.45s ease-out 1.4s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tk-spin, .tk-lev { animation: none !important; }
+  .tk-flip, .tk-lev { animation: none !important; }
 }
