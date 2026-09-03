@@ -23,7 +23,7 @@ exec 9>/tmp/tokup-alert.lock
 flock -n 9 || exit 0
 
 LAST=$(tail -n 5 "$FAILFILE")
-TITLE="[TokUp] 监控告警 $(date '+%H:%M')"
+TITLE="⚡TokUp | 监控告警 $(date '+%H:%M')"
 
 if [ -n "$WECOM_WEBHOOK" ]; then
   CONTENT_JSON=$(python3 -c 'import json,sys; print(json.dumps({"msgtype":"text","text":{"content":sys.stdin.read()}}))' <<< "$LAST" 2>/dev/null)
