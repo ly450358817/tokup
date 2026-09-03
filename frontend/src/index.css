@@ -476,8 +476,8 @@ html, body, #root {
 
 /* SuccessTicket 持续动效 v2：整卡旋转一圈入场 + 上下漂浮（2026-09-03） */
 @keyframes tk-spin-in {
-  0%   { opacity: 0; transform: rotate(0deg) scale(0.7); }
-  55%  { opacity: 1; }
+  0%   { opacity: 0; transform: rotate(0deg) scale(0.85); }
+  8%   { opacity: 1; }
   100% { opacity: 1; transform: rotate(360deg) scale(1); }
 }
 @keyframes tk-float-y {
@@ -485,14 +485,15 @@ html, body, #root {
   50%      { transform: translateY(-15px); }
 }
 
+/* 原地顺时针旋转一圈 + 轻微居中放大（绕自身中心，无任何上下位移），落定后漂浮 */
 .tk-spin {
   position: relative;
   z-index: 2;
   transform-origin: 50% 50%;
-  animation: tk-spin-in 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: tk-spin-in 1.3s cubic-bezier(0.2, 0.6, 0.35, 1) both;
 }
 .tk-lev {
-  animation: tk-float-y 4.6s ease-in-out 1.3s infinite;
+  animation: tk-float-y 4.6s ease-in-out 1.4s infinite;
 }
 .tk-stage { z-index: 0; }
 .tk-actions {
