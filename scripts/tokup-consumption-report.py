@@ -87,7 +87,7 @@ def fetch_qiniu(api_key, start, end):
     # 本月汇总
     try:
         j = http_get_json(COST_SUMMARY_URL + "?type=month", {"Authorization": f"Bearer {api_key}"})
-        for ak in j.get("data", {}).get("api_keys", []):
+        for ak in (j.get("data", {}).get("api_keys") or []):
             month_fee += float(ak.get("total_fee") or 0)
     except Exception as e:
         errors.append(f"month_summary: {e}")
@@ -96,12 +96,12 @@ def fetch_qiniu(api_key, start, end):
         url = COST_DETAIL_URL + "?" + urllib.parse.urlencode(
             {"start_date": start, "end_date": end, "grain": "day"})
         j = http_get_json(url, {"Authorization": f"Bearer {api_key}"})
-        for b in j.get("data", {}).get("bills", []):
-            for m in b.get("models", []):
+        for b in (j.get("data", {}).get("bills") or []):
+            for m in (b.get("models") or []):
                 mid = m.get("model_id")
                 e = models.setdefault(mid, {"in": 0.0, "out": 0.0, "cache": 0.0, "fee": 0.0})
                 e["fee"] += float(m.get("total_fee") or 0)
-                for it in m.get("items", []):
+                for it in (m.get("items") or []):
                     u = it.get("usage", {})
                     cnt = float(u.get("count") or 0)
                     unit = u.get("unit", "")

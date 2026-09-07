@@ -102,12 +102,12 @@ def fetch_billing(api_key, period=None):
         url = (QINIU_COST_DETAIL_URL + "?" + urllib.parse.urlencode(
             {"start_date": start.isoformat(), "end_date": end.isoformat(), "grain": "month"}))
         j = http_get_json(url, {"Authorization": f"Bearer {api_key}"})
-        for b in j.get("data", {}).get("bills", []):
-            for m in b.get("models", []):
+        for b in (j.get("data", {}).get("bills") or []):
+            for m in (b.get("models") or []):
                 mid = m.get("model_id")
                 entry = models.setdefault(mid, {"input": (0.0, 0.0), "output": (0.0, 0.0), "total_fee": 0.0})
                 entry["total_fee"] += float(m.get("total_fee") or 0)
-                for it in m.get("items", []):
+                for it in (m.get("items") or []):
                     _accum(it, entry)
     except Exception as e:
         errors.append(f"cost-detail: {type(e).__name__}: {e}")
@@ -115,12 +115,12 @@ def fetch_billing(api_key, period=None):
         try:
             url = QINIU_COST_URL + "?" + urllib.parse.urlencode({"type": "month"})
             j = http_get_json(url, {"Authorization": f"Bearer {api_key}"})
-            for ak in j.get("data", {}).get("api_keys", []):
-                for m in ak.get("models", []):
+            for ak in (j.get("data", {}).get("api_keys") or []):
+                for m in (ak.get("models") or []):
                     mid = m.get("model_id")
                     entry = models.setdefault(mid, {"input": (0.0, 0.0), "output": (0.0, 0.0), "total_fee": 0.0})
                     entry["total_fee"] += float(m.get("total_fee") or 0)
-                    for it in m.get("items", []):
+                    for it in (m.get("items") or []):
                         _accum(it, entry)
         except Exception as e2:
             errors.append(f"cost: {type(e2).__name__}: {e2}")

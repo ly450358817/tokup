@@ -48,6 +48,7 @@ MODEL_ROUTES = {
     "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.7-plus": ("qiniu", QINIU_ENDPOINT),
+    "qwen/qwen3.8-flash-next": ("qiniu", QINIU_ENDPOINT),
     "qwen3-max": ("qiniu", QINIU_ENDPOINT),
     "qwen3.5-397b-a17b": ("qiniu", QINIU_ENDPOINT),
     # 智谱AI（七牛云）
@@ -100,6 +101,7 @@ MODEL_COST = {
     "glm-5.3": (11.0, 37.0),                    # 上游 ¥8/¥28（与 glm-5.2 同价）
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
     "qwen/qwen3.7-plus": (8.0, 32.0),        # 上游 ¥6/¥24
+    "qwen/qwen3.8-flash-next": (1.5, 4.0),   # 上游 ¥1/¥3（七牛广场 2026-09-07 核实）×1.33
     "anthropic/claude-fable-5": (90.0, 500.0),   # 2026-08-22 输出+11% 保险（上游计费>API返回约10%，实测毛利仅13%）  # 上游实测 ¥69/¥345
     "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
@@ -147,6 +149,7 @@ MODEL_META = {
     "qwen/qwen3.7-max": {"name": "Qwen 3.7 Max", "provider": "通义千问", "note": "通义旗舰", "badge": ""},
     "qwen/qwen3.8-max": {"name": "Qwen3.8 Max", "provider": "通义千问", "note": "2.4T 参数新旗舰", "badge": "New"},
     "qwen/qwen3.7-plus": {"name": "Qwen 3.7 Plus", "provider": "通义千问", "note": "高性价比中杯", "badge": "New"},
+    "qwen/qwen3.8-flash-next": {"name": "Qwen3.8 Flash", "provider": "通义千问", "note": "高性价比 · 1M上下文", "badge": "New"},
     "glm-5.2": {"name": "GLM-5.2", "provider": "智谱AI", "note": "1M 上下文旗舰", "badge": "New"},
     "glm-5.3": {"name": "GLM-5.3", "provider": "智谱AI", "note": "最新一代旗舰", "badge": "New"},
     "qwen3-max": {"name": "Qwen3 Max", "provider": "通义千问", "note": "通义旗舰 · 全量版", "badge": "New"},

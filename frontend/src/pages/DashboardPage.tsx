@@ -39,6 +39,7 @@ const DEFAULT_MODELS = [
   { id: 'qwen/qwen3.8-max', label: 'Qwen3.8 Max', provider: '通义千问', cost: '¥16/1M input' },
   { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '通义千问', cost: '¥16/1M input' },
   { id: 'qwen/qwen3.7-plus', label: 'Qwen 3.7 Plus', provider: '通义千问', cost: '¥8/1M input' },
+  { id: 'qwen/qwen3.8-flash-next', label: 'Qwen3.8 Flash', provider: '通义千问', cost: '¥1.5/1M input' },
   { id: 'qwen3.5-397b-a17b', label: 'Qwen3.5 397B', provider: '通义千问', cost: '¥4.0/1M input' },
   { id: 'glm-5.3', label: 'GLM-5.3', provider: '智谱AI', cost: '¥11/1M input' },
   { id: 'glm-5.2', label: 'GLM-5.2', provider: '智谱AI', cost: '¥11/1M input' },

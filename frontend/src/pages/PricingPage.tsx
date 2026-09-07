@@ -36,6 +36,7 @@ const MODELS = [
   { id: 'qwen/qwen3.8-max', name: 'Qwen3.8 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: 'New', note: '2.4T参数新旗舰' },
   { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥16', output: '¥48', badge: '', note: '通义旗舰' },
   { id: 'qwen/qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: '通义千问', input: '¥8', output: '¥32', badge: 'New', note: '高性价比中杯' },
+  { id: 'qwen/qwen3.8-flash-next', name: 'Qwen3.8 Flash', provider: '通义千问', input: '¥1.5', output: '¥4.0', badge: 'New', note: '高性价比 · 1M上下文' },
   { id: 'qwen3.5-397b-a17b', name: 'Qwen3.5 397B', provider: '通义千问', input: '¥4.0', output: '¥24.0', badge: 'New', note: '397B超大杯旗舰' },
   { id: 'glm-5.3', name: 'GLM-5.3', provider: '智谱AI', input: '¥11', output: '¥37', badge: 'New', note: '最新一代旗舰' },
   { id: 'glm-5.2', name: 'GLM-5.2', provider: '智谱AI', input: '¥11', output: '¥37', badge: 'New', note: '1M上下文旗舰' },

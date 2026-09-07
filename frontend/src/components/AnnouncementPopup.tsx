@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v15';
+const VERSION = 'v16';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -55,15 +55,9 @@ export default function AnnouncementPopup() {
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">本周重磅上线 7 个国际主流模型</span>（已在定价 / 工作台 / 中转站同步）</p>
+          <p>🎯 <span className="text-white/80 font-medium">本周新上线 1 个高性价比模型</span>（已在定价 / 工作台 / 中转站同步）</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">Claude 4.7 Opus</span> — Anthropic 最新旗舰，¥45 / ¥225（每百万 token）</li>
-            <li><span className="text-emerald-400 font-medium">Claude 4.6 Sonnet</span> — Anthropic 旗舰，¥27 / ¥135</li>
-            <li><span className="text-emerald-400 font-medium">Gemini 2.5 Pro</span> — Google 旗舰，¥24 / ¥141</li>
-            <li><span className="text-emerald-400 font-medium">Gemini 2.5 Flash</span> — Google 高效，¥3 / ¥23</li>
-            <li><span className="text-emerald-400 font-medium">GPT-5.4</span> — OpenAI 新一代旗舰，¥45 / ¥202</li>
-            <li><span className="text-emerald-400 font-medium">GPT-5-mini</span> — OpenAI 轻量快速，¥3 / ¥19</li>
-            <li><span className="text-emerald-400 font-medium">GPT-OSS 120B</span> — OpenAI 开源高性价比，¥2 / ¥8</li>
+            <li><span className="text-emerald-400 font-medium">Qwen3.8 Flash</span> — 通义千问高性价比小钢炮，支持 100 万超长上下文，¥1.5 / ¥4.0（每百万 token）</li>
           </ul>
           <div className="border-t border-white/[0.06] pt-2 mt-2">
             <p className="text-white/40 text-[11px]">📢 说明：订阅用户全模型余额消费享 9 折；每日免费额度适用于低价模型（V4 Flash / V3.2 / GPT-OSS 120B）。国际模型渠道偶有波动，如遇个别模型短暂不可用请稍后重试。</p>
