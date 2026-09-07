@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 
 const DEFAULT_MODELS = [
+  { id: 'openai/gpt-6-astra', label: 'GPT-6 Astra', provider: 'OpenAI', cost: '¥115/1M input' },
   { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'OpenAI', cost: '¥18/1M input' },
   { id: 'gpt-5.5', label: 'GPT-5.5', provider: 'OpenAI', cost: '¥45/1M input' },
   { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', cost: '¥10/1M input' },

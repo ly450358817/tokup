@@ -29,6 +29,7 @@ interface ModelPrice {
 }
 
 const DEFAULT_MODELS: ModelPrice[] = [
+  { id: 'openai/gpt-6-astra', name: 'GPT-6 Astra', provider: 'OpenAI', input: '¥115', output: '¥675', note: '最新旗舰 · AGI 级', badge: 'New' },
   { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', note: '旗舰 Terra', badge: 'New' },
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', note: '最新旗舰', badge: 'Hot' },
   { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', note: '最新旗舰 Luna', badge: 'New' },

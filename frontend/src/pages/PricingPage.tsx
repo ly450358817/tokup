@@ -15,6 +15,7 @@ const formatExpiry = (v?: string | null): string => {
 };
 
 const MODELS = [
+  { id: 'openai/gpt-6-astra', name: 'GPT-6 Astra', provider: 'OpenAI', input: '¥115', output: '¥675', badge: 'New', note: '最新旗舰 · AGI 级' },
   { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', badge: 'New', note: '旗舰 Terra' },
   { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'Hot', note: '最新旗舰' },
   { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', badge: 'New', note: '最新旗舰 Luna' },

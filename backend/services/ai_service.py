@@ -22,6 +22,7 @@ ZHIPU_ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
 MODEL_ROUTES = {
     # OpenAI（七牛云）
+    "openai/gpt-6-astra": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5.6-terra": ("qiniu", QINIU_ENDPOINT),
     "gpt-5.5": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5.6-luna": ("qiniu", QINIU_ENDPOINT),
@@ -84,6 +85,8 @@ PEAK_HOUR_RANGES = ((9, 12), (14, 18))  # [start, end) 小时（北京时间）
 
 MODEL_COST = {
     # 2026-08-13 定价修复：按七牛官方账单/模型广场实测成本 × ≥1.3 定价，杜绝倒挂
+    # GPT-6 Astra：七牛无公开价（海外模型，官方 $10/$50 = 2.5x Sol），按 Sol 账单成本 ¥34.5/¥207 ×2.5 估算成本 ¥86/¥517，卖 ¥115/¥675（≥1.3x，宁高勿亏）
+    "openai/gpt-6-astra": (115.0, 675.0),
     "openai/gpt-5.6-luna": (10.0, 55.0),        # 上游实测 ~¥7/¥42（7月账单；8/30 官方降价七牛未必跟进，按高价成本定价）
     "openai/gpt-5.6-sol": (45.0, 270.0),        # 上游实测 ¥34.3/¥207
     "openai/gpt-5.6-terra": (18.0, 110.0),      # 上游实测 ¥13.8/¥83
@@ -133,10 +136,14 @@ MODEL_COST_PEAK = {
 # 私有/内部模型：仍可调用（用户自用），但不在 /models 公开列表中展示
 PRIVATE_MODELS = {"glm-4.6v-flash"}
 
+# 需要 max_completion_tokens 而非 max_tokens 的模型（GPT-6 系列，七牛/OpenAI 新协议）
+MAX_COMPLETION_TOKENS_MODELS = {"openai/gpt-6-astra"}
+
 # 模型展示元数据（单一数据源，前端模型目录/仪表盘/工作台统一从这里拉取）
 # provider 为展示品牌（非实际路由上游）；note/badge 用于控制台与文档
 MODEL_META = {
     "openai/gpt-5.6-terra": {"name": "GPT-5.6 Terra", "provider": "OpenAI", "note": "旗舰 Terra", "badge": "New"},
+    "openai/gpt-6-astra": {"name": "GPT-6 Astra", "provider": "OpenAI", "note": "最新旗舰 · AGI 级", "badge": "New"},
     "gpt-5.5": {"name": "GPT-5.5", "provider": "OpenAI", "note": "最新旗舰", "badge": "Hot"},
     "openai/gpt-5.6-luna": {"name": "GPT-5.6 Luna", "provider": "OpenAI", "note": "最新旗舰 Luna", "badge": "New"},
     "openai/gpt-5.6-sol": {"name": "GPT-5.6 Sol", "provider": "OpenAI", "note": "高效推理 Sol", "badge": "New"},
@@ -289,8 +296,9 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
             continue
 
         payload = {"model": m_name, "messages": messages, "stream": False}
+        _tok_key = "max_completion_tokens" if m_name in MAX_COMPLETION_TOKENS_MODELS else "max_tokens"
         if max_tokens:
-            payload["max_tokens"] = max_tokens
+            payload[_tok_key] = max_tokens
         if prov == "anthropic":
             payload = {"model": m_name, "messages": messages, "max_tokens": max_tokens or 4096}
 
@@ -357,8 +365,9 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
             continue
 
         payload = {"model": m_name, "messages": messages, "stream": True}
+        _tok_key = "max_completion_tokens" if m_name in MAX_COMPLETION_TOKENS_MODELS else "max_tokens"
         if max_tokens:
-            payload["max_tokens"] = max_tokens
+            payload[_tok_key] = max_tokens
         if tools:
             payload["tools"] = tools
         if tool_choice:
