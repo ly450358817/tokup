@@ -48,6 +48,7 @@ const DEFAULT_MODELS = [
   { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥9/1M input' },
   { id: 'MiniMax-M1', label: 'MiniMax M1', provider: 'MiniMax', cost: '¥8.0/1M input' },
   { id: 'minimax/minimax-m3', label: 'MiniMax M3', provider: 'MiniMax', cost: '¥6.0/1M input' },
+  { id: 'tencent/hy4-preview', label: '混元 Hy4 Preview', provider: '腾讯混元', cost: '¥8/1M input' },
 ];
 
 

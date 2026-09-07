@@ -61,6 +61,8 @@ MODEL_ROUTES = {
     # MiniMax（七牛云）
     "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
     "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
+    # 腾讯混元（七牛云）
+    "tencent/hy4-preview": ("qiniu", QINIU_ENDPOINT),
     # 智谱（直连，免费视觉模型，不对外展示）
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
@@ -110,6 +112,7 @@ MODEL_COST = {
     "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
     "moonshotai/kimi-k2.7-code": (9.0, 36.0),   # 上游 ¥6.5/¥27
+    "tencent/hy4-preview": (8.0, 24.0),         # 上游 ¥6/¥18（七牛广场 2026-09-07 核实）×1.33
     "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
     # ── 2026-08-29 新增海外模型（七牛资源包系数换算成本 ×≥1.3；首账单后校准）──
     "claude-4.7-opus": (45.0, 225.0),           # 成本 ¥34.5/¥172.5
@@ -157,6 +160,7 @@ MODEL_META = {
     "MiniMax-M1": {"name": "MiniMax M1", "provider": "MiniMax", "note": "顶级推理旗舰", "badge": "New"},
     "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "最新旗舰", "badge": "New"},
     "moonshotai/kimi-k2.7-code": {"name": "Kimi K2.7 Code", "provider": "月之暗面", "note": "代码最强", "badge": "New"},
+    "tencent/hy4-preview": {"name": "混元 Hy4 Preview", "provider": "腾讯混元", "note": "1M 上下文 · 代码/智能体", "badge": "New"},
     "glm-4.6v-flash": {"name": "GLM-4.6V Flash", "provider": "智谱AI", "note": "视觉 · 免费", "badge": "Free"},
     # ── 2026-08-29 新增海外模型 ──
     "claude-4.7-opus": {"name": "Claude 4.7 Opus", "provider": "Anthropic", "note": "最新旗舰 Opus", "badge": "New"},

@@ -22,7 +22,7 @@ const MODELS = [
   { id: 'openai/gpt-5.4', name: 'GPT-5.4', provider: 'OpenAI', input: '¥45', output: '¥202', badge: 'New', note: '新一代旗舰' },
   { id: 'openai/gpt-5-mini', name: 'GPT-5-mini', provider: 'OpenAI', input: '¥3.0', output: '¥19', badge: 'New', note: '轻量快速' },
   { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', input: '¥2.0', output: '¥8.0', badge: 'New', note: '开源高性价比' },
-  { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥450', badge: 'New', note: '最新 Claude' },
+  { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥500', badge: 'New', note: '最新 Claude' },
   { id: 'claude-4.7-opus', name: 'Claude 4.7 Opus', provider: 'Anthropic', input: '¥45', output: '¥225', badge: 'New', note: '最新旗舰 Opus' },
   { id: 'claude-4.6-sonnet', name: 'Claude 4.6 Sonnet', provider: 'Anthropic', input: '¥27', output: '¥135', badge: 'New', note: '旗舰 Sonnet' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥24', output: '¥141', badge: 'New', note: '谷歌旗舰' },
@@ -45,6 +45,7 @@ const MODELS = [
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥9', output: '¥36', badge: '', note: '稳定可靠' },
   { id: 'MiniMax-M1', name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', badge: 'New', note: '顶级推理旗舰' },
   { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', badge: 'New', note: '最新旗舰' },
+  { id: 'tencent/hy4-preview', name: '混元 Hy4 Preview', provider: '腾讯混元', input: '¥8', output: '¥24', badge: 'New', note: '1M 上下文 · 代码/智能体' },
 ];
 
 
