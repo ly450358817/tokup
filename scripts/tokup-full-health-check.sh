@@ -1,8 +1,11 @@
 #!/bin/bash
 # ============================================================
-# TokUp 全面健康检查（每周自动化使用，本地 Mac 执行）
+# TokUp 全面健康检查（本地 Mac 执行，每周/每日自动化使用）
 # 只读为主 + 一次低成本 chat 冒烟（用管理员现有 key，deepseek-v3）
 # 覆盖：服务/健康接口/磁盘/内存/日志/DB/备份/pending单/API冒烟
+# 2026-09-13: 公网 HTTP 检查改为「在服务器上执行 curl」——本机网络曾被
+#   SNI 层拦截导致 tokup.net 全部请求被重置（误报为站点故障）。
+#   服务器侧 curl 仍经过 Cloudflare 回源，端到端验证能力不变。
 # ============================================================
 set -u
 HOST="ubuntu@101.32.189.59"
@@ -29,9 +32,9 @@ for svc in tokup-backend nginx; do
   fi
 done
 
-# 2) 健康接口
+# 2) 健康接口（在服务器上请求公网地址，经 Cloudflare）
 echo "▍2. 健康接口"
-health=$(curl -s --max-time 15 "$BASE/api/health")
+health=$(SSH "curl -s --max-time 20 '$BASE/api/health'" 2>/dev/null)
 if echo "$health" | grep -q '"status":"ok"'; then
   pass "GET /api/health"
 else
@@ -85,14 +88,21 @@ if [ -n "$bk" ]; then
   bktime=$(SSH "stat -c %Y '$bk'" 2>/dev/null)
   nowsec=$(date +%s)
   age=$(( (nowsec - bktime) / 3600 ))
-  if [ "$age" -le 30 ]; then pass "最新备份 $age 小时前"; else fail "备份过期 ${age}h 前: $bk"; fi
+  bk_size=$(SSH "stat -c %s '$bk'" 2>/dev/null)
+  if [ "$age" -le 30 ] && [ "${bk_size:-0}" -gt 0 ]; then
+    pass "最新备份 $age 小时前（$(echo $((bk_size/1024/1024)))MB）"
+  elif [ "${bk_size:-0}" -eq 0 ]; then
+    fail "最新备份为 0 字节：$bk"
+  else
+    fail "备份过期 ${age}h 前: $bk"
+  fi
 else
   fail "无数据库备份"
 fi
 
-# 7) API 冒烟
+# 7) API 冒烟（全部在服务器上执行）
 echo "▍7. API 冒烟"
-models=$(curl -s --max-time 15 "$BASE/api/v1/models")
+models=$(SSH "curl -s --max-time 20 '$BASE/api/v1/models'" 2>/dev/null)
 if echo "$models" | grep -q '"data"'; then
   cnt=$(echo "$models" | python3 -c 'import sys,json; print(len(json.load(sys.stdin).get("data",[])))' 2>/dev/null)
   pass "GET /api/v1/models（$cnt 个模型）"
@@ -102,43 +112,40 @@ fi
 
 ADMIN_PASS=$(SSH "sudo grep -oE 'TOKUP_ADMIN_PASSWORD=[^ ]*' /etc/systemd/system/tokup-backend.service | cut -d= -f2" 2>/dev/null)
 if [ -n "$ADMIN_PASS" ]; then
-  TOKEN=$(curl -s --max-time 15 -H 'Content-Type: application/json' \
-    -d "{\"email\":\"admin@tokup.io\",\"password\":\"$ADMIN_PASS\"}" \
-    "$BASE/api/auth/login" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("token",""))' 2>/dev/null)
+  LOGIN_BODY=$(printf '{"email":"admin@tokup.io","password":"%s"}' "$ADMIN_PASS")
+  TOKEN=$(printf '%s' "$LOGIN_BODY" | SSH "curl -s --max-time 20 -H 'Content-Type: application/json' -d @- '$BASE/api/auth/login'" 2>/dev/null \
+    | python3 -c 'import sys,json; print(json.load(sys.stdin).get("token",""))' 2>/dev/null)
   if [ -n "$TOKEN" ]; then
     pass "管理员登录 /api/auth/login"
-    astats=$(curl -s --max-time 15 -H "Authorization: Bearer $TOKEN" "$BASE/api/admin/stats")
+    astats=$(SSH "curl -s --max-time 20 -H 'Authorization: Bearer $TOKEN' '$BASE/api/admin/stats'" 2>/dev/null)
     if echo "$astats" | grep -q '"total_users"'; then
       pass "GET /api/admin/stats（${astats:0:120}）"
     else
       fail "GET /api/admin/stats → ${astats:0:100}"
     fi
-    dstats=$(curl -s --max-time 15 -H "Authorization: Bearer $TOKEN" "$BASE/api/dashboard/stats")
+    dstats=$(SSH "curl -s --max-time 20 -H 'Authorization: Bearer $TOKEN' '$BASE/api/dashboard/stats'" 2>/dev/null)
     if echo "$dstats" | grep -q '"'; then
       pass "GET /api/dashboard/stats"
     else
       fail "GET /api/dashboard/stats → ${dstats:0:100}"
     fi
     # 用现有 key 做一次低价 chat 冒烟（不新建 key，避免脏数据）
-    keys=$(curl -s --max-time 15 -H "Authorization: Bearer $TOKEN" "$BASE/api/keys")
+    keys=$(SSH "curl -s --max-time 20 -H 'Authorization: Bearer $TOKEN' '$BASE/api/keys'" 2>/dev/null)
     key=$(echo "$keys" | python3 -c 'import sys,json
 try:
   d=json.load(sys.stdin)
   print(d[0]["key"] if isinstance(d,list) and d else "")
 except Exception: print("")' 2>/dev/null)
     if [ -n "$key" ]; then
-      chat=$(curl -s --max-time 45 -H "Authorization: Bearer $key" -H 'Content-Type: application/json' \
-        -d '{"model":"deepseek-v3","messages":[{"role":"user","content":"ping"}],"max_tokens":5}' \
-        "$BASE/api/v1/chat/completions")
+      CHAT_BODY='{"model":"deepseek-v3","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
+      chat=$(printf '%s' "$CHAT_BODY" | SSH "curl -s --max-time 45 -H 'Authorization: Bearer $key' -H 'Content-Type: application/json' -d @- '$BASE/api/v1/chat/completions'" 2>/dev/null)
       if echo "$chat" | grep -q '"choices"'; then
         pass "chat/completions 非流式冒烟（deepseek-v3）"
       else
         warn "chat/completions → ${chat:0:140}"
       fi
       # 无效 key 应 401
-      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -H "Authorization: Bearer sk-invalid-test" \
-        -H 'Content-Type: application/json' -d '{"model":"deepseek-v3","messages":[{"role":"user","content":"x"}]}' \
-        "$BASE/api/v1/chat/completions")
+      code=$(printf '%s' "$CHAT_BODY" | SSH "curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H 'Authorization: Bearer sk-invalid-test' -H 'Content-Type: application/json' -d @- '$BASE/api/v1/chat/completions'" 2>/dev/null)
       [ "$code" = "401" ] && pass "无效 key 被拒（401）" || warn "无效 key 返回 $code"
     else
       warn "管理员账号无 API Key，跳过 chat 冒烟"
