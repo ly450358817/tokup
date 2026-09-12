@@ -3,6 +3,7 @@ TokUp · 脉充 — Backend API
 """
 import os
 import secrets
+import sentry_sdk
 from dotenv import load_dotenv
 import asyncio
 from fastapi import FastAPI, Request
@@ -10,6 +11,8 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from database import engine, Base, SessionLocal
 from models import User
 from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, analytics, support, ws as ws_router
@@ -24,6 +27,27 @@ ALLOWED_ORIGINS = os.getenv("TOKUP_ALLOWED_ORIGINS", "http://localhost:3000").sp
 ALLOWED_HOSTS = os.getenv("TOKUP_ALLOWED_HOSTS", "localhost,tokup.io,api.tokup.io").split(",")
 ADMIN_EMAIL = os.getenv("TOKUP_ADMIN_EMAIL", "")
 ADMIN_PASSWORD = os.getenv("TOKUP_ADMIN_PASSWORD", "")
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", "production")
+SENTRY_RELEASE = os.getenv("SENTRY_RELEASE", "").strip()
+
+try:
+    SENTRY_TRACES_SAMPLE_RATE = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
+except ValueError:
+    SENTRY_TRACES_SAMPLE_RATE = 0.1
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT,
+        release=SENTRY_RELEASE or None,
+        traces_sample_rate=max(0.0, min(SENTRY_TRACES_SAMPLE_RATE, 1.0)),
+        send_default_pii=False,
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            SqlalchemyIntegration(),
+        ],
+    )
 
 # 建表（多 worker 并发启动时可能撞"已存在"，忽略即可）
 try:
