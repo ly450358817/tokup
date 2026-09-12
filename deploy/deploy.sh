@@ -45,8 +45,14 @@ echo "=== TokUp Deploy ==="
  npx vite build
  
  # 4. 重启后端
- echo ">>> Restarting backend..."
- sudo systemctl restart tokup-backend 2>/dev/null || echo "  (manual start needed)"
+ echo ">>> Restarting backend (含 .env 权限修正 + worker/健康校验)..."
+ if [ -x "$REPO_DIR/scripts/tokup-backend-restart.sh" ]; then
+   bash "$REPO_DIR/scripts/tokup-backend-restart.sh" || { echo "  ❌ 后端重启校验失败，部署中止"; exit 1; }
+ else
+   sudo chown ubuntu:ubuntu "$BACKEND_DIR/.env" 2>/dev/null || true
+   sudo chmod 600 "$BACKEND_DIR/.env" 2>/dev/null || true
+   sudo systemctl restart tokup-backend 2>/dev/null || echo "  (manual start needed)"
+ fi
  
  # 5. 重载 Nginx
  echo ">>> Reloading nginx..."

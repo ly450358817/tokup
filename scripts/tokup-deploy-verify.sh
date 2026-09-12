@@ -61,10 +61,23 @@ PY
 [ $? -ne 0 ] && FAIL=1
 
 echo
-echo "== 2/3 公网 bundle == 生产 dist 最新 bundle =="
+echo "== 1.5/4 生产 .env 权限与后端 worker =="
+ENV_OWNER=$(ssh_prod "stat -c '%U:%G %a' /opt/tokup/backend/.env 2>/dev/null" 2>/dev/null)
+WORKERS=$(ssh_prod "pgrep -f 'from multiprocessing.spawn import spawn_main' 2>/dev/null | wc -l" 2>/dev/null | tr -d ' ')
+echo "  .env 属主/权限: ${ENV_OWNER:-未找到}（期望 ubuntu:ubuntu 600）"
+echo "  worker 进程数: ${WORKERS:-0}（期望 ≥2）"
+if [ "$ENV_OWNER" = "ubuntu:ubuntu 600" ] && [ "${WORKERS:-0}" -ge 2 ]; then
+    echo "✅ .env 权限正常且后端 worker 存活"
+else
+    echo "❌ .env 权限或 worker 异常（PermissionError 曾致 worker 启动失败，见 2026-09-12）"
+    FAIL=1
+fi
+
+echo
+echo "== 2/4 公网 bundle == 生产 dist 最新 bundle =="
 SERVER_BUNDLE=$(ssh_prod \
   "ls -t /opt/tokup/frontend/dist/assets/index-*.js 2>/dev/null | head -1 | xargs basename" 2>/dev/null)
-LIVE_BUNDLE=$(curl -s -m 20 "https://tokup.net/?cb=$(date +%s)" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1 | xargs basename 2>/dev/null)
+LIVE_BUNDLE=$(ssh_prod 'curl -s -m 20 https://tokup.net/ | grep -oE "assets/index-[A-Za-z0-9_-]+\\.js" | head -1 | xargs -r basename' 2>/dev/null)
 echo "  生产 dist: ${SERVER_BUNDLE:-无}"
 echo "  公网实际: ${LIVE_BUNDLE:-无}"
 if [ -n "$SERVER_BUNDLE" ] && [ "$SERVER_BUNDLE" = "$LIVE_BUNDLE" ]; then
@@ -75,8 +88,8 @@ else
 fi
 
 echo
-echo "== 3/3 健康检查 =="
-HEALTH=$(curl -s -m 15 https://tokup.net/api/health)
+echo "== 3/4 健康检查 =="
+HEALTH=$(ssh_prod "curl -s -m 15 https://tokup.net/api/health" 2>/dev/null)
 if echo "$HEALTH" | grep -q '"ok"'; then
     echo "✅ /api/health ok"
 else
