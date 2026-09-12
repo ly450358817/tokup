@@ -22,7 +22,8 @@ export SENTRY_ORG="${SENTRY_ORG:-$(read_backend_env SENTRY_ORG)}"
 export SENTRY_PROJECT="${SENTRY_PROJECT:-$(read_backend_env SENTRY_PROJECT)}"
 export SENTRY_FRONTEND_PROJECT="${SENTRY_FRONTEND_PROJECT:-$(read_backend_env SENTRY_FRONTEND_PROJECT)}"
 export SENTRY_AUTH_TOKEN="${SENTRY_AUTH_TOKEN:-$(read_backend_env SENTRY_AUTH_TOKEN)}"
-export SENTRY_RELEASE="${SENTRY_RELEASE:-$(read_backend_env SENTRY_RELEASE)}"
+# The Vite build must use the frontend release even when a backend release is configured.
+export SENTRY_RELEASE="${VITE_SENTRY_RELEASE:-${SENTRY_RELEASE:-$(read_backend_env SENTRY_RELEASE)}}"
 
 echo "=== TokUp Deploy ==="
  

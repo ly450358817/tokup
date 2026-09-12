@@ -19,7 +19,10 @@ export default defineConfig({
             project: process.env.SENTRY_FRONTEND_PROJECT || process.env.SENTRY_PROJECT,
             authToken: process.env.SENTRY_AUTH_TOKEN,
             release: sentryRelease ? { name: sentryRelease } : undefined,
-            sourcemaps: { assets: './dist/**' },
+            sourcemaps: {
+              assets: './dist/**',
+              filesToDeleteAfterUpload: ['./dist/**/*.map'],
+            },
             telemetry: false,
           }),
         ]
