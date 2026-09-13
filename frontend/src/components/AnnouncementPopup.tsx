@@ -23,6 +23,9 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    const muted = safeGet(localStorage, `tokup_announcement_muted_${VERSION}`);
+    if (muted) return;
+
     const dismissed = safeGet(localStorage, `tokup_announcement_dismissed_${VERSION}`);
     if (dismissed) {
       const dismissedAt = parseInt(dismissed);
@@ -38,6 +41,11 @@ export default function AnnouncementPopup() {
 
   const dismiss = () => {
     safeSet(localStorage, `tokup_announcement_dismissed_${VERSION}`, Date.now().toString());
+    setVisible(false);
+  };
+
+  const dismissForVersion = () => {
+    safeSet(localStorage, `tokup_announcement_muted_${VERSION}`, '1');
     setVisible(false);
   };
 
@@ -65,12 +73,23 @@ export default function AnnouncementPopup() {
           </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
-        <button
-          onClick={dismiss}
-          className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-medium hover:bg-emerald-400 transition-all"
-        >
-          我知道了
-        </button>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={dismiss}
+            className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-medium hover:bg-emerald-400 transition-all"
+          >
+            我知道了
+          </button>
+          <button
+            type="button"
+            onClick={dismissForVersion}
+            title="本次公告不再提示，发布新公告时仍会显示"
+            className="w-full py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/45 text-[12px] hover:text-white/70 hover:bg-white/[0.06] transition-all"
+          >
+            不再提示
+          </button>
+        </div>
       </div>
     </div>
   );
