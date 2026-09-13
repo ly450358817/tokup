@@ -20,7 +20,15 @@ export default function ThreeScene() {
     const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 200);
     camera.position.set(0, 0.75, 6.2);
 
-    const renderer = new THREE.WebGLRenderer({ alpha: false, antialias: true });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ alpha: false, antialias: true });
+    } catch {
+      // WebGL may be unavailable in privacy-restricted, headless, or legacy browsers.
+      // Keep the page usable and avoid reporting an expected capability failure.
+      container.style.opacity = '1';
+      return;
+    }
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
