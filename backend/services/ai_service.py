@@ -41,6 +41,7 @@ MODEL_ROUTES = {
     # DeepSeek → 七牛云（合规上游）
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4.1-flash": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
@@ -100,6 +101,7 @@ MODEL_COST = {
     # V4 Pro 走七牛 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
     "deepseek/deepseek-v4-flash": (1.5, 3.0),   # 上游无日期别名仍 ¥1/¥2 一口价（8/17-8/19 账单实测），不受 8/17 峰谷公告影响
+    "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（七牛未公开价，待账单验证）
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
@@ -152,6 +154,7 @@ MODEL_META = {
     "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
     "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
     "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "极致性价比", "badge": ""},
+    "deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash", "provider": "DeepSeek", "note": "新一代高速 · 实验版", "badge": "New"},
     "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 实验版", "badge": "New"},
     "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "通用模型", "badge": ""},
     "deepseek/deepseek-v3.2": {"name": "DeepSeek V3.2", "provider": "DeepSeek", "note": "达 GPT-5 水平", "badge": "New"},

@@ -33,6 +33,7 @@ const DEFAULT_MODELS = [
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google', cost: '¥3/1M input' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥6~¥12/1M input (闲时~高峰)' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥1.5/1M input' },
+  { id: 'deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥3.0/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥3.0/1M input' },
   { id: 'deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek', cost: '¥6.0/1M input' },
