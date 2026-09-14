@@ -113,3 +113,16 @@ def maybe_alert_low_balance(user, balance: float) -> None:
         f"—— TokUp 平台"
     )
     threading.Thread(target=_send_sync, args=(email, subject, body), daemon=True).start()
+
+
+def send_email(to_email: str, subject: str, body: str) -> bool:
+    """同步发送一封普通文本邮件（供营销/提醒脚本调用）。
+
+    未配置 SMTP、收件人为空、发送异常 → 返回 False，绝不抛异常。
+    """
+    if not is_enabled():
+        return False
+    to_email = (to_email or "").strip()
+    if not to_email or "@" not in to_email:
+        return False
+    return _send_sync(to_email, subject, body)

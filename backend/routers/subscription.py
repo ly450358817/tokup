@@ -116,10 +116,51 @@ def purchase_plan(plan_id: str, user: User = Depends(get_current_user), db: Sess
     }
 
 
+def _reminder_ctx(user: User, db: Session, sub):
+    """订阅到期提醒 / 续费召回 / 定向推荐所需的上下文字段（2026-09-14 新增）。"""
+    from services.token_service import has_completed_recharge
+    if user.is_admin:
+        # 管理员不弹运营提醒（其 status 走预览逻辑）
+        return {"expiring_soon": False, "expired_recently": False, "expired_at": None,
+                "expired_days_ago": None, "can_subscribe": False}
+    now = datetime.now(timezone.utc)
+    latest = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user.id)
+        .order_by(Subscription.end_date.desc())
+        .first()
+    )
+    expiring_soon = False
+    expired_recently = False
+    expired_at = None
+    expired_days_ago = None
+    if latest is not None and latest.end_date is not None:
+        end = latest.end_date
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
+        expired_at = _iso_utc(latest.end_date)
+        if sub is not None:
+            expiring_soon = (end - now) <= timedelta(days=1)
+        else:
+            delta = now - end
+            if timedelta(0) <= delta <= timedelta(days=14):
+                expired_recently = True
+                expired_days_ago = delta.days
+    can_subscribe = (sub is None) and has_completed_recharge(user.id, db)
+    return {
+        "expiring_soon": expiring_soon,
+        "expired_recently": expired_recently,
+        "expired_at": expired_at,
+        "expired_days_ago": expired_days_ago,
+        "can_subscribe": can_subscribe,
+    }
+
+
 @router.get("/status")
 def subscription_status(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """返回当前订阅状态（含当日配额使用情况）"""
+    """返回当前订阅状态（含当日配额使用情况 + 到期提醒/续费召回/定向推荐标记）"""
     sub = get_active_subscription(user.id, db)
+    ctx = _reminder_ctx(user, db, sub)
     if not sub:
         # 管理员预览：无订阅时按体验订阅额度模拟显示每日免费额度（仅管理员账号可见，便于查看效果）
         if user.is_admin:
@@ -134,8 +175,9 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
                 "today_used": _used,
                 "today_used_all": today_usage_tokens(user.id, db, beijing_day_start()),
                 "today_remaining": max(0.0, float(_trial["daily_limit"]) - _used),
+                **ctx,
             }
-        return {"active": False, "plan": None, "expires_at": None}
+        return {"active": False, "plan": None, "expires_at": None, **ctx}
     daily_limit = sub.daily_limit or 0
     used = today_usage_tokens(user.id, db, beijing_day_start(), eligible_only=True)
     used_all = today_usage_tokens(user.id, db, beijing_day_start())
@@ -148,4 +190,5 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
         "today_used": used,
         "today_used_all": used_all,
         "today_remaining": max(0.0, float(daily_limit) - used),
+        **ctx,
     }

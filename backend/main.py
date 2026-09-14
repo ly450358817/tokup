@@ -136,6 +136,7 @@ async def _startup_tasks():
     from routers.payment import payment_reconcile_loop
     asyncio.create_task(payment_reconcile_loop())
     asyncio.create_task(_cleanup_conversation_logs())
+    asyncio.create_task(_subscription_reminder_loop())
 
 
 @app.on_event("shutdown")
@@ -169,6 +170,120 @@ async def _cleanup_conversation_logs():
         except Exception:
             pass
         await asyncio.sleep(86400)
+
+async def _subscription_reminder_loop():
+    """订阅到期/刚到期邮件提醒（2026-09-14 新增）。
+
+    - 每小时检查一次；对「24 小时内到期」和「24 小时内刚过期」的订阅各发一封提醒邮件。
+    - 用文件状态去重（同一订阅同一类型只发一次）+ flock 防多 worker 重复执行。
+    - 未配置 SMTP 时完全静默。
+    """
+    import json
+    import logging
+    import os
+    from datetime import datetime, timedelta, timezone as _tz
+    log = logging.getLogger("tokup.log")
+    base = os.path.dirname(os.path.abspath(__file__))
+    state_path = os.path.join(base, ".sub_reminder_state.json")
+    lock_path = os.path.join(base, ".sub_reminder.lock")
+    while True:
+        lock_fd = None
+        try:
+            import fcntl
+            lock_fd = open(lock_path, "w")
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                lock_fd.close()
+                lock_fd = None
+                await asyncio.sleep(3600)
+                continue
+            from services.email_notify import is_enabled, send_email
+            if is_enabled():
+                state = {}
+                try:
+                    if os.path.exists(state_path):
+                        with open(state_path, encoding="utf-8") as f:
+                            state = json.load(f)
+                except Exception:
+                    state = {}
+                from database import SessionLocal
+                from models import Subscription, User
+                now = datetime.now(_tz.utc)
+                db = SessionLocal()
+                changed = False
+                try:
+                    soon = (
+                        db.query(Subscription)
+                        .filter(
+                            Subscription.is_active == True,
+                            Subscription.end_date > now,
+                            Subscription.end_date <= now + timedelta(hours=24),
+                        )
+                        .all()
+                    )
+                    just_expired = (
+                        db.query(Subscription)
+                        .filter(
+                            Subscription.is_active == True,
+                            Subscription.end_date <= now,
+                            Subscription.end_date >= now - timedelta(hours=24),
+                        )
+                        .all()
+                    )
+                    def _send(sub, kind):
+                        nonlocal changed
+                        key = "%s:%s" % (sub.id, kind)
+                        if state.get(key):
+                            return
+                        u = db.query(User).filter(User.id == sub.user_id).first()
+                        if not u or not u.email:
+                            return
+                        if kind == "expiring":
+                            subject = "【TokUp】你的订阅即将到期"
+                            body = (
+                                "您好，\n\n"
+                                "您的 TokUp 订阅将于 24 小时内到期。\n"
+                                "到期后每日免费额度将停止，超额调用会按余额计费。\n\n"
+                                "续费后可继续享受每日免费额度 + 全模型余额消费 9 折：\n"
+                                "https://tokup.net/pricing\n\n"
+                                "—— TokUp 平台"
+                            )
+                        else:
+                            subject = "【TokUp】你的订阅已到期"
+                            body = (
+                                "您好，\n\n"
+                                "您的 TokUp 订阅已到期，每日免费额度已停止。\n\n"
+                                "续费 ¥29.9 体验订阅即可继续享受：\n"
+                                "· 每天 5 万 Token 免费额度\n"
+                                "· 全模型余额消费 9 折\n"
+                                "https://tokup.net/pricing\n\n"
+                                "—— TokUp 平台"
+                            )
+                        if send_email(u.email, subject, body):
+                            state[key] = now.isoformat()
+                            changed = True
+                    for sub in soon:
+                        _send(sub, "expiring")
+                    for sub in just_expired:
+                        _send(sub, "expired")
+                    if changed:
+                        tmp = state_path + ".tmp"
+                        with open(tmp, "w", encoding="utf-8") as f:
+                            json.dump(state, f, ensure_ascii=False)
+                        os.replace(tmp, state_path)
+                finally:
+                    db.close()
+        except Exception:
+            log.warning("订阅提醒循环异常（忽略）", exc_info=True)
+        finally:
+            if lock_fd is not None:
+                try:
+                    lock_fd.close()
+                except Exception:
+                    pass
+        await asyncio.sleep(3600)
+
 
 @app.get("/api/health")
 def health():
