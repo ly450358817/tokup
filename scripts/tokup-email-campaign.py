@@ -14,12 +14,14 @@ TokUp 邮件触达脚本（2026-09-14 新增）
   python3 scripts/tokup-email-campaign.py --campaign activate  --send
 """
 import argparse
+import json
 import os
 import sqlite3
 import sys
 import time
 
 DB = os.getenv("TOKUP_DB", "/opt/tokup/backend/tokup.db")
+STATE_PATH = os.getenv("TOKUP_EMAIL_STATE", "/opt/tokup/scripts/.email_campaign_sent.json")
 BASE = "https://tokup.net"
 MIN_RECHARGE, MAX_RECHARGE = 5.0, 300.0
 
@@ -100,18 +102,32 @@ def main():
     ap.add_argument("--send", action="store_true", help="真正发送（默认只列出，不发送）")
     ap.add_argument("--list", action="store_true", help="只列出目标人群")
     ap.add_argument("--limit", type=int, default=0, help="最多发送人数（0=不限）")
-    ap.add_argument("--sleep", type=float, default=3.0, help="每封间隔秒数")
+    ap.add_argument("--sleep", type=float, default=15.0, help="每封间隔秒数（默认 15s，防触发邮箱限流）")
+    ap.add_argument("--max-per-run", type=int, default=10, help="单次最多发送封数（默认 10，防触发限流）")
     args = ap.parse_args()
 
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
     rows = targets_subscribe(db) if args.campaign == "subscribe" else targets_activate(db)
+
+    # 已发送记录：同一活动同一邮箱不重复发（支持中断后续发）
+    sent_state = {}
+    try:
+        if os.path.exists(STATE_PATH):
+            with open(STATE_PATH, encoding="utf-8") as f:
+                sent_state = json.load(f)
+    except Exception:
+        sent_state = {}
+    sent_set = set(sent_state.get(args.campaign, []))
+    rows = [r for r in rows if r["email"] not in sent_set]
     if args.limit:
         rows = rows[:args.limit]
+    if args.max_per_run:
+        rows = rows[:args.max_per_run]
 
     print("=" * 60)
-    print("TokUp 邮件触达 | 活动=%s | 目标人数=%d | 模式=%s"
-          % (args.campaign, len(rows), "发送" if args.send else "dry-run"))
+    print("TokUp 邮件触达 | 活动=%s | 本次待发=%d | 已发过=%d | 模式=%s"
+          % (args.campaign, len(rows), len(sent_set), "发送" if args.send else "dry-run"))
     print("=" * 60)
     for r in rows:
         print("  %-32s 余额=%-8d 累计充值=%.2f" % (r["email"], int(r["token_balance"] or 0), r["total_recharged"] or 0))
@@ -133,10 +149,23 @@ def main():
         good = send_email(r["email"], subject, body)
         ok += 1 if good else 0
         fail += 0 if good else 1
+        if good:
+            sent_set.add(r["email"])
+            sent_state[args.campaign] = sorted(sent_set)
+            try:
+                tmp = STATE_PATH + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(sent_state, f, ensure_ascii=False, indent=1)
+                os.replace(tmp, STATE_PATH)
+            except Exception:
+                pass
         print("  [%d/%d] %s %s" % (i, len(rows), "OK " if good else "FAIL", r["email"]))
+        if fail >= 3:
+            print("  ⚠️ 连续失败 3 次（可能触发邮箱限流），本次中止；稍后重跑可续发")
+            break
         if i < len(rows):
             time.sleep(max(0.5, args.sleep))
-    print("\n发送完成：成功 %d，失败 %d" % (ok, fail))
+    print("\n本次完成：成功 %d，失败 %d；累计已发 %d" % (ok, fail, len(sent_set)))
     return 0 if fail == 0 else 1
 
 
