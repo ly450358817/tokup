@@ -5,6 +5,7 @@ import { useRecharge } from '../contexts/RechargeContext';
 import { subscriptionApi } from '../utils/api';
 import { Check, Loader2 } from 'lucide-react';
 import SuccessTicket from '../components/Payment/SuccessTicket';
+import SubscriptionCharacterArt, { type CharacterKind } from '../components/Subscription/SubscriptionCharacterArt';
 
 
 // 订阅到期日安全格式化：null/无效值显示 —（管理员预览无真实订阅时后端返回 null，new Date(null) 会显示 1970/1/1）
@@ -49,6 +50,69 @@ const MODELS = [
   { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', badge: 'New', note: '最新旗舰' },
   { id: 'tencent/hy4-preview', name: '混元 Hy4 Preview', provider: '腾讯混元', input: '¥8', output: '¥24', badge: 'New', note: '1M 上下文 · 代码/智能体' },
 ];
+
+
+type PlanPresentation = {
+  label: string;
+  character: CharacterKind;
+  accent: string;
+  accentSoft: string;
+  glow: string;
+  card: string;
+  button: string;
+  recommended?: boolean;
+};
+
+const PLAN_PRESENTATION: Record<string, PlanPresentation> = {
+  trial: {
+    label: '周卡',
+    character: 'youth',
+    accent: '#67e8f9',
+    accentSoft: 'rgba(103,232,249,.22)',
+    glow: 'rgba(34,211,238,.30)',
+    card: 'linear-gradient(155deg, rgba(15,23,42,.98) 0%, rgba(8,47,73,.96) 52%, rgba(12,74,110,.94) 100%)',
+    button: 'linear-gradient(135deg, #22d3ee, #38bdf8)',
+  },
+  monthly: {
+    label: '月卡',
+    character: 'cute',
+    accent: '#fb7185',
+    accentSoft: 'rgba(251,113,133,.24)',
+    glow: 'rgba(244,63,94,.32)',
+    card: 'linear-gradient(155deg, rgba(45,16,38,.98) 0%, rgba(88,28,61,.96) 52%, rgba(127,29,77,.92) 100%)',
+    button: 'linear-gradient(135deg, #fb7185, #f472b6)',
+    recommended: true,
+  },
+  quarterly: {
+    label: '季卡',
+    character: 'cool',
+    accent: '#a78bfa',
+    accentSoft: 'rgba(167,139,250,.24)',
+    glow: 'rgba(124,58,237,.34)',
+    card: 'linear-gradient(155deg, rgba(20,18,45,.98) 0%, rgba(49,36,93,.96) 52%, rgba(76,29,149,.92) 100%)',
+    button: 'linear-gradient(135deg, #a78bfa, #818cf8)',
+  },
+  yearly: {
+    label: '年卡',
+    character: 'mature',
+    accent: '#fbbf24',
+    accentSoft: 'rgba(251,191,36,.24)',
+    glow: 'rgba(245,158,11,.32)',
+    card: 'linear-gradient(155deg, rgba(34,16,31,.99) 0%, rgba(91,28,56,.97) 52%, rgba(146,64,14,.90) 100%)',
+    button: 'linear-gradient(135deg, #fbbf24, #fb7185)',
+  },
+};
+
+const PLAN_DAYS: Record<string, string> = {
+  trial: '7 天',
+  monthly: '30 天',
+  quarterly: '90 天',
+  yearly: '365 天',
+};
+
+const formatQuota = (value: number): string => (
+  value >= 10000 ? `${value / 10000}万` : value.toLocaleString()
+);
 
 
 const REASONS = ['pricing.reason1', 'pricing.reason2', 'pricing.reason3', 'pricing.reason4'];
@@ -176,7 +240,8 @@ export default function PricingPage() {
 
       {/* 订阅套餐（每日免费额度） */}
       <div>
-        <h2 className="text-[15px] font-semibold text-white mb-3">订阅套餐（每日免费额度）</h2>
+        <h2 className="text-[18px] font-semibold text-white mb-1">选择你的陪伴周期</h2>
+        <p className="text-[12px] text-white/40 mb-4">四位原创角色，对应四档订阅；卡面决定陪伴风格，核心权益以卡内内容为准。</p>
 
         {/* 订阅规则说明（余额/订阅选择提示 + 对勾规则 + 亮点 + 备注 + 政策） */}
         <div className="mb-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
@@ -207,52 +272,104 @@ export default function PricingPage() {
         {loadingPlans ? (
           <div className="text-[12px] text-white/30">加载中...</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative rounded-2xl border p-6 backdrop-blur-xl bg-white/[0.02] transition-all hover:bg-white/[0.04] ${
-                  plan.id === 'monthly' ? 'border-emerald-500/30' : 'border-white/[0.06]'
-                }`}
-              >
-                {plan.id === 'monthly' && (
-                  <span className="absolute -top-2.5 right-4 px-3 py-0.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-medium rounded-full">
-                    推荐
-                  </span>
-                )}
-                <h3 className="text-[16px] font-semibold text-white">{plan.label}</h3>
-                <div className="mt-3">
-                  <span className="text-[28px] font-bold text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
-                  <span className="text-[11px] text-white/30 ml-1">
-                    {plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年'}
-                  </span>
-                </div>
-                <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-semibold">
-                  余额消费 9 折
-                </span>
-                <p className="text-[12px] text-white/50 mt-2">{plan.desc}</p>
-                <div className="mt-4 space-y-2 text-[12px] text-white/50">
-                  <p>每日 {plan.daily_limit.toLocaleString()} Token 免费</p>
-                  <p>超额按量计费 · 0 点重置</p>
-                </div>
-                <button
-                  onClick={() => handlePurchase(plan.id)}
-                  disabled={buying === plan.id}
-                  className={`mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    buying === plan.id
-                      ? 'bg-emerald-500/5 text-emerald-400/50'
-                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
-                  }`}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {plans.map((plan) => {
+              const meta = PLAN_PRESENTATION[plan.id] || {
+                label: plan.label,
+                character: 'youth' as CharacterKind,
+                accent: '#34d399',
+                accentSoft: 'rgba(52,211,153,.22)',
+                glow: 'rgba(16,185,129,.28)',
+                card: 'linear-gradient(155deg, rgba(6,78,59,.96), rgba(15,23,42,.98))',
+                button: 'linear-gradient(135deg, #34d399, #22d3ee)',
+              };
+              const period = plan.id === 'trial' ? '/7天' : plan.id === 'monthly' ? '/月' : plan.id === 'quarterly' ? '/季' : '/年';
+              return (
+                <div
+                  key={plan.id}
+                  className="group relative flex min-h-[560px] flex-col overflow-visible rounded-[30px] border p-5 pt-[184px] transition-all duration-500 hover:-translate-y-1"
+                  style={{
+                    borderColor: meta.accentSoft,
+                    background: meta.card,
+                    boxShadow: `0 28px 70px -42px ${meta.glow}`,
+                  }}
                 >
-                  {buying === plan.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      处理中...
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[220px] overflow-visible"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className="absolute -top-5 right-[-16px] h-24 w-24 rounded-full blur-3xl"
+                      style={{ background: meta.glow }}
+                    />
+                    <SubscriptionCharacterArt
+                      kind={meta.character}
+                      className="absolute -top-11 right-[-18px] h-[246px] w-[224px] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-[1.03]"
+                    />
+                  </div>
+
+                  <div
+                    className="absolute left-5 top-5 rounded-full border px-3 py-1 text-[10px] font-semibold tracking-[0.08em]"
+                    style={{ color: meta.accent, borderColor: meta.accentSoft, background: 'rgba(2,6,23,.34)' }}
+                  >
+                    {meta.label}
+                  </div>
+
+                  {meta.recommended && (
+                    <span
+                      className="absolute right-5 top-5 rounded-full border px-3 py-1 text-[10px] font-semibold tracking-[0.05em]"
+                      style={{ color: '#fff7ed', borderColor: 'rgba(255,255,255,.25)', background: 'rgba(251,113,133,.28)', backdropFilter: 'blur(12px)' }}
+                    >
+                      最受欢迎
                     </span>
-                  ) : '用余额开通'}
-                </button>
-              </div>
-            ))}
+                  )}
+
+                  <div className="relative z-10 mt-auto rounded-2xl border border-white/10 bg-slate-950/38 p-4 backdrop-blur-xl">
+                    <div className="flex items-start justify-end gap-3">
+                      <div className="shrink-0 text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-[27px] font-bold tracking-tight text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
+                          <span className="text-[11px] text-white/38">{period}</span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-white/35">{PLAN_DAYS[plan.id] || `${plan.days} 天`}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.045] p-3">
+                      <p className="mb-2 text-[10px] font-medium tracking-[0.08em] text-white/35">订阅内容</p>
+                      <div className="space-y-2 text-[11px] leading-relaxed text-white/72">
+                        <p className="flex items-start gap-2">
+                          <Check size={13} className="mt-0.5 shrink-0" style={{ color: meta.accent }} />
+                          <span>每日 <strong className="font-semibold text-white">{formatQuota(plan.daily_limit)}</strong> Token 免费额度</span>
+                        </p>
+                        <p className="flex items-start gap-2">
+                          <Check size={13} className="mt-0.5 shrink-0" style={{ color: meta.accent }} />
+                          <span>全模型余额消费 <strong className="font-semibold text-white">9 折</strong></span>
+                        </p>
+                        <p className="flex items-start gap-2">
+                          <Check size={13} className="mt-0.5 shrink-0" style={{ color: meta.accent }} />
+                          <span>{PLAN_DAYS[plan.id] || `${plan.days} 天`}有效，北京时间 0 点重置</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handlePurchase(plan.id)}
+                      disabled={buying === plan.id}
+                      className="mt-4 w-full rounded-xl py-2.5 text-sm font-semibold text-slate-950 transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ background: meta.button, boxShadow: `0 12px 30px -18px ${meta.glow}` }}
+                    >
+                      {buying === plan.id ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 size={14} className="animate-spin" />
+                          处理中...
+                        </span>
+                      ) : '用余额开通'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
