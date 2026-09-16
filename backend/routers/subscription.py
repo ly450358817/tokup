@@ -30,10 +30,10 @@ def _iso_utc(dt):
 # 最坏情况（免费额度薅满+全走输出，当前价）毛利：体验96%/月73%/季52%/年12%，均不亏
 # ⚠️ 年卡 12% 最薄：若 flash/v3.2 上游峰谷涨价致年卡逼近亏损，周维护须下调年卡额度或把 flash 移出免费额度
 PLANS = {
-    "trial": {"label": "周卡", "price": 2990, "days": 7, "daily_limit": 50000, "desc": "7天试用 · 每日 5万 Token 免费 + 全模型余额消费 9 折"},
-    "monthly": {"label": "月卡", "price": 9900, "days": 30, "daily_limit": 300000, "desc": "每日 30万 Token 免费（月 900万）+ 全模型余额消费 9 折"},
-    "quarterly": {"label": "季卡", "price": 19900, "days": 90, "daily_limit": 350000, "desc": "每日 35万 Token 免费 + 全模型余额消费 9 折，日均 ¥2.2"},
-    "yearly": {"label": "年卡", "price": 49900, "days": 365, "daily_limit": 400000, "desc": "每日 40万 Token 免费（最多）+ 整年 9 折，日均仅 ¥1.4 最省"},
+    "trial": {"label": "七日之约", "price": 2990, "days": 7, "daily_limit": 50000, "desc": "7天试用 · 每日 5万 Token 免费 + 全模型余额消费 9 折"},
+    "monthly": {"label": "甜蜜月宴", "price": 9900, "days": 30, "daily_limit": 300000, "desc": "每日 30万 Token 免费（月 900万）+ 全模型余额消费 9 折"},
+    "quarterly": {"label": "银月季话", "price": 19900, "days": 90, "daily_limit": 350000, "desc": "每日 35万 Token 免费 + 全模型余额消费 9 折，日均 ¥2.2"},
+    "yearly": {"label": "绯金年鉴", "price": 49900, "days": 365, "daily_limit": 400000, "desc": "每日 40万 Token 免费（最多）+ 整年 9 折，日均仅 ¥1.4 最省"},
 }
 
 
@@ -169,7 +169,7 @@ def subscription_status(user: User = Depends(get_current_user), db: Session = De
             return {
                 "active": True,
                 "plan": "trial",
-                "plan_label": "周卡（管理员预览）",
+                "plan_label": "七日之约（管理员预览）",
                 "expires_at": None,
                 "daily_limit": _trial["daily_limit"],
                 "today_used": _used,

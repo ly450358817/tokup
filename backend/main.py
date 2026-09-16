@@ -254,7 +254,7 @@ async def _subscription_reminder_loop():
                             body = (
                                 "您好，\n\n"
                                 "您的 TokUp 订阅已到期，每日免费额度已停止。\n\n"
-                                "续费 ¥29.9 周卡即可继续享受：\n"
+                                "续费 ¥29.9 七日之约即可继续享受：\n"
                                 "· 每天 5 万 Token 免费额度\n"
                                 "· 全模型余额消费 9 折\n"
                                 "https://tokup.net/pricing\n\n"

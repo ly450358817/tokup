@@ -54,6 +54,7 @@ const MODELS = [
 
 type PlanPresentation = {
   label: string;
+  periodLabel: string;
   character: CharacterKind;
   accent: string;
   accentSoft: string;
@@ -65,7 +66,8 @@ type PlanPresentation = {
 
 const PLAN_PRESENTATION: Record<string, PlanPresentation> = {
   trial: {
-    label: '周卡',
+    label: '七日之约',
+    periodLabel: '周卡',
     character: 'youth',
     accent: '#67e8f9',
     accentSoft: 'rgba(103,232,249,.22)',
@@ -74,7 +76,8 @@ const PLAN_PRESENTATION: Record<string, PlanPresentation> = {
     button: 'linear-gradient(135deg, #22d3ee, #38bdf8)',
   },
   monthly: {
-    label: '月卡',
+    label: '甜蜜月宴',
+    periodLabel: '月卡',
     character: 'cute',
     accent: '#fb7185',
     accentSoft: 'rgba(251,113,133,.24)',
@@ -84,7 +87,8 @@ const PLAN_PRESENTATION: Record<string, PlanPresentation> = {
     recommended: true,
   },
   quarterly: {
-    label: '季卡',
+    label: '银月季话',
+    periodLabel: '季卡',
     character: 'cool',
     accent: '#a78bfa',
     accentSoft: 'rgba(167,139,250,.24)',
@@ -93,7 +97,8 @@ const PLAN_PRESENTATION: Record<string, PlanPresentation> = {
     button: 'linear-gradient(135deg, #a78bfa, #818cf8)',
   },
   yearly: {
-    label: '年卡',
+    label: '绯金年鉴',
+    periodLabel: '年卡',
     character: 'mature',
     accent: '#fbbf24',
     accentSoft: 'rgba(251,191,36,.24)',
@@ -261,7 +266,7 @@ export default function PricingPage() {
           </div>
 
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-[12px] text-emerald-200/90 leading-relaxed">
-            <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度；月卡 30万/天、季卡 35万/天、年卡 40万/天（¥99 / ¥199 / ¥499），日用量越大越划算。
+            <span className="text-emerald-300 font-medium">高频用户订阅更省</span>：每天最高 40 万 Token 免费额度；甜蜜月宴 30万/天、银月季话 35万/天、绯金年鉴 40万/天（¥99 / ¥199 / ¥499），日用量越大越划算。
           </div>
 
           <p className="text-[11px] text-white/70 leading-relaxed">
@@ -276,6 +281,7 @@ export default function PricingPage() {
             {plans.map((plan) => {
               const meta = PLAN_PRESENTATION[plan.id] || {
                 label: plan.label,
+                periodLabel: '周卡',
                 character: 'youth' as CharacterKind,
                 accent: '#34d399',
                 accentSoft: 'rgba(52,211,153,.22)',
@@ -325,7 +331,10 @@ export default function PricingPage() {
                   )}
 
                   <div className="relative z-10 mt-auto rounded-2xl border border-white/10 bg-slate-950/38 p-4 backdrop-blur-xl">
-                    <div className="flex items-start justify-end gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-[17px] font-semibold text-white">{meta.periodLabel}</h3>
+                      </div>
                       <div className="shrink-0 text-right">
                         <div className="flex items-baseline justify-end gap-1">
                           <span className="text-[27px] font-bold tracking-tight text-white">¥{(plan.price / 100).toFixed(plan.price % 100 === 0 ? 0 : 1)}</span>
