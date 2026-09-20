@@ -8,7 +8,7 @@ echo "TokUp 安全升级检查 $(date '+%Y-%m-%d %H:%M:%S')"
 
 cd "$ROOT/frontend" || exit 0
 AUDIT_JSON=$(pnpm audit --prod --json 2>/dev/null || true)
-VULN_COUNT=$(printf '%s' "$AUDIT_JSON" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d.get("vulnerabilities",{})))' 2>/dev/null || echo "?")
+VULN_COUNT=$(printf '%s' "$AUDIT_JSON" | python3 -c 'import sys,json; d=json.load(sys.stdin); m=(d.get("metadata") or {}).get("vulnerabilities") or {}; print(sum(int(m.get(k,0) or 0) for k in ("info","low","moderate","high","critical")))' 2>/dev/null || echo "?")
 echo "REACT_ROUTER_CHECK: pnpm audit vulnerabilities=$VULN_COUNT"
 if [ "$VULN_COUNT" != "0" ]; then
   echo "REMINDER: 前端依赖仍有漏洞；先在预览环境验证 react-router-dom 7.18+，不要直接改生产。"
