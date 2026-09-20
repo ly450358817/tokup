@@ -373,7 +373,7 @@ requires_openai_auth = true`;
               <tbody>
                 <tr className="border-b border-white/[0.04]">
                   <td className="px-4 py-2 font-mono text-emerald-400">deepseek/deepseek-v4-flash</td>
-                  <td className="px-4 py-2 text-white/60">¥1.5 / ¥3</td>
+                  <td className="px-4 py-2 text-white/60">¥1.8 / ¥3.6</td>
                   <td className="px-4 py-2 text-white/60">最快 · 最便宜 · 首选</td>
                 </tr>
                 <tr className="border-b border-white/[0.04]">

@@ -59,7 +59,7 @@ export default function TermsPage() {
       </div>
 
       <p className="text-[11px] text-white/25 text-center mt-6">
-        TokUp（脉充）· 版本 V1.0 · 生效日期 2026 年 8 月 17 日 · 联系邮箱 support@tokup.net
+        TokUp（脉充）· 版本 V1.1 · 生效日期 2026 年 9 月 20 日 · 联系邮箱 support@tokup.net
       </p>
     </div>
   );

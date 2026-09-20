@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v19';
+const VERSION = 'v20';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -60,17 +60,17 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型更新公告</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📋 协议与计费规则更新</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">上线 DeepSeek V4.1 Flash</span>（已在定价 / 工作台 / 中转站同步）</p>
+          <p>🎯 <span className="text-white/80 font-medium">用户协议升级至 V1.1</span>，新增海外模型、跨境数据处理、上游模型变更与可用性说明。老用户需重新确认协议。</p>
+          <p>📊 <span className="text-white/80 font-medium">根据上游实际账单校准部分模型价格</span>：</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><span className="text-emerald-400 font-medium">DeepSeek V4.1 Flash</span> — 新一代高速模型，¥4.0 / ¥12.0（每百万 token）</li>
+            <li>DeepSeek V4 Flash：¥1.8 / ¥3.6（每百万 token）</li>
+            <li>GPT-5.5：¥48 / ¥288（每百万 token）</li>
+            <li>Claude Fable 5：¥135 / ¥750（每百万 token）</li>
           </ul>
-          <p className="text-white/40 text-[11px]">📎 提示：该新模型成本尚未完全实测，暂不纳入订阅免费额度（先观察成本，后续校准）；其余模型使用规则不变。</p>
-          <div className="border-t border-white/[0.06] pt-2 mt-2">
-            <p className="text-white/40 text-[11px]">📢 说明：订阅用户全模型余额消费享 9 折；每日免费额度适用于低价模型（V4 Flash / V3.2 / GPT-OSS 120B）。国际模型渠道偶有波动，如遇个别模型短暂不可用请稍后重试。</p>
-          </div>
+          <p className="text-white/40 text-[11px]">📎 说明：调整用于覆盖上游缓存创建、上下文处理及波动成本，确保服务持续稳定；订阅规则与余额使用方式不变。</p>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
         <div className="space-y-2">

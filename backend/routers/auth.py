@@ -174,7 +174,7 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
         token_balance=0,  # 2026-08-20 取消注册体验金：杜绝"充值¥1解锁体验金再用完换号"刷号（花1得2）；新用户充值多少用多少
         invite_code=uuid.uuid4().hex[:8].upper(),
         ip_address=_get_client_ip(request),
-        terms_version="v1",  # 新用户注册时已勾选同意协议
+        terms_version="v2",  # 新用户注册时已勾选同意 V1.1 协议
     )
     try:
         db.add(user)
@@ -234,9 +234,9 @@ def get_me(user: User = Depends(get_current_user)):
 
 @router.post("/accept-terms")
 def accept_terms(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """老用户确认同意新版《用户服务协议》与《隐私政策》（含对话存档告知），记录版本号便于审计"""
-    if not user.terms_version:
-        user.terms_version = "v1"
+    """老用户确认同意 V1.1《用户服务协议》与《隐私政策》，记录版本号便于审计"""
+    if user.terms_version != "v2":
+        user.terms_version = "v2"
         user.updated_at = datetime.now(timezone.utc)
         db.commit()
     return {"ok": True, "terms_version": user.terms_version}

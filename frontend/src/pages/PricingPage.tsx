@@ -18,19 +18,19 @@ const formatExpiry = (v?: string | null): string => {
 const MODELS = [
   { id: 'openai/gpt-6-astra', name: 'GPT-6 Astra', provider: 'OpenAI', input: '¥115', output: '¥675', badge: 'New', note: '最新旗舰 · AGI 级' },
   { id: 'openai/gpt-5.6-terra', name: 'GPT-5.6 Terra', provider: 'OpenAI', input: '¥18', output: '¥110', badge: 'New', note: '旗舰 Terra' },
-  { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'Hot', note: '最新旗舰' },
+  { id: 'gpt-5.5', name: 'GPT-5.5', provider: 'OpenAI', input: '¥48', output: '¥288', badge: 'Hot', note: '最新旗舰' },
   { id: 'openai/gpt-5.6-luna', name: 'GPT-5.6 Luna', provider: 'OpenAI', input: '¥10', output: '¥55', badge: 'New', note: '最新旗舰 Luna' },
   { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'New', note: '高效推理 Sol' },
   { id: 'openai/gpt-5.4', name: 'GPT-5.4', provider: 'OpenAI', input: '¥45', output: '¥202', badge: 'New', note: '新一代旗舰' },
   { id: 'openai/gpt-5-mini', name: 'GPT-5-mini', provider: 'OpenAI', input: '¥3.0', output: '¥19', badge: 'New', note: '轻量快速' },
   { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', input: '¥2.0', output: '¥8.0', badge: 'New', note: '开源高性价比' },
-  { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥90', output: '¥500', badge: 'New', note: '最新 Claude' },
+  { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥135', output: '¥750', badge: 'New', note: '最新 Claude' },
   { id: 'claude-4.7-opus', name: 'Claude 4.7 Opus', provider: 'Anthropic', input: '¥45', output: '¥225', badge: 'New', note: '最新旗舰 Opus' },
   { id: 'claude-4.6-sonnet', name: 'Claude 4.6 Sonnet', provider: 'Anthropic', input: '¥27', output: '¥135', badge: 'New', note: '旗舰 Sonnet' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥24', output: '¥141', badge: 'New', note: '谷歌旗舰' },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', input: '¥3.0', output: '¥23', badge: '', note: '谷歌高效' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥6 / ¥12', output: '¥18 / ¥36', badge: 'Hot', note: '旗舰模型 · 峰谷计价' },
-  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.5', output: '¥3.0', badge: '', note: '极致性价比' },
+  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.8', output: '¥3.6', badge: '', note: '极致性价比' },
   { id: 'deepseek/deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', badge: 'New', note: '新一代高速 · 实验版' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', badge: 'New', note: '达GPT-5水平' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', badge: '', note: '通用模型' },
@@ -270,7 +270,7 @@ export default function PricingPage() {
           </div>
 
           <p className="text-[11px] text-white/70 leading-relaxed">
-            注：免费额度按模型 Token（输入 + 输出）计算，与充值余额点数（1 元 = 100 Token）是不同单位；低价模型单价约 ¥1.5~¥4 / 百万 Token。
+            注：免费额度按模型 Token（输入 + 输出）计算，与充值余额点数（1 元 = 100 Token）是不同单位；低价模型单价约 ¥1.8~¥4 / 百万 Token。
           </p>
 
         </div>

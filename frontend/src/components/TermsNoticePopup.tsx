@@ -7,8 +7,8 @@ export default function TermsNoticePopup() {
   const [show, setShow] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  // 仅对"老用户"（未确认新版协议，terms_version 为空）且已登录时弹出
-  if (!user || user.terms_version) return null;
+  // V1.1 协议发布后，未确认 v2 的用户都需要重新确认
+  if (!user || user.terms_version === 'v2') return null;
   if (!show) return null;
 
   const accept = async () => {
@@ -29,7 +29,7 @@ export default function TermsNoticePopup() {
       <div className="w-full max-w-md backdrop-blur-xl bg-[#15151F] border border-white/[0.08] rounded-2xl p-6">
         <h3 className="text-white font-semibold text-[15px] mb-3">服务协议与隐私政策更新</h3>
         <p className="text-white/60 text-[13px] leading-relaxed mb-5">
-          我们已更新《用户服务协议》与《隐私政策》。继续使用本服务即表示您已阅读并同意更新后的协议与隐私政策。
+          我们已更新至 V1.1，新增海外模型、跨境数据处理、上游模型变更和模型可用性说明，并根据上游实际账单校准部分模型价格。请阅读更新后的《用户服务协议》与《隐私政策》；确认后继续使用。
         </p>
         <div className="flex items-center justify-between gap-3">
           <a
