@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from services.alert_notify import push_alert_async
 
 from database import get_db
 from models import User, Transaction
@@ -212,8 +213,22 @@ def login(req: LoginReq, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not pwd.verify(req.password, user.password_hash):
         _record_auth_fail(_auth_key)
+        if user and user.is_admin:
+            push_alert_async(
+                "TokUp 管理员登录失败",
+                f"邮箱: {req.email}\nIP: {_get_client_ip(request)}\nUA: {request.headers.get('user-agent','')[:180]}",
+                dedup_key=f"admin-login-fail:{req.email}:{_get_client_ip(request)}",
+                cooldown=60,
+            )
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
     _clear_auth_fails(_auth_key)
+    if user.is_admin:
+        push_alert_async(
+            "TokUp 管理员登录成功",
+            f"邮箱: {user.email}\nIP: {_get_client_ip(request)}\nUA: {request.headers.get('user-agent','')[:180]}",
+            dedup_key=f"admin-login-ok:{user.id}",
+            cooldown=60,
+        )
     token = create_token(user.id)
     return {"token": token, "user_id": user.id}
 

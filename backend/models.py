@@ -101,12 +101,17 @@ class ApiKey(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    key = Column(String, unique=True, index=True, nullable=False)
+    key = Column(String, unique=True, index=True, nullable=False)  # 一阶段迁移暂时保留明文，后续切换为仅哈希
+    key_hash = Column(String, unique=True, index=True, nullable=True)
+    key_prefix = Column(String, default="")
+    key_last4 = Column(String, default="")
     name = Column(String, default="Default Key")
     is_active = Column(Boolean, default=True)
     rate_limit = Column(Integer, default=0)  # 每分钟请求上限（0=不限；用户显式设置后才生效）
     monthly_cap = Column(Float, default=0)  # 0 = unlimited
     daily_cap = Column(Float, default=0)  # 0 = unlimited
+    allowed_ips = Column(Text, default="")  # 逗号分隔 IP/CIDR；空=不限制
+    allowed_models = Column(Text, default="")  # 逗号分隔模型 ID；空=全部允许
     last_used_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

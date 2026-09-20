@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -12,8 +12,10 @@ from datetime import datetime, timezone
 from routers.auth import get_current_user
 from services.token_service import reserve_token, settle_reserved, has_completed_recharge
 from services.email_notify import maybe_alert_low_balance
+from services.alert_notify import push_alert_async
+from services.api_key_security import hash_api_key, key_prefix, key_last4, ip_allowed, model_allowed
 
-import secrets, time, json, asyncio, uuid
+import os, secrets, time, json, asyncio, uuid
 
 router = APIRouter(prefix="/api/v1", tags=["api-proxy"])
 
@@ -29,7 +31,30 @@ class ChatReq(BaseModel):
 
 from fastapi import Header as FastAPIHeader
 
+def _request_ip(request: Request) -> str:
+    cf = request.headers.get("cf-connecting-ip")
+    if cf:
+        return cf.strip()
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip
+    return (request.client.host if request.client else "") or "unknown"
+
+
+def _alert_blocked_key(api_key: ApiKey, reason: str, detail: str) -> None:
+    push_alert_async(
+        "TokUp API Key 访问被拒",
+        f"Key: {api_key.name or api_key.id}\n前缀: {api_key.key_prefix or key_prefix(api_key.key)}\n原因: {reason}\n详情: {detail}",
+        dedup_key=f"blocked:{api_key.id}:{reason}",
+        cooldown=300,
+    )
+
+
 def authenticate_api_key(
+    request: Request,
     authorization: str = FastAPIHeader(None, alias="authorization"),
     x_auth_token: str = FastAPIHeader(None, alias="x-auth-token"),
     x_api_key: str = FastAPIHeader(None, alias="x-api-key"),
@@ -44,11 +69,44 @@ def authenticate_api_key(
         api_key_str = api_key_str[7:]
     if not api_key_str:
         raise HTTPException(status_code=401, detail="缺少 API Key")
-    api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
+    key_digest = hash_api_key(api_key_str)
+    api_key = db.query(ApiKey).filter(ApiKey.key_hash == key_digest, ApiKey.is_active).first()
+    if not api_key:
+        # 兼容迁移期间的旧明文 Key；首次命中后回填哈希索引。
+        api_key = db.query(ApiKey).filter(ApiKey.key == api_key_str, ApiKey.is_active).first()
+        if api_key:
+            api_key.key_hash = key_digest
+            api_key.key_prefix = api_key.key_prefix or key_prefix(api_key_str)
+            api_key.key_last4 = api_key.key_last4 or key_last4(api_key_str)
+            db.commit()
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key 无效")
+    client_ip = _request_ip(request)
+    if not ip_allowed(client_ip, api_key.allowed_ips or ""):
+        _alert_blocked_key(api_key, "IP 不在白名单", client_ip)
+        raise HTTPException(status_code=403, detail="API Key 不允许从当前 IP 使用")
     _check_key_rate(api_key.id, api_key.rate_limit or 0, db)
     return api_key
+
+
+def _ensure_model_allowed(api_key: ApiKey, model: str) -> None:
+    if not model_allowed(model, api_key.allowed_models or ""):
+        _alert_blocked_key(api_key, "模型不在白名单", model)
+        raise HTTPException(status_code=403, detail=f"API Key 不允许调用模型：{model}")
+
+
+def _maybe_alert_high_cost(api_key: ApiKey, model: str, cost: float) -> None:
+    try:
+        threshold = float(os.getenv("API_COST_ALERT_THRESHOLD", "10"))
+    except ValueError:
+        threshold = 10.0
+    if cost >= threshold:
+        push_alert_async(
+            "TokUp API 大额调用",
+            f"Key: {api_key.name or api_key.id}\n前缀: {api_key.key_prefix or key_prefix(api_key.key)}\n模型: {model}\n单次费用: ¥{cost:.4f}",
+            dedup_key=f"cost:{api_key.id}:{model}",
+            cooldown=600,
+        )
 
 
 # 按 API Key 的每分钟请求上限限速（仅 rate_limit>0 生效）。
@@ -331,6 +389,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     model = resolve_model(req.model)
     if model not in MODEL_ROUTES:
         raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
+    _ensure_model_allowed(api_key, model)
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
     _uid, _kid = _capture_key_identity(api_key)
@@ -387,6 +446,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _output_tok = max(1, len(_fwd_content) // 2) if _fwd_content else 0
                         _cost = calculate_cost(model, _input_tok, _output_tok, (_usage_data or {}).get("image", 0)) if _output_tok else 0.0
                     _tc = max(round(_cost * 100), 1) if (_output_tok and _cost > 0) else 0
+                    if _cost > 0:
+                        _maybe_alert_high_cost(api_key, model, _cost)
                     try:
                         # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
                         _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
@@ -524,6 +585,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if cost is None:
         cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
     token_cost = max(round(cost * 100), 1) if cost > 0 else 0
+    if cost > 0:
+        _maybe_alert_high_cost(api_key, model, cost)
     # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
     _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
@@ -746,6 +809,8 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if cost is None:
         cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
     token_cost = max(round(cost * 100), 1) if cost > 0 else 0
+    if cost > 0:
+        _maybe_alert_high_cost(api_key, model, cost)
     # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
     _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
     _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
@@ -785,6 +850,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
     model = resolve_model(req.model)
     if model not in MODEL_ROUTES:
         raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
+    _ensure_model_allowed(api_key, model)
 
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)

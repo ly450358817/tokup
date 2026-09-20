@@ -1,7 +1,7 @@
  import { useState, useEffect } from 'react';
  import { keysApi } from '../utils/api';
 import { useLang } from '../contexts/LanguageContext';
- import { Key, Copy, Trash2, Plus, Check, Eye, EyeOff } from 'lucide-react';
+ import { Key, Copy, Trash2, Plus, Check, Eye, EyeOff, Shield } from 'lucide-react';
  
  interface ApiKeyItem {
    id: string;
@@ -11,6 +11,8 @@ import { useLang } from '../contexts/LanguageContext';
    rate_limit: number;
   monthly_cap: number;
   daily_cap: number;
+   allowed_ips: string;
+   allowed_models: string;
    created_at: string;
  }
  
@@ -25,6 +27,8 @@ import { useLang } from '../contexts/LanguageContext';
   const [newMonthlyCap, setNewMonthlyCap] = useState<string>("");
   const [newDailyCap, setNewDailyCap] = useState<string>("");
   const [newRateLimit, setNewRateLimit] = useState<string>("");
+  const [newAllowedIps, setNewAllowedIps] = useState<string>("");
+  const [newAllowedModels, setNewAllowedModels] = useState<string>("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
     const [newlyCreatedKey, setNewlyCreatedKey] = useState('');
@@ -48,13 +52,15 @@ import { useLang } from '../contexts/LanguageContext';
    const handleCreate = async () => {
      setCreating(true);
      try {
-      const result = await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0, Number(newRateLimit) || 0);
+      const result = await keysApi.create(newName, Number(newMonthlyCap) || 0, Number(newDailyCap) || 0, Number(newRateLimit) || 0, newAllowedIps, newAllowedModels);
         setNewlyCreatedKey(result.key);
         setShowQuickstart(true);
       setNewName('');
       setNewMonthlyCap('');
       setNewDailyCap('');
       setNewRateLimit('');
+      setNewAllowedIps('');
+      setNewAllowedModels('');
        await loadKeys();
      } catch (err) {
        console.error('Failed to create key', err);
@@ -63,6 +69,19 @@ import { useLang } from '../contexts/LanguageContext';
      }
    };
  
+   const updateRestrictions = async (k: ApiKeyItem) => {
+     const ips = prompt('允许使用的 IP/CIDR，逗号分隔；留空表示不限制：', k.allowed_ips || '');
+     if (ips === null) return;
+     const models = prompt('允许调用的模型 ID，逗号分隔；留空表示全部模型：', k.allowed_models || '');
+     if (models === null) return;
+     try {
+       await keysApi.update(k.id, { allowed_ips: ips, allowed_models: models });
+       await loadKeys();
+     } catch (err) {
+       console.error('Failed to update key restrictions', err);
+     }
+   };
+
    const handleDelete = async (id: string) => {
      if (!confirm('确定删除此密钥？此操作不可撤销。')) return;
      try {
@@ -134,6 +153,22 @@ import { useLang } from '../contexts/LanguageContext';
                  value={newRateLimit}
                  onChange={(e) => setNewRateLimit(e.target.value)}
                  className="glass-input w-full text-[11px]"
+               />
+             </div>
+             <div className="flex gap-2">
+               <input
+                 type="text"
+                 placeholder="允许 IP/CIDR（逗号分隔，留空=不限）"
+                 value={newAllowedIps}
+                 onChange={(e) => setNewAllowedIps(e.target.value)}
+                 className="glass-input w-1/2 text-[11px]"
+               />
+               <input
+                 type="text"
+                 placeholder="允许模型（逗号分隔，留空=全部）"
+                 value={newAllowedModels}
+                 onChange={(e) => setNewAllowedModels(e.target.value)}
+                 className="glass-input w-1/2 text-[11px]"
                />
              </div>
            </div>
@@ -234,6 +269,13 @@ import { useLang } from '../contexts/LanguageContext';
                        title={visible ? '隐藏密钥' : '显示密钥'}
                      >
                        {visible ? <EyeOff size={14} /> : <Eye size={14} />}
+                     </button>
+                     <button
+                       onClick={() => updateRestrictions(k)}
+                       className="p-2 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-emerald-400 transition-all"
+                       title="设置 IP / 模型限制"
+                     >
+                       <Shield size={14} />
                      </button>
                      <button
                        onClick={() => copyToClipboard(k.key, k.id)}

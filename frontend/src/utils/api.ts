@@ -67,7 +67,8 @@ export const paymentApi = {
 
 export const keysApi = {
   list: () => api.get('/keys').then((r) => r.data),
-  create: (name = '', monthly_cap = 0, daily_cap = 0, rate_limit = 0) => api.post('/keys', { name, monthly_cap, daily_cap, rate_limit }).then((r) => r.data),
+  create: (name = '', monthly_cap = 0, daily_cap = 0, rate_limit = 0, allowed_ips = '', allowed_models = '') => api.post('/keys', { name, monthly_cap, daily_cap, rate_limit, allowed_ips, allowed_models }).then((r) => r.data),
+  update: (id: string, data: { allowed_ips?: string; allowed_models?: string }) => api.patch(`/keys/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete(`/keys/${id}`).then((r) => r.data),
   batchDelete: (ids: string[]) => api.post('/keys/batch-delete', { ids }).then((r) => r.data),
 };
