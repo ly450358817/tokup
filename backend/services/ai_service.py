@@ -65,6 +65,8 @@ MODEL_ROUTES = {
     "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
     # 腾讯混元（七牛云）
     "tencent/hy4-preview": ("qiniu", QINIU_ENDPOINT),
+    "glm-5.3-flash": ("qiniu", QINIU_ENDPOINT),
+    "gemini-3.0-pro-image-preview": ("qiniu", QINIU_ENDPOINT),
     # 智谱（直连，免费视觉模型，不对外展示）
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
@@ -76,6 +78,7 @@ MODEL_ROUTES = {
 #   内部计费仍按 tokup key deepseek/deepseek-v4-pro，模型名不变。
 UPSTREAM_MODEL_NAME = {
     "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-0813",
+    "glm-5.3-flash": "z-ai/glm-5.3-flash",
 }
 
 # 峰谷计费（2026-08-17 DeepSeek 官方 / 七牛同步生效）：
@@ -106,6 +109,8 @@ MODEL_COST = {
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
     "glm-5.3": (11.0, 37.0),                    # 上游 ¥8/¥28（与 glm-5.2 同价）
+    "glm-5.3-flash": (1.2, 4.2),                # 上游 ¥0.8/¥2.8，按1.5x定价
+    "gemini-3.0-pro-image-preview": (24.0, 130.0),  # 文本输入/文本输出；图片输出见 MODEL_IMAGE_COST
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
     "qwen/qwen3.7-plus": (8.0, 32.0),        # 上游 ¥6/¥24
     "qwen/qwen3.8-flash-next": (1.5, 4.0),   # 上游 ¥1/¥3（七牛广场 2026-09-07 核实）×1.33
@@ -131,6 +136,14 @@ MODEL_COST = {
 
 
 # 峰谷模型的「高峰」卖价（¥/1M）：高峰成本 ×1.33（宁贵不可亏，杜绝高峰倒挂）
+MODEL_IMAGE_COST = {
+    # 图片输出单独按图片 token 计价（¥/1M 图片 token），上游实际 ¥828/M；按1.57x定价
+    "gemini-3.0-pro-image-preview": 1300.0,
+}
+
+# 图片生成预扣使用的保守图片 token 数，避免生成后余额不足
+MODEL_IMAGE_RESERVE_TOKENS = {"1K": 2000, "2K": 6000, "4K": 20000}
+
 MODEL_COST_PEAK = {
     "deepseek/deepseek-v4-pro": (12.0, 36.0),   # 上游高峰 ¥9/¥27
 }
@@ -171,6 +184,8 @@ MODEL_META = {
     "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "最新旗舰", "badge": "New"},
     "moonshotai/kimi-k2.7-code": {"name": "Kimi K2.7 Code", "provider": "月之暗面", "note": "代码最强", "badge": "New"},
     "tencent/hy4-preview": {"name": "混元 Hy4 Preview", "provider": "腾讯混元", "note": "1M 上下文 · 代码/智能体", "badge": "New"},
+    "glm-5.3-flash": {"name": "GLM-5.3 Flash", "provider": "智谱AI", "note": "1M多模态 · 成本优化", "badge": "New"},
+    "gemini-3.0-pro-image-preview": {"name": "Gemini 3.0 Pro Image", "provider": "Google", "note": "图片生成 · 1K/2K/4K", "badge": "New"},
     "glm-4.6v-flash": {"name": "GLM-4.6V Flash", "provider": "智谱AI", "note": "视觉 · 免费", "badge": "Free"},
     # ── 2026-08-29 新增海外模型 ──
     "claude-4.7-opus": {"name": "Claude 4.7 Opus", "provider": "Anthropic", "note": "最新旗舰 Opus", "badge": "New"},
@@ -192,15 +207,22 @@ def _is_beijing_peak_hour() -> bool:
     return any(start <= hour < end for start, end in PEAK_HOUR_RANGES)
 
 
-def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+def calculate_cost(model: str, input_tokens: int, output_tokens: int, image_tokens: int = 0) -> float:
     costs = MODEL_COST.get(model)
     if not costs:
         return 0.01
     if model in MODEL_COST_PEAK and _is_beijing_peak_hour():
         costs = MODEL_COST_PEAK[model]
+    image_cost = 0.0
+    text_output_tokens = output_tokens
+    image_price = MODEL_IMAGE_COST.get(model)
+    if image_price is not None:
+        image_tokens = max(0, int(image_tokens or 0))
+        text_output_tokens = max(0, output_tokens - image_tokens)
+        image_cost = image_price * image_tokens / 1_000_000
     input_cost = costs[0] * input_tokens / 1_000_000
-    output_cost = costs[1] * output_tokens / 1_000_000
-    return round(input_cost + output_cost, 6)
+    output_cost = costs[1] * text_output_tokens / 1_000_000
+    return round(input_cost + output_cost + image_cost, 6)
 
 
 def get_headers(provider: str) -> dict:
@@ -274,7 +296,18 @@ async def close_http_client():
             logging.getLogger(__name__).warning("关闭上游连接池失败（忽略）", exc_info=True)
 
 
-async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None) -> dict:
+def _usage_values(usage: dict) -> tuple[int, int, int]:
+    """返回 input/output/image token；image 是 completion_tokens 的子集。"""
+    usage = usage or {}
+    input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0)) or 0
+    output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0)) or 0
+    details = usage.get("completion_tokens_details") or {}
+    image_tokens = details.get("image_tokens", 0) or 0
+    return int(input_tokens), int(output_tokens), int(image_tokens)
+
+
+async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None,
+                        extra_payload: dict | None = None) -> dict:
     """
     转发请求到上游；deepseek 模型在七牛失败时自动切到 DeepSeek 官方兜底。
     每个上游遇到 SSL/网络/HTTP>=400 错误自动重试。
@@ -302,6 +335,8 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
         _tok_key = "max_completion_tokens" if m_name in MAX_COMPLETION_TOKENS_MODELS else "max_tokens"
         if max_tokens:
             payload[_tok_key] = max_tokens
+        if extra_payload:
+            payload.update(extra_payload)
         if prov == "anthropic":
             payload = {"model": m_name, "messages": messages, "max_tokens": max_tokens or 4096}
 
@@ -316,13 +351,12 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
                 result = resp.json()
                 await resp.aclose()
                 usage = result.get("usage", {})
-                input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
-                output_tokens = usage.get("output_tokens", usage.get("completion_tokens", 0))
-                cost = calculate_cost(model, input_tokens, output_tokens)
+                input_tokens, output_tokens, image_tokens = _usage_values(usage)
+                cost = calculate_cost(model, input_tokens, output_tokens, image_tokens)
                 return {
                     "success": True,
                     "data": result,
-                    "usage": {"input": input_tokens, "output": output_tokens, "cost": cost},
+                    "usage": {"input": input_tokens, "output": output_tokens, "image": image_tokens, "cost": cost},
                 }
             except Exception as e:
                 last_err = str(e)
@@ -339,7 +373,7 @@ async def proxy_request(model: str, messages: list, stream: bool = False, max_to
 
 
 async def proxy_stream_request(model: str, messages: list, max_tokens: int | None = None,
-                        tools: list | None = None, tool_choice=None):
+                        tools: list | None = None, tool_choice=None, extra_payload: dict | None = None):
     """
     真流式转发：用 stream=True 请求上游，按字节读取 SSE 并实时原样转发。
     - 上游的 reasoning_content（思考过程）也立即转发，客户端不会长时间静默（避免被
@@ -375,6 +409,8 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
             payload["tools"] = tools
         if tool_choice:
             payload["tool_choice"] = tool_choice
+        if extra_payload:
+            payload.update(extra_payload)
         if prov == "anthropic":
             payload = {"model": m_name, "messages": messages, "max_tokens": max_tokens or 4096, "stream": True}
 
@@ -387,6 +423,7 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                         raise RuntimeError(f"HTTP {resp.status_code}: {err_body}")
                     input_tok = 0
                     output_tok = 0
+                    image_tok = 0
                     usage_seen = False   # 已捕获到 usage（防止 usage 与 finish_reason 分帧导致漏记）
                     usage_emitted = False
                     full_content = ""
@@ -404,25 +441,25 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                                     # OpenAI 风格顶层 usage；Anthropic 风格在 message.usage（message_start/message_delta）
                                     usage = data.get("usage") or (data.get("message") or {}).get("usage") or {}
                                     if usage:
-                                        _u_in = usage.get("prompt_tokens", usage.get("input_tokens", 0))
-                                        _u_out = usage.get("completion_tokens", usage.get("output_tokens", 0))
+                                        _u_in, _u_out, _u_img = _usage_values(usage)
                                         if _u_in or _u_out:
-                                            input_tok, output_tok = _u_in, _u_out
+                                            input_tok, output_tok, image_tok = _u_in, _u_out, _u_img
                                             usage_seen = True
                                     delta = data.get("choices", [{}])[0].get("delta", {}) or {}
                                     rc = delta.get("reasoning_content") or delta.get("reasoning") or ""
                                     dc = delta.get("content") or ""
                                     has_tc = bool(delta.get("tool_calls"))
+                                    has_img = bool(delta.get("images"))
                                     if rc:
                                         full_reasoning += rc
                                     if dc:
                                         full_content += dc
                                     # 工具调用也是有效输出：立即开始转发，避免被当成空流
-                                    if (rc or dc or has_tc) and not started:
+                                    if (rc or dc or has_tc or has_img) and not started:
                                         started = True
                                     if data.get("choices", [{}])[0].get("finish_reason"):
-                                        cost_val = calculate_cost(model, input_tok, output_tok)
-                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
+                                        cost_val = calculate_cost(model, input_tok, output_tok, image_tok)
+                                        usage_tag = f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'image': image_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
                                         usage_emitted = True
                         except Exception:
                             pass
@@ -439,8 +476,8 @@ async def proxy_stream_request(model: str, messages: list, max_tokens: int | Non
                         yield pending
                     # 兜底：usage 与 finish_reason 分帧时，流结束后补发 usage，避免回退到字符估算导致少计费
                     if usage_seen and not usage_emitted:
-                        cost_val = calculate_cost(model, input_tok, output_tok)
-                        yield f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
+                        cost_val = calculate_cost(model, input_tok, output_tok, image_tok)
+                        yield f"__USAGE__:{_json.dumps({'input': input_tok, 'output': output_tok, 'image': image_tok, 'cost': cost_val, 'content': full_content, 'reasoning': full_reasoning})}\n".encode()
                     return
             except Exception as e:
                 last_err = e

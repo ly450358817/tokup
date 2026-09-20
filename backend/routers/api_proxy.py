@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from database import get_db
 from models import User, ApiKey, UsageRecord, ConversationLog
-from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES, PRIVATE_MODELS, MODEL_META, MODEL_COST, MODEL_COST_PEAK
+from services.ai_service import proxy_request, calculate_cost, MODEL_ROUTES, PRIVATE_MODELS, MODEL_META, MODEL_COST, MODEL_COST_PEAK, MODEL_IMAGE_COST, MODEL_IMAGE_RESERVE_TOKENS
 from services.subscription_service import SUBSCRIPTION_DISCOUNT
 from datetime import datetime, timezone
 from routers.auth import get_current_user
@@ -24,6 +24,7 @@ class ChatReq(BaseModel):
     stream: bool = False
     max_tokens: int | None = None
     max_completion_tokens: int | None = None
+    image_config: dict | None = None
 
 
 from fastapi import Header as FastAPIHeader
@@ -122,15 +123,36 @@ def _capture_key_identity(api_key):
     return api_key.user_id, api_key.id
 
 
-def estimate_request_cost(model: str, messages: list, max_tokens: int | None = None) -> int:
-    """预扣估算：输入按字符数、输出按保守上限（考虑请求的 max_tokens，上限 16384），余额不足直接拒绝"""
+def estimate_request_cost(model: str, messages: list, max_tokens: int | None = None,
+                          image_config: dict | None = None) -> int:
+    """预扣估算：文本按字符数；图片模型按分辨率预留图片 token，余额不足直接拒绝。"""
     try:
         est_input = sum(len(str(m.get("content", ""))) for m in messages) or 1
         est_output = min(int(max_tokens or 0), 16384) if (max_tokens or 0) > 0 else 4096
-        cost = calculate_cost(model, est_input, est_output)
+        image_tokens = 0
+        if model in MODEL_IMAGE_COST:
+            size = str((image_config or {}).get("image_size") or "1K").upper()
+            image_tokens = MODEL_IMAGE_RESERVE_TOKENS.get(size, MODEL_IMAGE_RESERVE_TOKENS["4K"])
+            est_output = max(est_output, image_tokens + 512)
+        cost = calculate_cost(model, est_input, est_output, image_tokens)
         return max(round(cost * 100), 1) if cost > 0 else 0
     except Exception:
         return 1
+
+
+def _redact_image_data(value):
+    """存档时移除 Base64 图片正文，避免把超大图片写入对话日志。"""
+    if isinstance(value, dict):
+        out = {}
+        for k, v in value.items():
+            if k == "url" and isinstance(v, str) and v.startswith("data:image/"):
+                out[k] = "[image data omitted]"
+            else:
+                out[k] = _redact_image_data(v)
+        return out
+    if isinstance(value, list):
+        return [_redact_image_data(v) for v in value]
+    return value
 
 
 def _log_conversation(db, *, user_id, api_key_id, model, endpoint, request_messages,
@@ -140,7 +162,7 @@ def _log_conversation(db, *, user_id, api_key_id, model, endpoint, request_messa
     try:
         req_txt = json.dumps(request_messages, ensure_ascii=False, default=str) if request_messages is not None else ""
         if isinstance(response_content, (dict, list)):
-            resp_txt = json.dumps(response_content, ensure_ascii=False, default=str)
+            resp_txt = json.dumps(_redact_image_data(response_content), ensure_ascii=False, default=str)
         elif response_content is None:
             resp_txt = ""
         else:
@@ -323,7 +345,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if _sub and _eligible:
         _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(model, req.messages, req.max_tokens or req.max_completion_tokens)
+    _need = estimate_request_cost(model, req.messages, req.max_tokens or req.max_completion_tokens, req.image_config)
     _need_balance = max(0, _need - _quota_remaining)
     # 2026-08-22 管理员免扣费：管理员调用（含看图/测试）不预扣、不结算扣费，仅记录用量
     _admin_free = bool(getattr(_u, "is_admin", False))
@@ -359,11 +381,11 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         _output_tok = _usage_data.get("output", 0)
                         _cost = _usage_data.get("cost")
                         if _cost is None:
-                            _cost = calculate_cost(model, _input_tok, _output_tok)
+                            _cost = calculate_cost(model, _input_tok, _output_tok, _usage_data.get("image", 0))
                     else:
                         _input_tok = sum(len(str(m.get("content", ""))) for m in _messages) // 2
                         _output_tok = max(1, len(_fwd_content) // 2) if _fwd_content else 0
-                        _cost = calculate_cost(model, _input_tok, _output_tok) if _output_tok else 0.0
+                        _cost = calculate_cost(model, _input_tok, _output_tok, (_usage_data or {}).get("image", 0)) if _output_tok else 0.0
                     _tc = max(round(_cost * 100), 1) if (_output_tok and _cost > 0) else 0
                     try:
                         # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
@@ -405,7 +427,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         logging.getLogger("tokup.payment").warning("流式结算失败: model=%s err=%s", model, _se)
 
                 try:
-                    async for _chunk in _psr(model, _messages):
+                    async for _chunk in _psr(model, _messages, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
                         if isinstance(_chunk, bytes):
                             if _chunk.startswith(b"__USAGE__:"):
                                 try:
@@ -480,7 +502,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
     _max_tokens = req.max_tokens or req.max_completion_tokens
     _t0 = time.monotonic()
-    result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens)
+    result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
     _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
         _log_conversation(db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
@@ -500,7 +522,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost")
     if cost is None:
-        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0))
+        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
     token_cost = max(round(cost * 100), 1) if cost > 0 else 0
     # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
     _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
@@ -564,7 +586,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if _sub and _eligible:
         _quota_used = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(_model_t, req.messages, req.max_tokens or req.max_completion_tokens)
+    _need = estimate_request_cost(_model_t, req.messages, req.max_tokens or req.max_completion_tokens, req.image_config)
     _need_balance = max(0, _need - _quota_remaining)
     _admin_free = bool(getattr(user, "is_admin", False))
     if _admin_free:
@@ -600,11 +622,11 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                         _output_tok = _usage_data.get("output", 0)
                         _cost = _usage_data.get("cost")
                         if _cost is None:
-                            _cost = calculate_cost(model, _input_tok, _output_tok)
+                            _cost = calculate_cost(model, _input_tok, _output_tok, _usage_data.get("image", 0))
                     else:
                         _input_tok = sum(len(str(m.get("content", ""))) for m in req.messages) // 2
                         _output_tok = max(1, len(_fwd_content) // 2) if _fwd_content else 0
-                        _cost = calculate_cost(model, _input_tok, _output_tok) if _output_tok else 0.0
+                        _cost = calculate_cost(model, _input_tok, _output_tok, (_usage_data or {}).get("image", 0)) if _output_tok else 0.0
                     _tc = max(round(_cost * 100), 1) if (_output_tok and _cost > 0) else 0
                     try:
                         _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
@@ -638,7 +660,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                         _logging.getLogger("tokup.payment").warning("流式测试结算失败: model=%s err=%s", model, _se)
 
                 try:
-                    async for _chunk in _psr(model, req.messages):
+                    async for _chunk in _psr(model, req.messages, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
                         if isinstance(_chunk, bytes):
                             if _chunk.startswith(b"__USAGE__:"):
                                 try:
@@ -702,7 +724,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
             settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
             return {"success": False, "detail": str(e)}
     _t0 = time.monotonic()
-    result = await proxy_request(model, req.messages, False)
+    result = await proxy_request(model, req.messages, False, extra_payload=({"image_config": req.image_config} if req.image_config else None))
     _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
         _log_conversation(db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
@@ -722,7 +744,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     usage_data = result.get("usage", {})
     cost = usage_data.get("cost")
     if cost is None:
-        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0))
+        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
     token_cost = max(round(cost * 100), 1) if cost > 0 else 0
     # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
     _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)

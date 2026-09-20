@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v20';
+const VERSION = 'v21';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -60,17 +60,15 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📋 协议与计费规则更新</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🚀 模型与计费规则更新</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
           <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>🎯 <span className="text-white/80 font-medium">用户协议升级至 V1.1</span>，新增海外模型、跨境数据处理、上游模型变更与可用性说明。老用户需重新确认协议。</p>
-          <p>📊 <span className="text-white/80 font-medium">根据上游实际账单校准部分模型价格</span>：</p>
-          <ul className="list-disc list-inside space-y-1 pl-2">
-            <li>DeepSeek V4 Flash：¥1.8 / ¥3.6（每百万 token）</li>
-            <li>GPT-5.5：¥48 / ¥288（每百万 token）</li>
-            <li>Claude Fable 5：¥135 / ¥750（每百万 token）</li>
-          </ul>
-          <p className="text-white/40 text-[11px]">📎 说明：调整用于覆盖上游缓存创建、上下文处理及波动成本，确保服务持续稳定；订阅规则与余额使用方式不变。</p>
+          <p>🎯 <span className="text-white/80 font-medium">上线 GLM-5.3 Flash</span>：1M 上下文、多模态、工具调用，¥1.2 / ¥4.2（每百万 token）。</p>
+          <p>🎨 <span className="text-white/80 font-medium">上线 Gemini 3.0 Pro Image</span>：支持文生图、图生图和纯对话。输入 ¥24/M，文本输出 ¥130/M，图片输出 <span className="text-white/80 font-medium">¥1300/M 图片 token</span>。</p>
+          <p className="text-white/40 text-[11px]">📎 图片模型按实际图片 token 计费；1K 单图通常约 1120 图片 token，单张约 ¥1.5。2K/4K 和编辑输入会更高，余额不足时无法生成。</p>
+          <div className="border-t border-white/[0.06] pt-2 mt-2">
+            <p className="text-white/40 text-[11px]">📋 V1.1 用户协议已生效，新增海外模型、跨境处理、上游变更和模型可用性说明。原有三项价格校准继续有效：V4 Flash ¥1.8/¥3.6、GPT-5.5 ¥48/¥288、Claude Fable 5 ¥135/¥750；订阅规则不变。</p>
+          </div>
           <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
         </div>
         <div className="space-y-2">
