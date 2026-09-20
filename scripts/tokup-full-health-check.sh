@@ -110,7 +110,7 @@ else
   fail "GET /api/v1/models → ${models:0:100}"
 fi
 
-ADMIN_PASS=$(SSH "sudo grep -oE 'TOKUP_ADMIN_PASSWORD=[^ ]*' /etc/systemd/system/tokup-backend.service | cut -d= -f2" 2>/dev/null)
+ADMIN_PASS=$(SSH "sudo grep -oE 'TOKUP_ADMIN_PASSWORD=[^ ]*' /opt/tokup/backend/.env | cut -d= -f2-" 2>/dev/null)
 if [ -n "$ADMIN_PASS" ]; then
   LOGIN_BODY=$(printf '{"email":"admin@tokup.io","password":"%s"}' "$ADMIN_PASS")
   TOKEN=$(printf '%s' "$LOGIN_BODY" | SSH "curl -s --max-time 20 -H 'Content-Type: application/json' -d @- '$BASE/api/auth/login'" 2>/dev/null \
