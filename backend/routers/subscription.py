@@ -59,9 +59,8 @@ def purchase_plan(plan_id: str, user: User = Depends(get_current_user), db: Sess
     if user.token_balance < price:
         raise HTTPException(status_code=400, detail="余额不足，请先充值")
 
-    # 扣费
+    # 扣费：订阅购买属于消费，不得计入累计充值
     user.token_balance -= price
-    user.total_recharged += price / 100
 
     now = datetime.now(timezone.utc)
     sub = Subscription(
