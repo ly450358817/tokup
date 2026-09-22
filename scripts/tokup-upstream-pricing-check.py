@@ -9,9 +9,9 @@ TokUp 上游账单倒挂核查脚本（每周自动化使用，只读）
 - 保存快照 scripts/model_snapshots/pricing/YYYYMMDD.json 供历史对比
 
 用法:
-  python3 scripts/tokup-qiniu-pricing-check.py            # 人类可读报告
-  python3 scripts/tokup-qiniu-pricing-check.py --json     # 机器可读 JSON
-  python3 scripts/tokup-qiniu-pricing-check.py --min-margin 1.3   # 自定义最低毛利阈值
+  python3 scripts/tokup-upstream-pricing-check.py            # 人类可读报告
+  python3 scripts/tokup-upstream-pricing-check.py --json     # 机器可读 JSON
+  python3 scripts/tokup-upstream-pricing-check.py --min-margin 1.3   # 自定义最低毛利阈值
 退出码: 0=无倒挂; 1=存在倒挂或严重低毛利
 """
 import argparse
