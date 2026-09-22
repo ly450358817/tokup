@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v22';
+const VERSION = 'v23';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
