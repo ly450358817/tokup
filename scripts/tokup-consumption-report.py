@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TokUp 消耗明细 + 七牛月限额使用率报告（只读）
+TokUp 消耗明细 + 上游月限额使用率报告（只读）
 
 回答三个问题：
-  1. 七牛 key 月限额用了多少（本月费用 / 配置的月限额）
+  1. 上游 key 月限额用了多少（本月费用 / 配置的月限额）
   2. 谁用了什么模型、消耗了多少 token / 费用（平台 usage_records 按用户/模型/天）
-  3. 平台记录 vs 七牛实际计费是否对得上（差额 = 潜在白嫖/漏记/上游口径差异）
+  3. 平台记录 vs 上游实际计费是否对得上（差额 = 潜在白嫖/漏记/上游口径差异）
 
 运行方式：
   # 生产（服务器上跑，读生产库）：
@@ -15,11 +15,11 @@ TokUp 消耗明细 + 七牛月限额使用率报告（只读）
   python3 scripts/tokup-consumption-report.py --db backend/tokup.db --env backend/.env
   参数：
     --db           SQLite 库路径（默认 backend/tokup.db）
-    --env          七牛 key 的 .env 路径（默认 backend/.env）
-    --monthly-quota 七牛 key 月限额金额（默认取 env QINIU_MONTHLY_QUOTA_LIMIT，否则 300）
+    --env          上游 key 的 .env 路径（默认 backend/.env）
+    --monthly-quota 上游 key 月限额金额（默认取 env QINIU_MONTHLY_QUOTA_LIMIT，否则 300）
     --since        明细起始日期 YYYY-MM-DD（默认 30 天前；也总是输出全部/近7天/本月）
     --json         输出机器可读 JSON 并保存快照 scripts/model_snapshots/consumption/YYYYMMDD.json
-退出码：0=正常；1=存在异常项（如平台记录与七牛差额>10%、限额使用率>90%）
+退出码：0=正常；1=存在异常项（如平台记录与上游差额>10%、限额使用率>90%）
 """
 import argparse
 import datetime as dt
@@ -30,7 +30,7 @@ import sqlite3
 import sys
 import urllib.request
 
-# 平台模型 → 七牛账单 model_id（用于对账；与 pricing-check 的 BILLING_ALIASES 保持一致）
+# 平台模型 → 上游账单 model_id（用于对账；与 pricing-check 的 BILLING_ALIASES 保持一致）
 QINIU_MODEL_ALIASES = {
     "deepseek/deepseek-v4-flash": ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-flash-202605",
                                    "deepseek/deepseek-v4-flash-20260731"],
@@ -145,12 +145,12 @@ def main():
     out = {"date": today.isoformat(), "period": f"{start_iso}~{end_iso}", "monthly_quota": quota_limit,
            "qiniu_errors": [], "db_errors": [], "alerts": [], "detail": {}}
 
-    # ---- 七牛 ----
+    # ---- 上游 ----
     month_fee, q_models, q_errs = fetch_qiniu(qk, start_iso, end_iso)
     out["qiniu_errors"] = q_errs
     quota_rate = (month_fee / quota_limit * 100) if quota_limit else None
     if quota_rate is not None and quota_rate >= 90:
-        out["alerts"].append(f"七牛月限额使用率 {quota_rate:.0f}%（{month_fee:.2f}/{quota_limit:.0f}），快触顶需关注")
+        out["alerts"].append(f"上游月限额使用率 {quota_rate:.0f}%（{month_fee:.2f}/{quota_limit:.0f}），快触顶需关注")
 
     # ---- 平台库 ----
     try:
@@ -212,7 +212,7 @@ def main():
             gap = (plat["cost"] or 0) / qiniu_period_fee
             if gap < 0.98:
                 out["alerts"].append(
-                    f"⚠️ 平台本期收入({plat['cost']}元) < 七牛本期计费({qiniu_period_fee:.2f}元)，比值 {gap:.2f}，"
+                    f"⚠️ 平台本期收入({plat['cost']}元) < 上游本期计费({qiniu_period_fee:.2f}元)，比值 {gap:.2f}，"
                     f"本期在亏钱，请核对是否有漏记/白嫖/免费额度超发")
         free_models = ("glm-4.6v-flash",)  # 智谱直连免费，cost=0 是设计如此
         for z in zero_cost:
@@ -261,13 +261,13 @@ def main():
     # ---- 人类可读 ----
     W = 78
     print("=" * W)
-    print(f"TokUp 消耗明细 + 七牛限额报告  {today}  （明细区间 {start_iso} ~ {end_iso}）")
+    print(f"TokUp 消耗明细 + 上游限额报告  {today}  （明细区间 {start_iso} ~ {end_iso}）")
     print("=" * W)
-    print(f"① 七牛 key 月限额：本月已用 ¥{month_fee:.2f} / ¥{quota_limit:.0f}"
+    print(f"① 上游 key 月限额：本月已用 ¥{month_fee:.2f} / ¥{quota_limit:.0f}"
           + (f"（{quota_rate:.0f}%）" if quota_rate is not None else "") + ("  ⚠️≥90% 快触顶" if quota_rate and quota_rate >= 90 else ""))
     print(f"② 平台本期消耗：请求 {plat['req']} 次，输入 {plat['itok']/1e6:.2f}M + 输出 {plat['otok']/1e6:.2f}M"
           f"（共 {(plat['itok'] or 0)+(plat['otok'] or 0):,.0f} token），平台收入 ¥{plat['cost'] or 0}")
-    print(f"   七牛本期计费：¥{sum(m['fee'] for m in q_models.values()):.2f}"
+    print(f"   上游本期计费：¥{sum(m['fee'] for m in q_models.values()):.2f}"
           f"（标准价，{(sum(m['in']+m['out'] for m in q_models.values()))/1e6:.2f}M token）")
     print(f"   平台历史累计：请求 {plat_all['req']}，token {(plat_all['itok'] or 0)+(plat_all['otok'] or 0):,.0f}，收入 ¥{plat_all['cost'] or 0}")
     print()
@@ -298,7 +298,7 @@ def main():
             print(f"   - {a}")
         print()
         return 1
-    print("✅ 无异常：限额余量充足、平台记录与七牛计费基本一致、无白嫖迹象")
+    print("✅ 无异常：限额余量充足、平台记录与上游计费基本一致、无白嫖迹象")
     return 0
 
 

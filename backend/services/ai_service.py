@@ -21,7 +21,7 @@ QINIU_ENDPOINT = "https://api.qnaigc.com/v1/chat/completions"
 ZHIPU_ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
 MODEL_ROUTES = {
-    # OpenAI（七牛云）
+    # OpenAI（上游）
     "openai/gpt-6-astra": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5.6-terra": ("qiniu", QINIU_ENDPOINT),
     "gpt-5.5": ("qiniu", QINIU_ENDPOINT),
@@ -30,15 +30,15 @@ MODEL_ROUTES = {
     "openai/gpt-5.4": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5-mini": ("qiniu", QINIU_ENDPOINT),
     "gpt-oss-120b": ("qiniu", QINIU_ENDPOINT),
-    # Anthropic（七牛云）
+    # Anthropic（上游）
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
     "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
     "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
-    # Google（七牛云）
+    # Google（上游）
     "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
     "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
-    # xAI（七牛云）
-    # DeepSeek → 七牛云（合规上游）
+    # xAI（上游）
+    # DeepSeek → 上游（合规上游）
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4.1-flash": ("qiniu", QINIU_ENDPOINT),
@@ -46,24 +46,24 @@ MODEL_ROUTES = {
     "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash-vision-exp": ("qiniu", QINIU_ENDPOINT),
-    # 通义千问（七牛云）
+    # 通义千问（上游）
     "qwen/qwen3.8-max": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.7-max": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.7-plus": ("qiniu", QINIU_ENDPOINT),
     "qwen/qwen3.8-flash-next": ("qiniu", QINIU_ENDPOINT),
     "qwen3-max": ("qiniu", QINIU_ENDPOINT),
     "qwen3.5-397b-a17b": ("qiniu", QINIU_ENDPOINT),
-    # 智谱AI（七牛云）
+    # 智谱AI（上游）
     "glm-5.3": ("qiniu", QINIU_ENDPOINT),
     "glm-5.2": ("qiniu", QINIU_ENDPOINT),
-    # 月之暗面（七牛云）
+    # 月之暗面（上游）
     "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
-    # MiniMax（七牛云）
+    # MiniMax（上游）
     "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
     "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
-    # 腾讯混元（七牛云）
+    # 腾讯混元（上游）
     "tencent/hy4-preview": ("qiniu", QINIU_ENDPOINT),
     "glm-5.3-flash": ("qiniu", QINIU_ENDPOINT),
     "gemini-3.0-pro-image-preview": ("qiniu", QINIU_ENDPOINT),
@@ -71,7 +71,7 @@ MODEL_ROUTES = {
     "glm-4.6v-flash": ("zhipu", ZHIPU_ENDPOINT),
 }
 
-# 2026-08-20 七牛跟随 DeepSeek 官方 8/17 峰谷计价：
+# 2026-08-20 上游跟随 DeepSeek 官方 8/17 峰谷计价：
 #   原厂版 deepseek/deepseek-v4-pro-202606 已于 2026-08-18 退役（模型广场 retirement_at，
 #   官方建议迁移 -0813），继续走 -202606 会报错，必须切到 -0813。
 #   -0813 按峰谷计费：闲时 ¥4.5/¥13.5、高峰 ¥9/¥27（¥/1M，见 MODEL_COST_PEAK）。
@@ -81,17 +81,17 @@ UPSTREAM_MODEL_NAME = {
     "glm-5.3-flash": "z-ai/glm-5.3-flash",
 }
 
-# 峰谷计费（2026-08-17 DeepSeek 官方 / 七牛同步生效）：
+# 峰谷计费（2026-08-17 DeepSeek 官方 / 上游同步生效）：
 #   高峰时段：每日 9:00-12:00、14:00-18:00（北京时间），闲时 = 高峰价 5 折。
 #   仅 DeepSeek V4 系列执行；本平台 v4-flash 走无日期别名 deepseek/deepseek-v4-flash
 #   （8/17-8/19 账单实测仍 ¥1/¥2 一口价），不受影响，暂不纳入峰谷。
 PEAK_HOUR_RANGES = ((9, 12), (14, 18))  # [start, end) 小时（北京时间）
 
 MODEL_COST = {
-    # 2026-08-13 定价修复：按七牛官方账单/模型广场实测成本 × ≥1.3 定价，杜绝倒挂
-    # GPT-6 Astra：七牛无公开价（海外模型，官方 $10/$50 = 2.5x Sol），按 Sol 账单成本 ¥34.5/¥207 ×2.5 估算成本 ¥86/¥517，卖 ¥115/¥675（≥1.3x，宁高勿亏）
+    # 2026-08-13 定价修复：按上游官方账单/模型广场实测成本 × ≥1.3 定价，杜绝倒挂
+    # GPT-6 Astra：上游无公开价（海外模型，官方 $10/$50 = 2.5x Sol），按 Sol 账单成本 ¥34.5/¥207 ×2.5 估算成本 ¥86/¥517，卖 ¥115/¥675（≥1.3x，宁高勿亏）
     "openai/gpt-6-astra": (115.0, 675.0),
-    "openai/gpt-5.6-luna": (10.0, 55.0),        # 上游实测 ~¥7/¥42（7月账单；8/30 官方降价七牛未必跟进，按高价成本定价）
+    "openai/gpt-5.6-luna": (10.0, 55.0),        # 上游实测 ~¥7/¥42（7月账单；8/30 官方降价上游未必跟进，按高价成本定价）
     "openai/gpt-5.6-sol": (45.0, 270.0),        # 上游实测 ¥34.3/¥207
     "openai/gpt-5.6-terra": (18.0, 110.0),      # 上游实测 ¥13.8/¥83
     "qwen/qwen3.7-max": (16.0, 48.0),           # 上游 ¥12/¥36
@@ -101,11 +101,11 @@ MODEL_COST = {
     "claude-3-haiku-20240307": (1.5, 6.0),
     "deepseek-v3": (3.0, 11.0),                 # 上游 ¥2/¥8
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
-    # V4 Pro 走七牛 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
+    # V4 Pro 走上游 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
     "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 2026-09-20 按30天实际账单（含缓存与上下文开销）校准，目标≥1.3x
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
-    "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（七牛未公开价，待账单验证）
+    "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
     "glm-5.3": (11.0, 37.0),                    # 上游 ¥8/¥28（与 glm-5.2 同价）
@@ -113,7 +113,7 @@ MODEL_COST = {
     "gemini-3.0-pro-image-preview": (24.0, 130.0),  # 文本输入/文本输出；图片输出见 MODEL_IMAGE_COST
     "qwen/qwen3.8-max": (16.0, 48.0),           # 上游 ¥12/¥36
     "qwen/qwen3.7-plus": (8.0, 32.0),        # 上游 ¥6/¥24
-    "qwen/qwen3.8-flash-next": (1.5, 4.0),   # 上游 ¥1/¥3（七牛广场 2026-09-07 核实）×1.33
+    "qwen/qwen3.8-flash-next": (1.5, 4.0),   # 上游 ¥1/¥3（上游广场 2026-09-07 核实）×1.33
     "anthropic/claude-fable-5": (135.0, 750.0),  # 2026-09-20 按30天实际账单（含缓存创建与未返回用量）校准，目标≥1.3x
     "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
@@ -122,9 +122,9 @@ MODEL_COST = {
     "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
     "moonshotai/kimi-k2.7-code": (9.0, 36.0),   # 上游 ¥6.5/¥27
-    "tencent/hy4-preview": (8.0, 24.0),         # 上游 ¥6/¥18（七牛广场 2026-09-07 核实）×1.33
+    "tencent/hy4-preview": (8.0, 24.0),         # 上游 ¥6/¥18（上游广场 2026-09-07 核实）×1.33
     "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
-    # ── 2026-08-29 新增海外模型（七牛资源包系数换算成本 ×≥1.3；首账单后校准）──
+    # ── 2026-08-29 新增海外模型（上游资源包系数换算成本 ×≥1.3；首账单后校准）──
     "claude-4.7-opus": (45.0, 225.0),           # 成本 ¥34.5/¥172.5
     "claude-4.6-sonnet": (27.0, 135.0),         # 成本 ¥20.7/¥103.5
     "gemini-2.5-pro": (24.0, 141.0),            # 成本 ¥18.0/¥108.0
@@ -151,7 +151,7 @@ MODEL_COST_PEAK = {
 # 私有/内部模型：仍可调用（用户自用），但不在 /models 公开列表中展示
 PRIVATE_MODELS = {"glm-4.6v-flash"}
 
-# 需要 max_completion_tokens 而非 max_tokens 的模型（GPT-6 系列，七牛/OpenAI 新协议）
+# 需要 max_completion_tokens 而非 max_tokens 的模型（GPT-6 系列，上游/OpenAI 新协议）
 MAX_COMPLETION_TOKENS_MODELS = {"openai/gpt-6-astra"}
 
 # 模型展示元数据（单一数据源，前端模型目录/仪表盘/工作台统一从这里拉取）
@@ -237,7 +237,7 @@ def get_headers(provider: str) -> dict:
     return {}
 
 
-# ── DeepSeek 官方兜底（备胎）：七牛失败时自动切换，需配置 DEEPSEEK_API_KEY ──
+# ── DeepSeek 官方兜底（备胎）：上游失败时自动切换，需配置 DEEPSEEK_API_KEY ──
 DEEPSEEK_OFFICIAL_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL_MAP = {
     "deepseek-v3": "deepseek-chat",
@@ -253,7 +253,7 @@ DEEPSEEK_MODEL_MAP = {
 
 
 def _deepseek_fallback(model: str, provider: str):
-    """deepseek 模型在七牛失败时切到官方（返回 (官方模型名, provider, url) 或 None）"""
+    """deepseek 模型在上游失败时切到官方（返回 (官方模型名, provider, url) 或 None）"""
     if provider == "qiniu" and model.startswith("deepseek") and os.getenv("DEEPSEEK_API_KEY"):
         official = DEEPSEEK_MODEL_MAP.get(model)
         if official:
@@ -309,7 +309,7 @@ def _usage_values(usage: dict) -> tuple[int, int, int]:
 async def proxy_request(model: str, messages: list, stream: bool = False, max_tokens: int | None = None,
                         extra_payload: dict | None = None) -> dict:
     """
-    转发请求到上游；deepseek 模型在七牛失败时自动切到 DeepSeek 官方兜底。
+    转发请求到上游；deepseek 模型在上游失败时自动切到 DeepSeek 官方兜底。
     每个上游遇到 SSL/网络/HTTP>=400 错误自动重试。
     """
     import logging

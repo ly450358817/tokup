@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TokUp 七牛账单倒挂核查脚本（每周自动化使用，只读）
-- 拉取七牛官方账单 API（/v3/stat/usage/apikey/cost，week+month）拿到每个模型实际扣费 → 反推有效单价
-- 拉取七牛模型广场 __NEXT_DATA__ 价格表（在售模型刊例价，取最高档防长上下文倒挂）
+TokUp 上游账单倒挂核查脚本（每周自动化使用，只读）
+- 拉取上游官方账单 API（/v3/stat/usage/apikey/cost，week+month）拿到每个模型实际扣费 → 反推有效单价
+- 拉取上游模型广场 __NEXT_DATA__ 价格表（在售模型刊例价，取最高档防长上下文倒挂）
 - 对比本地 MODEL_COST：卖价 < 上游成本 = 倒挂（CRITICAL）；毛利 < 1.3x = 低毛利（WARNING）
 - 自动识别 UPSTREAM_MODEL_NAME（deepseek-v4-pro → 原厂版 -202606）：成本一律按「当前上游」算，避免把切换前历史账单误报
 - 保存快照 scripts/model_snapshots/pricing/YYYYMMDD.json 供历史对比
@@ -32,7 +32,7 @@ QINIU_COST_URL = "https://api.qnaigc.com/v3/stat/usage/apikey/cost"
 QINIU_MODELS_PAGE = "https://www.qiniu.com/ai/models"
 MIN_RELIABLE_TOKENS = 20_000  # 账单费用保留2位小数，样本低于此值反推单价不可靠
 
-# 七牛账单 model_id → tokup key 的显式别名（upstream 映射之外的写法差异）
+# 上游账单 model_id → tokup key 的显式别名（upstream 映射之外的写法差异）
 BILLING_ALIASES = {
     "deepseek/deepseek-v3.2-exp": "deepseek/deepseek-v3.2",
     "deepseek/deepseek-v3.2-exp-thinking": "deepseek/deepseek-v3.2",
@@ -210,14 +210,14 @@ def main():
             return rev_upstream[mid]
         if mid in costs:
             return mid
-        # 七牛账单会把 gpt-5.5 记成 openai/gpt-5.5 等，尝试去常见前缀匹配
+        # 上游账单会把 gpt-5.5 记成 openai/gpt-5.5 等，尝试去常见前缀匹配
         for pre in ("openai/", "anthropic/", "qwen/", "moonshotai/", "z-ai/", "minimax/"):
             if mid.startswith(pre) and mid[len(pre):] in costs:
                 return mid[len(pre):]
         return mid
 
     def plaza_get(up_id, tk):
-        """广场 model_id → 价格字典（flat/offpeak/peak）。七牛广场用 z-ai/glm-5.2 等带前缀 ID，而 tokup 可能发短名。"""
+        """广场 model_id → 价格字典（flat/offpeak/peak）。上游广场用 z-ai/glm-5.2 等带前缀 ID，而 tokup 可能发短名。"""
         cands = [up_id, tk,
                  "z-ai/" + tk, "deepseek/" + tk, "moonshotai/" + tk,
                  "qwen/" + tk, "openai/" + tk, "anthropic/" + tk]
@@ -261,7 +261,7 @@ def main():
     else:
         errs["billing_0"] = "QINIU_API_KEY 缺失（backend/.env）"
 
-    # 把账单按 tokup key 合并（同一 tokup 模型可能对应多个七牛 model_id，如 v4-pro 标准版+原厂版）
+    # 把账单按 tokup key 合并（同一 tokup 模型可能对应多个上游 model_id，如 v4-pro 标准版+原厂版）
     merged = {}
     for mid, e in billing_raw.items():
         tk = to_tokup(mid)
@@ -370,7 +370,7 @@ def main():
         return 1 if issues else 0
 
     print("=" * 62)
-    print(f"TokUp 七牛账单倒挂核查  {today}  (近{BILLING_WINDOW_DAYS}天账单, 最低毛利≥{args.min_margin}x)")
+    print(f"TokUp 上游账单倒挂核查  {today}  (近{BILLING_WINDOW_DAYS}天账单, 最低毛利≥{args.min_margin}x)")
     print("=" * 62)
     for k, v in errs.items():
         print(f"⚠️ {k}: {v}")

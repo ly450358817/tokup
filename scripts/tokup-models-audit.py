@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 TokUp 上游模型审计脚本（每周自动化使用，只读 + 对候选退役模型做一次最小调用实测）
-- 拉取七牛(qnaigc) /v1/models 与 DeepSeek 官方 /models
+- 拉取上游(qnaigc) /v1/models 与 DeepSeek 官方 /models
 - 解析本地 backend/services/ai_service.py 的 MODEL_ROUTES / MODEL_COST
 - 输出：新增模型 / 疑似退役模型（实测确认）/ 建议定价
 - 保存快照到 scripts/model_snapshots/YYYYMMDD.json 供历史对比
@@ -92,7 +92,7 @@ def fetch_upstream(env):
         except Exception as e:
             errs["deepseek"] = f"{type(e).__name__}: {e}"
     else:
-        errs["deepseek"] = "DEEPSEEK_API_KEY 缺失（本地 .env 无，仅七牛对比）"
+        errs["deepseek"] = "DEEPSEEK_API_KEY 缺失（本地 .env 无，仅上游对比）"
     return out, errs
 
 
@@ -222,7 +222,7 @@ def main():
     print("=" * 64)
     print(f"TokUp 上游模型审计  {today}")
     print("=" * 64)
-    print(f"七牛(qnaigc)列表: {len(qiniu_set)} | DeepSeek官方: {len(ds_set)} | TokUp已接入: {len(tokup_set)}")
+    print(f"上游(qnaigc)列表: {len(qiniu_set)} | DeepSeek官方: {len(ds_set)} | TokUp已接入: {len(tokup_set)}")
     for k, v in errs.items():
         print(f"  ⚠ {k}: {v}")
 
@@ -249,7 +249,7 @@ def main():
         print(f"  [~]{m}  ({note})")
 
     print(f"\n💾 快照: {SNAP_DIR}/{today}.json")
-    print("⚠ 七牛 /models 不返回价格，建议价仅为同系列均值估算；接入前请核对真实成本（利润率≥1.3x），避免亏本。")
+    print("⚠ 上游 /models 不返回价格，建议价仅为同系列均值估算；接入前请核对真实成本（利润率≥1.3x），避免亏本。")
 
 
 if __name__ == "__main__":
