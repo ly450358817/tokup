@@ -16,7 +16,7 @@ ISSUES=0
 pass(){ echo "  ✅ $1"; }
 warn(){ echo "  ⚠️  $1"; }
 fail(){ echo "  ❌ $1"; ISSUES=$((ISSUES+1)); }
-SSH(){ ssh -o ConnectTimeout=12 -o StrictHostKeyChecking=no "$HOST" "$@"; }
+SSH(){ ssh -o ConnectTimeout=12 -o ConnectionAttempts=3 -o ServerAliveInterval=5 -o StrictHostKeyChecking=no "$HOST" "$@"; }
 
 echo "============================================================"
 echo "TokUp 全面健康检查  $NOW"
