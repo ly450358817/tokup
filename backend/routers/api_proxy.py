@@ -639,7 +639,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
             if not _gas(user.id, db):
                 return {"success": False, "detail": "余额不足，请先充值"}
     from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
-    _model_t = resolve_model(req.model or "deepseek-v3")
+    _model_t = resolve_model(req.model or "deepseek/deepseek-v4-flash-20260731")
     if _model_t not in MODEL_ROUTES:
         raise HTTPException(status_code=400, detail=f"不支持的模型：{req.model}")
     _sub = get_active_subscription(user.id, db)

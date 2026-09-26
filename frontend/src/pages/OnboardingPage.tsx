@@ -28,7 +28,7 @@ export default function OnboardingPage() {
     try {
       const token = localStorage.getItem('tokup_token') || '';
       const result = await streamTestChat({
-        model: 'deepseek/deepseek-v4-flash',
+        model: 'deepseek/deepseek-v4-flash-20260731',
         messages: [{ role: 'user', content: testInput }],
         token,
         onDelta: (content, reasoning) => {

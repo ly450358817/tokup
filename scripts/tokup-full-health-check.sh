@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # TokUp 全面健康检查（本地 Mac 执行，每周/每日自动化使用）
-# 只读为主 + 一次低成本 chat 冒烟（用管理员现有 key，deepseek-v3）
+# 只读为主 + 一次低成本 chat 冒烟（用管理员现有 key，deepseek/deepseek-v4-flash-20260731）
 # 覆盖：服务/健康接口/磁盘/内存/日志/DB/备份/pending单/API冒烟
 # 2026-09-13: 公网 HTTP 检查改为「在服务器上执行 curl」——本机网络曾被
 #   SNI 层拦截导致 tokup.net 全部请求被重置（误报为站点故障）。
@@ -137,10 +137,10 @@ try:
   print(d[0]["key"] if isinstance(d,list) and d else "")
 except Exception: print("")' 2>/dev/null)
     if [ -n "$key" ]; then
-      CHAT_BODY='{"model":"deepseek-v3","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
+      CHAT_BODY='{"model":"deepseek/deepseek-v4-flash-20260731","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
       chat=$(printf '%s' "$CHAT_BODY" | SSH "curl -s --max-time 45 -H 'Authorization: Bearer $key' -H 'Content-Type: application/json' -d @- '$BASE/api/v1/chat/completions'" 2>/dev/null)
       if echo "$chat" | grep -q '"choices"'; then
-        pass "chat/completions 非流式冒烟（deepseek-v3）"
+        pass "chat/completions 非流式冒烟（deepseek/deepseek-v4-flash-20260731）"
       else
         warn "chat/completions → ${chat:0:140}"
       fi

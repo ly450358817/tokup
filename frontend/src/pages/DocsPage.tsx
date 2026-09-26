@@ -130,7 +130,7 @@ requires_openai_auth = true`;
               </tr>
               <tr>
                 <td className="px-4 py-2.5 text-white/60">模型选择</td>
-                <td className="px-4 py-2.5 font-mono text-emerald-400/80">deepseek/deepseek-v4-flash（快）· gpt-5.5（强）· kimi-k2.6 等，见下方「快模型推荐」</td>
+                <td className="px-4 py-2.5 font-mono text-emerald-400/80">deepseek/deepseek-v4-flash-20260731（快）· gpt-5.5（强）· kimi-k2.6 等，见下方「快模型推荐」</td>
               </tr>
             </tbody>
           </table>
@@ -306,7 +306,7 @@ requires_openai_auth = true`;
           <p className="text-[12px] text-white/40 leading-relaxed mb-3">
             所有软件统一用「<strong className="text-white/70">自定义 / OpenAI 兼容</strong>」类型，地址填{" "}
             <code className="font-mono text-emerald-400">https://tokup.net/v1</code>（或 /api/v1），Key 填 tok- 开头，
-            模型填 <code className="font-mono text-emerald-400">deepseek/deepseek-v4-flash</code>。
+            模型填 <code className="font-mono text-emerald-400">deepseek/deepseek-v4-flash-20260731</code>。
             <strong className="text-amber-400/90">千万别选软件自带的「DeepSeek / OpenAI 官方预设」</strong>，那会请求官方服务器、不认 TokUp 的 Key。
           </p>
           <div className="bg-[#13131D] rounded-xl overflow-hidden">
@@ -372,7 +372,7 @@ requires_openai_auth = true`;
               </thead>
               <tbody>
                 <tr className="border-b border-white/[0.04]">
-                  <td className="px-4 py-2 font-mono text-emerald-400">deepseek/deepseek-v4-flash</td>
+                  <td className="px-4 py-2 font-mono text-emerald-400">deepseek/deepseek-v4-flash-20260731</td>
                   <td className="px-4 py-2 text-white/60">¥1.8 / ¥3.6</td>
                   <td className="px-4 py-2 text-white/60">最快 · 最便宜 · 首选</td>
                 </tr>
@@ -443,7 +443,7 @@ requires_openai_auth = true`;
             <p className="text-[12px] text-white/40">
               八成是选了软件自带的「DeepSeek / OpenAI 官方预设」——它请求的是官方服务器，不认 TokUp 的 tok- Key。
               改用「自定义 / OpenAI 兼容」服务商，地址填 https://tokup.net/v1（或 /api/v1），
-              Key 填 tok- 开头的那个，模型填 deepseek/deepseek-v4-flash 即可。
+              Key 填 tok- 开头的那个，模型填 deepseek/deepseek-v4-flash-20260731 即可。
             </p>
           </div>
           <div>

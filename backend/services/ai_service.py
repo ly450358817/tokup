@@ -41,6 +41,7 @@ MODEL_ROUTES = {
     # DeepSeek → 上游（合规上游）
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4-flash-20260731": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4.1-flash": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
@@ -78,6 +79,8 @@ MODEL_ROUTES = {
 #   内部计费仍按 tokup key deepseek/deepseek-v4-pro，模型名不变。
 UPSTREAM_MODEL_NAME = {
     "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-0813",
+    # V3 已于上游标记 2026-10-09 退役；在退役日前明确走 V3 本体，避免 deepseek-chat 实际解析成 Flash。
+    "deepseek-v3": "deepseek-v3",
     "glm-5.3-flash": "z-ai/glm-5.3-flash",
 }
 
@@ -103,7 +106,8 @@ MODEL_COST = {
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
     # V4 Pro 走上游 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
-    "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 2026-09-20 按30天实际账单（含缓存与上下文开销）校准，目标≥1.3x
+    "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 旧无日期别名：2026-10-25 退役，退役日前维持兼容价
+    "deepseek/deepseek-v4-flash-20260731": (4.0, 12.0),  # 七牛稳定版高峰成本 ¥2/¥8，卖价 ≥1.3x 且与 v4.1 对齐
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
@@ -166,10 +170,11 @@ MODEL_META = {
     "moonshotai/kimi-k3": {"name": "Kimi K3", "provider": "月之暗面", "note": "最新旗舰 · 中国开源", "badge": "New"},
     "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
     "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
-    "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "极致性价比", "badge": ""},
-    "deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash", "provider": "DeepSeek", "note": "新一代高速 · 实验版", "badge": "New"},
-    "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 实验版", "badge": "New"},
-    "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "通用模型", "badge": ""},
+    "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "旧版兼容 · 10月25日退役", "badge": "10/25下线"},
+    "deepseek/deepseek-v4-flash-20260731": {"name": "DeepSeek V4 Flash 0731", "provider": "DeepSeek", "note": "稳定版本 · 推荐迁移", "badge": "New"},
+    "deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash", "provider": "DeepSeek", "note": "新一代高速 · 推荐迁移", "badge": "New"},
+    "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 10月25日退役", "badge": "10/25下线"},
+    "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "旧版兼容 · 10月9日退役", "badge": "10/9下线"},
     "deepseek/deepseek-v3.2": {"name": "DeepSeek V3.2", "provider": "DeepSeek", "note": "达 GPT-5 水平", "badge": "New"},
     "deepseek-r1": {"name": "DeepSeek R1", "provider": "DeepSeek", "note": "深度推理", "badge": ""},
     "qwen/qwen3.7-max": {"name": "Qwen 3.7 Max", "provider": "通义千问", "note": "通义旗舰", "badge": ""},

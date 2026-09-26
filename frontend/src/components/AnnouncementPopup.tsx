@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v23';
+const VERSION = 'v24';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -60,19 +60,18 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📢 Claude 4.5 Sonnet 下线提醒</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📢 DeepSeek 模型退役及迁移提醒</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
-          <p>尊敬的 Tokup·脉充用户，您好：</p>
-          <p>⏰ <span className="text-white/80 font-medium">下线时间：2026 年 9 月 29 日</span>。claude-4.5-sonnet 将于该日退役，此后本平台不再提供该模型的调用服务，请务必在此日期前完成迁移。</p>
-          <p>✅ <span className="text-white/80 font-medium">本次下线不影响站内其他服务</span>：您的 API Key、余额、订阅以及正在使用的其他模型均不受影响，<span className="text-white/80 font-medium">无需担心</span>。仅当您仍在调用 claude-4.5-sonnet 时，才需要在 9 月 29 日前完成迁移。</p>
-          <p>🔄 <span className="text-white/80 font-medium">建议迁移至以下新版 Claude</span>（下方为本站当前可用的 Claude 系列模型，按需切换即可）：</p>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 space-y-1 text-[12px]">
-            <p><span className="text-white/80 font-medium">claude-4.6-sonnet</span>（旗舰 Sonnet）  ¥ 27 / ¥ 135</p>
-            <p><span className="text-white/80 font-medium">claude-4.7-opus</span>（最新旗舰 Opus）  ¥ 45 / ¥ 225</p>
-            <p><span className="text-white/80 font-medium">anthropic/claude-fable-5</span>（最新 Claude）  ¥ 135 / ¥ 750</p>
-            <p className="text-white/40 text-[11px] pt-1">价格为 ¥ / 百万 Token（输入 / 输出）。anthropic/claude-sonnet-5 目前尚未上线，如需可联系运营开通评估。</p>
+          <p>尊敬的用户，您好：</p>
+          <p>上游服务商已通知以下 DeepSeek 模型将退役。您的 API Key、余额和订阅不受影响，仅在调用对应模型时需在截止日前更换模型 ID。</p>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-2 text-[12px]">
+            <p><span className="text-white/85 font-medium">deepseek-v3</span>：<span className="text-amber-300/90">2026-10-09 退役</span><br />建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span></p>
+            <p><span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>：<span className="text-amber-300/90">2026-10-25 退役</span><br />建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span></p>
+            <p><span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-vision-exp</span>：<span className="text-amber-300/90">2026-10-25 退役</span><br />建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span></p>
           </div>
-          <p className="text-white/40 text-[12px] pt-2">Tokup·脉充 AI 大模型推理团队</p>
+          <p>本站已上线稳定版 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span>，价格为 <span className="text-white/85 font-medium">¥4 / ¥12</span>（每百万输入 / 输出 Token）；<span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span> 同价。</p>
+          <p className="text-amber-300/80">请尽快替换模型 ID；上游公告中的部分建议版本已过退役日期，请以本站模型列表中的可用 ID 为准。</p>
+          <p className="text-white/40 text-[12px] pt-1">Tokup·脉充 AI 大模型推理团队</p>
         </div>
         <div className="space-y-2">
           <button
