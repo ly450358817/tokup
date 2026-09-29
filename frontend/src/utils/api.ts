@@ -83,8 +83,3 @@ export const subscriptionApi = {
     api.post(`/subscription/purchase/${planId}`).then((r) => r.data),
   status: () => api.get('/subscription/status').then((r) => r.data),
 };
-
-export const contentWarningApi = {
-  list: () => api.get('/me/warnings').then((r) => r.data),
-  ack: (id: string) => api.post(`/me/warnings/${id}/ack`).then((r) => r.data),
-};

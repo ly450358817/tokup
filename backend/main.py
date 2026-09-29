@@ -15,7 +15,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from database import engine, Base, SessionLocal
 from models import User
-from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, analytics, support, warnings, ws as ws_router
+from routers import auth, dashboard, payment, keys, api_proxy, security, monitor, settings, admin, usage, invite, subscription, analytics, support, ws as ws_router
 from services.security_service import AISecurityMiddleware, ip_tracker
 
 # ── 加载 .env 文件 ──
@@ -128,7 +128,6 @@ app.include_router(invite.router)
 app.include_router(subscription.router)
 app.include_router(analytics.router)
 app.include_router(support.router)
-app.include_router(warnings.router)
 
 
 @app.on_event("startup")

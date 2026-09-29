@@ -153,34 +153,3 @@ class ConversationLog(Base):
 
     user = relationship("User")
     api_key = relationship("ApiKey")
-
-
-class ContentViolation(Base):
-    """内容安全违规记录：在途关键词命中后落库，用于分级处置（警告/限速限额/封 Key）与事后审计。"""
-    __tablename__ = "content_violations"
-
-    id = Column(String, primary_key=True, default=_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True, index=True)
-    model = Column(String, default="")
-    category = Column(String, nullable=False)  # minor | adult | jailbreak
-    severity = Column(String, default="medium")  # high | medium | low
-    matched_keyword = Column(Text, default="")
-    message_snippet = Column(Text, default="")
-    action = Column(String, default="warn")  # warn | restrict | ban
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
-
-
-class UserWarning(Base):
-    """站内内容安全警告：违规后发给用户的弹窗告警，需用户点击「我知道了」确认后才会在下次违规时封 Key。"""
-    __tablename__ = "user_warnings"
-
-    id = Column(String, primary_key=True, default=_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True, index=True)
-    category = Column(String, default="")  # minor | adult | jailbreak
-    title = Column(String, default="")
-    message = Column(Text, default="")
-    acknowledged = Column(Boolean, default=False)
-    acknowledged_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
