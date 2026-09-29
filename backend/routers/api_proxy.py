@@ -216,11 +216,19 @@ def _redact_image_data(value):
 def _log_conversation(db, *, user_id, api_key_id, model, endpoint, request_messages,
                       response_content=None, input_tokens=0, output_tokens=0,
                       cost_cny=0.0, status="success"):
-    """调用存档：仅记录计费/审计元数据，不落用户与模型全文（2026-09-29 隐私合规调整）。"""
+    """对话全量存档：把请求消息与响应内容写入 conversation_logs（失败不影响主流程）"""
     try:
-        # 不再落 request/response 全文，只留调用元数据（model/endpoint/token/cost/status）
-        req_txt = ""
-        resp_txt = ""
+        req_txt = json.dumps(request_messages, ensure_ascii=False, default=str) if request_messages is not None else ""
+        if isinstance(response_content, (dict, list)):
+            resp_txt = json.dumps(_redact_image_data(response_content), ensure_ascii=False, default=str)
+        elif response_content is None:
+            resp_txt = ""
+        else:
+            resp_txt = str(response_content)
+        if len(req_txt) > 1_000_000:
+            req_txt = req_txt[:1_000_000] + "...[截断]"
+        if len(resp_txt) > 1_000_000:
+            resp_txt = resp_txt[:1_000_000] + "...[截断]"
         db.add(ConversationLog(
             user_id=user_id, api_key_id=api_key_id, model=model, endpoint=endpoint,
             request_json=req_txt, response_json=resp_txt,
