@@ -169,3 +169,18 @@ class ContentViolation(Base):
     message_snippet = Column(Text, default="")
     action = Column(String, default="warn")  # warn | restrict | ban
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+
+
+class UserWarning(Base):
+    """站内内容安全警告：违规后发给用户的弹窗告警，需用户点击「我知道了」确认后才会在下次违规时封 Key。"""
+    __tablename__ = "user_warnings"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True, index=True)
+    category = Column(String, default="")  # minor | adult | jailbreak
+    title = Column(String, default="")
+    message = Column(Text, default="")
+    acknowledged = Column(Boolean, default=False)
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
