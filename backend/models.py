@@ -153,3 +153,19 @@ class ConversationLog(Base):
 
     user = relationship("User")
     api_key = relationship("ApiKey")
+
+
+class ContentViolation(Base):
+    """内容安全违规记录：在途关键词命中后落库，用于分级处置（警告/限速限额/封 Key）与事后审计。"""
+    __tablename__ = "content_violations"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    api_key_id = Column(String, ForeignKey("api_keys.id"), nullable=True, index=True)
+    model = Column(String, default="")
+    category = Column(String, nullable=False)  # minor | adult | jailbreak
+    severity = Column(String, default="medium")  # high | medium | low
+    matched_keyword = Column(Text, default="")
+    message_snippet = Column(Text, default="")
+    action = Column(String, default="warn")  # warn | restrict | ban
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
