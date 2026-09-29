@@ -1,7 +1,7 @@
 """TokUp 在途内容安全检测（2026-09-29 新增）
 
 请求进入 api_proxy 时对 messages 做关键词扫描，命中即拦截本次请求（停止生成/传输），
-并做轻量处置：每次违规仅「拦截本次请求 + 落库 content_violations（审计）+ 发站内告警（user_warnings）」，不自动封 Key。
+只覆盖「涉未成年」与「越狱诱导」两类（色情/adult 不再拦截），处置为轻量告警：每次违规仅「拦截本次请求 + 落库 content_violations（审计）+ 发站内告警（user_warnings）」，不自动封 Key。
 （虚构文本/关键词误报风险高，真人相关严重内容由人工判断后手动停用。）
 
 设计要点：
@@ -96,10 +96,8 @@ def scan_messages(messages) -> dict | None:
         if sex_hit:
             return {"category": "minor", "matched": minor_hit[:3] + sex_hit[:3], "snippet": _snippet(text, minor_hit[0])}
 
-    sex_hit = [k for k in STRONG_SEX_TERMS if k in text]
-    if sex_hit:
-        return {"category": "adult", "matched": sex_hit[:6], "snippet": _snippet(text, sex_hit[0])}
-
+    # 注：2026-09-29 起不再单独拦截「色情/adult」（七牛上游对色情无内容拦截，403 实为欠费），
+    # STRONG_SEX_TERMS 仅保留用于「未成年词 + 性词」的 minor 组合判定。
     return None
 
 
