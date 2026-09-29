@@ -14,7 +14,6 @@ from services.token_service import reserve_token, settle_reserved, has_completed
 from services.email_notify import maybe_alert_low_balance
 from services.alert_notify import push_alert_async
 from services.api_key_security import hash_api_key, key_prefix, key_last4, ip_allowed, model_allowed
-from services import content_safety
 
 import os, secrets, time, json, asyncio, uuid
 
@@ -386,9 +385,6 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
     _uid, _kid = _capture_key_identity(api_key)
-    _cs_hit = content_safety.scan_messages(req.messages)
-    if _cs_hit:
-        content_safety.enforce_content_violation(db, api_key, _uid, _kid, model, _cs_hit)
     _initial_balance = _u.token_balance
 
     # 订阅日配额：免费配额仅适用低价模型，配额内用量不扣余额
@@ -850,9 +846,6 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
 
     _u = _ensure_paid(api_key, db)
     _check_key_caps(api_key, db)
-    _cs_hit = content_safety.scan_messages(messages)
-    if _cs_hit:
-        content_safety.enforce_content_violation(db, api_key, _uid, _kid, model, _cs_hit)
     # 订阅日配额：免费配额仅适用低价模型，配额内用量不扣余额
     from services.subscription_service import get_active_subscription, beijing_day_start, today_usage_tokens, model_quota_eligible
     _sub = get_active_subscription(_u.id, db)
