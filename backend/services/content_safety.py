@@ -1,9 +1,8 @@
 """TokUp 在途内容安全检测（2026-09-29 新增）
 
 请求进入 api_proxy 时对 messages 做关键词扫描，命中即拦截本次请求（停止生成/传输），
-并按「站内警告 → 确认后再犯即封 Key」的流程处置：
-- 每次违规：拦截请求 + 落库 content_violations（审计）+ 给用户发一条站内告警（user_warnings，未确认）。
-- 用户在网站弹窗点击「我知道了」后（acknowledged=1），再次违规 → 停用该 Key。
+并做轻量处置：每次违规仅「拦截本次请求 + 落库 content_violations（审计）+ 发站内告警（user_warnings）」，不自动封 Key。
+（虚构文本/关键词误报风险高，真人相关严重内容由人工判断后手动停用。）
 
 设计要点：
 1. 不向管理员推送告警（用户要求）；违规记录只被动落库，管理员可事后在后台/DB 查看。
@@ -16,7 +15,6 @@ import os
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import func
 
 from models import ApiKey, ContentViolation, UserWarning
 
@@ -110,49 +108,34 @@ def _category_label(category: str) -> str:
 
 
 def enforce_content_violation(db, api_key: ApiKey, user_id: str, key_id: str, model: str, hit: dict) -> None:
-    """拦截本次请求 + 站内告警；若该用户已确认过告警则直接封 Key。不向管理员推送。"""
+    """拦截本次请求 + 站内告警。不自动封 Key：虚构文本/关键词误报风险高，真人相关严重内容由人工判断后手动停用。"""
     category = hit["category"]
     matched = ",".join(hit["matched"][:6])
     snippet = hit["snippet"][:400]
     label = _category_label(category)
 
-    # 该用户是否已有「已确认」的告警：有则说明此前已点过「我知道了」，再犯即封
-    already_acked = (
+    # 同一条未确认告警只发一次，避免刷屏
+    existing = (
         db.query(UserWarning.id)
-        .filter(UserWarning.user_id == user_id, UserWarning.acknowledged == True)  # noqa: E712
+        .filter(UserWarning.user_id == user_id, UserWarning.acknowledged == False)  # noqa: E712
         .first()
-    ) is not None
-
-    if already_acked:
-        api_key.is_active = False
-        action = "ban"
-        status = 451 if category == "minor" else 403
-        detail = f"您已确认过内容安全告警，再次触发（{label}），该 API Key 已被停用。如需申诉请联系客服。"
-    else:
-        action = "warn"
-        status = 451 if category == "minor" else 400
-        # 同一条未确认告警只发一次，避免刷屏
-        existing = (
-            db.query(UserWarning.id)
-            .filter(UserWarning.user_id == user_id, UserWarning.acknowledged == False)  # noqa: E712
-            .first()
-        )
-        if not existing:
-            db.add(UserWarning(
-                user_id=user_id, api_key_id=key_id, category=category,
-                title="内容安全告警",
-                message=f"您的调用内容触发安全策略（{label}）。已拦截本次请求。请确认并停止发送违规内容；若再次触发，您的 API Key 将被停用。",
-                acknowledged=False,
-                created_at=datetime.now(timezone.utc),
-            ))
-        detail = f"内容违反使用条款（{label}），已拦截。请登录网站查看站内告警并点击「我知道了」。"
+    )
+    if not existing:
+        db.add(UserWarning(
+            user_id=user_id, api_key_id=key_id, category=category,
+            title="内容安全告警",
+            message=f"您的调用内容触发安全策略（{label}），已拦截本次请求。请停止发送违规内容，谢谢配合。",
+            acknowledged=False,
+            created_at=datetime.now(timezone.utc),
+        ))
+    detail = f"内容违反使用条款（{label}），已拦截本次请求。"
 
     db.add(ContentViolation(
         user_id=user_id, api_key_id=key_id, model=model,
         category=category,
         severity=("high" if category == "minor" else "medium" if category == "adult" else "low"),
-        matched_keyword=matched, message_snippet=snippet, action=action,
+        matched_keyword=matched, message_snippet=snippet, action="warn",
         created_at=datetime.now(timezone.utc),
     ))
     db.commit()
-    raise HTTPException(status_code=status, detail=detail)
+    raise HTTPException(status_code=451 if category == "minor" else 400, detail=detail)

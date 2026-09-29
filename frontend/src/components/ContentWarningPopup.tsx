@@ -51,7 +51,7 @@ export default function ContentWarningPopup() {
         <h2 className="text-[18px] font-semibold text-white text-center mb-3">{current.title || '内容安全告警'}</h2>
         <div className="text-[13px] text-white/60 leading-relaxed mb-6 px-1">
           <p>{current.message}</p>
-          <p className="text-amber-300/80 mt-3 text-[12px]">再次触发违规内容，您的 API Key 将被停用。</p>
+          <p className="text-white/40 mt-3 text-[12px]">请停止发送违规内容，以免影响正常使用。</p>
         </div>
         <button
           type="button"
