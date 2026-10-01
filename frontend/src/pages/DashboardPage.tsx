@@ -27,6 +27,7 @@ const DEFAULT_MODELS = [
   { id: 'openai/gpt-5-mini', label: 'GPT-5-mini', provider: 'OpenAI', cost: '¥3/1M input' },
   { id: 'gpt-oss-120b', label: 'GPT-OSS 120B', provider: 'OpenAI', cost: '¥2/1M input' },
   { id: 'anthropic/claude-fable-5', label: 'Claude Fable 5', provider: 'Anthropic', cost: '¥135/1M input' },
+  { id: 'claude-opus-5-5', label: 'Claude Opus 5.5', provider: 'Anthropic', cost: '¥36/1M input' },
   { id: 'claude-4.7-opus', label: 'Claude 4.7 Opus', provider: 'Anthropic', cost: '¥45/1M input' },
   { id: 'claude-4.6-sonnet', label: 'Claude 4.6 Sonnet', provider: 'Anthropic', cost: '¥27/1M input' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google', cost: '¥24/1M input' },

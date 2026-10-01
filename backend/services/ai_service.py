@@ -32,6 +32,7 @@ MODEL_ROUTES = {
     "gpt-oss-120b": ("qiniu", QINIU_ENDPOINT),
     # Anthropic（上游）
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
+    "claude-opus-5-5": ("qiniu", QINIU_ENDPOINT),
     "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
     "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
     # Google（上游）
@@ -129,6 +130,7 @@ MODEL_COST = {
     "tencent/hy4-preview": (8.0, 24.0),         # 上游 ¥6/¥18（上游广场 2026-09-07 核实）×1.33
     "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
     # ── 2026-08-29 新增海外模型（上游资源包系数换算成本 ×≥1.3；首账单后校准）──
+    "claude-opus-5-5": (36.0, 180.0),            # 官方 $4/$20≈¥27.6/¥138（×6.9）×1.3；待首账单校准
     "claude-4.7-opus": (45.0, 225.0),           # 成本 ¥34.5/¥172.5
     "claude-4.6-sonnet": (27.0, 135.0),         # 成本 ¥20.7/¥103.5
     "gemini-2.5-pro": (24.0, 141.0),            # 成本 ¥18.0/¥108.0
@@ -193,6 +195,7 @@ MODEL_META = {
     "gemini-3.0-pro-image-preview": {"name": "Gemini 3.0 Pro Image", "provider": "Google", "note": "图片生成 · 1K/2K/4K", "badge": "New"},
     "glm-4.6v-flash": {"name": "GLM-4.6V Flash", "provider": "智谱AI", "note": "视觉 · 免费", "badge": "Free"},
     # ── 2026-08-29 新增海外模型 ──
+    "claude-opus-5-5": {"name": "Claude Opus 5.5", "provider": "Anthropic", "note": "最新旗舰 · 5.5 系列", "badge": "New"},
     "claude-4.7-opus": {"name": "Claude 4.7 Opus", "provider": "Anthropic", "note": "最新旗舰 Opus", "badge": "New"},
     "claude-4.6-sonnet": {"name": "Claude 4.6 Sonnet", "provider": "Anthropic", "note": "旗舰 Sonnet", "badge": "New"},
     "gemini-2.5-pro": {"name": "Gemini 2.5 Pro", "provider": "Google", "note": "谷歌旗舰", "badge": "New"},

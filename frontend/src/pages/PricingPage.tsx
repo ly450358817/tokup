@@ -25,6 +25,7 @@ const MODELS = [
   { id: 'openai/gpt-5-mini', name: 'GPT-5-mini', provider: 'OpenAI', input: '¥3.0', output: '¥19', badge: 'New', note: '轻量快速' },
   { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', input: '¥2.0', output: '¥8.0', badge: 'New', note: '开源高性价比' },
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥135', output: '¥750', badge: 'New', note: '最新 Claude' },
+  { id: 'claude-opus-5-5', name: 'Claude Opus 5.5', provider: 'Anthropic', input: '¥36', output: '¥180', badge: 'New', note: '最新旗舰 · 5.5 系列' },
   { id: 'claude-4.7-opus', name: 'Claude 4.7 Opus', provider: 'Anthropic', input: '¥45', output: '¥225', badge: 'New', note: '最新旗舰 Opus' },
   { id: 'claude-4.6-sonnet', name: 'Claude 4.6 Sonnet', provider: 'Anthropic', input: '¥27', output: '¥135', badge: 'New', note: '旗舰 Sonnet' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥24', output: '¥141', badge: 'New', note: '谷歌旗舰' },
