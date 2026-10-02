@@ -181,12 +181,50 @@ def _capture_key_identity(api_key):
     return api_key.user_id, api_key.id
 
 
+# 单次请求输出上限（token）：防止客户端传超大 max_tokens 让预扣估算失真、
+# 或流式漏传导致上游按默认上限无界生成，最终由平台倒贴。
+# 可用环境变量 MAX_REQUEST_OUTPUT_TOKENS 覆盖；<=0 表示不限制（不建议）。
+DEFAULT_MAX_REQUEST_OUTPUT_TOKENS = 65536
+# 未指定 max_tokens 时预扣预留的输出量（注意：上游仍按其默认上限生成）
+DEFAULT_OUTPUT_RESERVE_TOKENS = 16384
+
+
+def _max_request_output_tokens() -> int:
+    try:
+        return int(os.getenv("MAX_REQUEST_OUTPUT_TOKENS", str(DEFAULT_MAX_REQUEST_OUTPUT_TOKENS)))
+    except (TypeError, ValueError):
+        return DEFAULT_MAX_REQUEST_OUTPUT_TOKENS
+
+
+def effective_max_tokens(requested: int | None) -> int | None:
+    """把客户端请求的输出上限夹到平台硬上限内；未指定/非法返回 None（沿用上游默认）。"""
+    if requested is None:
+        return None
+    try:
+        value = int(requested)
+    except (TypeError, ValueError):
+        return None
+    if value <= 0:
+        return None
+    cap = _max_request_output_tokens()
+    return min(value, cap) if cap > 0 else value
+
+
+def _default_output_reserve() -> int:
+    try:
+        return int(os.getenv("DEFAULT_OUTPUT_RESERVE_TOKENS", str(DEFAULT_OUTPUT_RESERVE_TOKENS)))
+    except (TypeError, ValueError):
+        return DEFAULT_OUTPUT_RESERVE_TOKENS
+
+
 def estimate_request_cost(model: str, messages: list, max_tokens: int | None = None,
                           image_config: dict | None = None) -> int:
-    """预扣估算：文本按字符数；图片模型按分辨率预留图片 token，余额不足直接拒绝。"""
+    """预扣估算：文本按字符数；图片模型按分辨率预留图片 token，余额不足直接拒绝。
+    输出按「实际会发给上游的上限」计算（不再硬封顶 16384），未指定时用 DEFAULT_OUTPUT_RESERVE_TOKENS。"""
     try:
         est_input = sum(len(str(m.get("content", ""))) for m in messages) or 1
-        est_output = min(int(max_tokens or 0), 16384) if (max_tokens or 0) > 0 else 4096
+        _eff = effective_max_tokens(max_tokens)
+        est_output = _eff if _eff is not None else max(1, _default_output_reserve())
         image_tokens = 0
         if model in MODEL_IMAGE_COST:
             size = str((image_config or {}).get("image_size") or "1K").upper()
@@ -404,7 +442,8 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     if _sub and _eligible:
         _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(model, req.messages, req.max_tokens or req.max_completion_tokens, req.image_config)
+    _eff_max_tokens = effective_max_tokens(req.max_tokens or req.max_completion_tokens)
+    _need = estimate_request_cost(model, req.messages, _eff_max_tokens, req.image_config)
     _need_balance = max(0, _need - _quota_remaining)
     # 2026-08-22 管理员免扣费：管理员调用（含看图/测试）不预扣、不结算扣费，仅记录用量
     _admin_free = bool(getattr(_u, "is_admin", False))
@@ -488,7 +527,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
                         logging.getLogger("tokup.payment").warning("流式结算失败: model=%s err=%s", model, _se)
 
                 try:
-                    async for _chunk in _psr(model, _messages, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
+                    async for _chunk in _psr(model, _messages, max_tokens=_eff_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
                         if isinstance(_chunk, bytes):
                             if _chunk.startswith(b"__USAGE__:"):
                                 try:
@@ -561,7 +600,7 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
     _res = reserve_token(_uid, _need_balance, db, f"API预扣: {model}")
     if not _res["success"]:
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
-    _max_tokens = req.max_tokens or req.max_completion_tokens
+    _max_tokens = _eff_max_tokens
     _t0 = time.monotonic()
     result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
     _latency = int((time.monotonic() - _t0) * 1000)
@@ -649,7 +688,8 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
     if _sub and _eligible:
         _quota_used = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(_model_t, req.messages, req.max_tokens or req.max_completion_tokens, req.image_config)
+    _eff_max_tokens = effective_max_tokens(req.max_tokens or req.max_completion_tokens)
+    _need = estimate_request_cost(_model_t, req.messages, _eff_max_tokens, req.image_config)
     _need_balance = max(0, _need - _quota_remaining)
     _admin_free = bool(getattr(user, "is_admin", False))
     if _admin_free:
@@ -723,7 +763,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
                         _logging.getLogger("tokup.payment").warning("流式测试结算失败: model=%s err=%s", model, _se)
 
                 try:
-                    async for _chunk in _psr(model, req.messages, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
+                    async for _chunk in _psr(model, req.messages, max_tokens=_eff_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None)):
                         if isinstance(_chunk, bytes):
                             if _chunk.startswith(b"__USAGE__:"):
                                 try:
@@ -787,7 +827,7 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
             settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
             return {"success": False, "detail": str(e)}
     _t0 = time.monotonic()
-    result = await proxy_request(model, req.messages, False, extra_payload=({"image_config": req.image_config} if req.image_config else None))
+    result = await proxy_request(model, req.messages, False, max_tokens=_eff_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
     _latency = int((time.monotonic() - _t0) * 1000)
     if "error" in result:
         _log_conversation(db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
@@ -863,7 +903,8 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
     if _sub and _eligible:
         _quota_used = today_usage_tokens(_u.id, db, _day_start, eligible_only=True)
         _quota_remaining = max(0.0, (_sub.daily_limit or 0) - _quota_used)
-    _need = estimate_request_cost(model, messages, req.max_output_tokens)
+    _eff_max_tokens = effective_max_tokens(req.max_output_tokens)
+    _need = estimate_request_cost(model, messages, _eff_max_tokens)
     _need_balance = max(0, _need - _quota_remaining)
     _admin_free = bool(getattr(_u, "is_admin", False))
     if _admin_free:
@@ -964,7 +1005,7 @@ async def responses_api(req: ResponseReq, api_key: ApiKey = Depends(authenticate
             nonlocal _usage_data, _content_text, _reasoning_text, _msg_added, _rs_added, _rs_idx, _msg_idx, _tool_items
             _tool_state = {}   # index -> {fc_id, call_id, name, args, added, out_idx}
             try:
-                async for _chunk in _psr(model, messages, max_tokens=req.max_output_tokens,
+                async for _chunk in _psr(model, messages, max_tokens=_eff_max_tokens,
                                          tools=_tools_legacy, tool_choice=_tool_choice):
                     if isinstance(_chunk, bytes):
                         if _chunk.startswith(b"__USAGE__:"):

@@ -140,6 +140,11 @@ def settle_reserved(user_id: str, reserved: float, actual: float, db: Session, d
         return {"success": True, "balance": get_balance(user_id, db), "refunded": reserved, "deducted": 0}
     balance = get_balance(user_id, db)
     if actual > balance:
+        # 预扣估算不足：差额由平台承担，必须留痕以便发现异常大额调用
+        import logging
+        logging.getLogger("tokup.payment").warning(
+            "预扣不足，按剩余余额结算（平台承担差额） user=%s 应付=%.2f 实收=%.2f 差额=%.2f desc=%s",
+            user_id, actual, balance, actual - balance, description)
         actual = max(balance, 0)  # 极端超支时收走全部余额，避免倒贴
     if actual <= 0:
         return {"success": True, "balance": 0.0, "refunded": reserved, "deducted": 0}
