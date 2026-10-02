@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v25';
+const VERSION = 'v26';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -60,17 +60,25 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">🎉 全新上线 Claude Opus 5.5</h2>
-        <div className="text-[13px] text-white/50 leading-relaxed space-y-2 mb-6">
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📢 模型上新与退役通知</h2>
+        <div className="text-[13px] text-white/50 leading-relaxed space-y-3 mb-6">
           <p>尊敬的用户，您好：</p>
-          <p>Anthropic 最新旗舰 <span className="text-white/85 font-medium">Claude Opus 5.5</span> 已正式上线。</p>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-2 text-[12px]">
-            <p><span className="text-white/85 font-medium">模型 ID</span>：<span className="text-emerald-300/90">claude-opus-5-5</span></p>
-            <p><span className="text-white/85 font-medium">价格</span>：¥36 / ¥180（每百万输入 / 输出 Token）</p>
-            <p><span className="text-white/85 font-medium">定位</span>：旗舰级复杂推理 · 编码 · Agent 任务</p>
-            <p><span className="text-white/85 font-medium">优势</span>：性能对标 Claude Fable 5.1，运行成本比 Opus 5 低 40%</p>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
+            <p className="text-white/85 font-medium">① Claude Opus 5.5 已上线</p>
+            <p>模型 ID：<span className="text-emerald-300/90">claude-opus-5-5</span></p>
+            <p>价格：¥36 / ¥180（每百万输入 / 输出 Token）</p>
+            <p>定位：旗舰级复杂推理 · 编码 · Agent 任务</p>
           </div>
-          <p>原有模型不受影响，API Key、余额与订阅均正常。</p>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
+            <p className="text-white/85 font-medium">② deepseek-v3 即将退役</p>
+            <p>本平台将于 <span className="text-amber-300/90">2026-10-09</span> 起不再提供 <span className="text-white/85 font-medium">deepseek-v3</span>。</p>
+            <p>建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span>，均为 ¥4 / ¥12（每百万输入 / 输出 Token）。</p>
+            <p>请在截止日前更换模型 ID。</p>
+          </div>
+
+          <p>您的 API Key、余额与订阅均不受影响。</p>
           <p className="text-white/40 text-[12px] pt-1">Tokup·脉充 AI 大模型推理团队</p>
         </div>
         <div className="space-y-2">
