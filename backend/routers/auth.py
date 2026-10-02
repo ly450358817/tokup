@@ -89,6 +89,27 @@ def _get_client_ip(request):
     if request.client:
         return request.client.host or "unknown"
     return "unknown"
+def _is_automation_login(request) -> bool:
+    """判断是否为本机自动化巡检的登录（curl 从服务器自身发起）。
+    两个条件必须同时满足，避免弱化安全告警：
+      1) 来源 IP 在 ADMIN_LOGIN_ALERT_EXEMPT_IPS 白名单内（默认仅本机 + 生产服务器自身 IP）
+      2) User-Agent 是脚本类客户端（curl/wget/python/httpx/go）
+    真人浏览器登录（Mozilla UA）或异地 IP 一律照常推送。"""
+    # 只信 Cloudflare 写入的 cf-connecting-ip；没有该头（可能绕过 CDN 直连源站并伪造 XFF）
+    # 一律不豁免 —— 失败方向是"多推一条告警"，不会漏报。
+    cf_ip = (request.headers.get("cf-connecting-ip") or "").strip()
+    if not cf_ip:
+        return False
+    raw = os.getenv("ADMIN_LOGIN_ALERT_EXEMPT_IPS", "127.0.0.1,::1,101.32.189.59")
+    exempt = {x.strip() for x in raw.split(",") if x.strip()}
+    if cf_ip not in exempt:
+        return False
+    ua = (request.headers.get("user-agent") or "").lower()
+    return any(k in ua for k in (
+        "curl", "wget", "python-requests", "python-urllib", "httpx", "go-http-client",
+    ))
+
+
 def _validate_password(password: str):
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="密码至少需要 8 位")
@@ -222,7 +243,7 @@ def login(req: LoginReq, request: Request, db: Session = Depends(get_db)):
             )
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
     _clear_auth_fails(_auth_key)
-    if user.is_admin:
+    if user.is_admin and not _is_automation_login(request):
         push_alert_async(
             "TokUp 管理员登录成功",
             f"邮箱: {user.email}\nIP: {_get_client_ip(request)}\nUA: {request.headers.get('user-agent','')[:180]}",
