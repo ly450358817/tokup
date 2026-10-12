@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v27';
+const VERSION = 'v28';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -72,11 +72,18 @@ export default function AnnouncementPopup() {
           </div>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">② 模型退役时间表</p>
+            <p className="text-white/85 font-medium">② Gemini 3.5 系列已上线</p>
+            <p>· <span className="text-emerald-300/90">gemini-3.5-flash</span>：¥4 / ¥30（每百万输入 / 输出 Token）</p>
+            <p>· <span className="text-emerald-300/90">gemini-3.5-flash-lite</span>：¥1.8 / ¥12（每百万输入 / 输出 Token）</p>
+            <p>定位：新一代高速模型，原 Gemini 2.5 用户建议优先迁移</p>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
+            <p className="text-white/85 font-medium">③ 模型退役时间表</p>
             <p>· <span className="text-white/85 font-medium">deepseek-v3</span>：本平台将于 <span className="text-amber-300/90">2026-10-09</span> 起不再提供。</p>
             <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span>。</p>
             <p>· <span className="text-white/85 font-medium">gemini-2.5-flash</span>、<span className="text-white/85 font-medium">gemini-2.5-pro</span>：本平台将于 <span className="text-amber-300/90">2026-10-20</span> 起不再提供。</p>
-            <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>（¥1.8 / ¥3.6）或 <span className="text-white/85 font-medium">qwen/qwen3.8-flash-next</span>（¥1.5 / ¥4.0）。</p>
+            <p>　建议迁移至 <span className="text-white/85 font-medium">gemini-3.5-flash</span> 或 <span className="text-white/85 font-medium">gemini-3.5-flash-lite</span>（本平台已上线），或 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>（¥1.8 / ¥3.6）。</p>
             <p>以上价格单位均为 ¥ / 百万 Token（输入 / 输出）。请在截止日前更换模型 ID。</p>
           </div>
 

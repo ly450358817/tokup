@@ -43,6 +43,8 @@ const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'claude-4.6-sonnet', name: 'Claude 4.6 Sonnet', provider: 'Anthropic', input: '¥27', output: '¥135', note: '旗舰 Sonnet', badge: 'New' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', input: '¥24', output: '¥141', note: '谷歌旗舰', badge: 'New' },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', input: '¥3.0', output: '¥23', note: '谷歌高效', badge: '' },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', provider: 'Google', input: '¥4.0', output: '¥30', note: '新一代高效 · 2.5 迁移推荐', badge: 'New' },
+  { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', input: '¥1.8', output: '¥12', note: '超低成本 · 高速', badge: 'New' },
   { id: 'gemini-3.0-pro-image-preview', name: 'Gemini 3.0 Pro Image', provider: 'Google', input: '¥24', output: '¥130 + 图片', note: '图片输出 ¥1300/M · 1K单图约 ¥1.5', badge: 'New' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥6 / ¥12', output: '¥18 / ¥36', note: '旗舰模型 · 峰谷计价', badge: 'Hot' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.8', output: '¥3.6', note: '旧版兼容 · 请尽快迁移', badge: '10/25下线' },

@@ -32,6 +32,8 @@ const DEFAULT_MODELS = [
   { id: 'claude-4.6-sonnet', label: 'Claude 4.6 Sonnet', provider: 'Anthropic', cost: '¥27/1M input' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google', cost: '¥24/1M input' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google', cost: '¥3/1M input' },
+  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'Google', cost: '¥4/1M input' },
+  { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', provider: 'Google', cost: '¥1.8/1M input' },
   { id: 'gemini-3.0-pro-image-preview', label: 'Gemini 3.0 Pro Image', provider: 'Google', cost: '¥24/1M input · 图片另计' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥6~¥12/1M input (闲时~高峰)' },
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥1.8/1M input · 10/25下线' },
