@@ -279,6 +279,29 @@ def _log_conversation(db, *, user_id, api_key_id, model, endpoint, request_messa
         logging.getLogger("tokup.log").exception("对话存档失败: model=%s", model)
 
 
+# ── Codex / OpenAI 客户端常见模型 ID 兼容别名 ──
+# 用户把官方 Codex（CLI/Desktop）接到本平台时，Codex 会用它在配置/目录里声明的模型 ID 发请求；
+# 若该 ID 不是本平台在售模型，过去会直接 400「不支持的模型」。这里做同家族就近映射，让 Codex 开箱可用。
+# 注意：仅当请求的 model 未命中 MODEL_ROUTES / 前缀匹配时才会用到；对任何已支持模型零影响。
+# 每次命中都会写一条 tokup.compat 日志，便于核对（不会静默改变行为）。
+CODEX_MODEL_ALIASES = {
+    # 编码专用（Codex 家族）→ 本平台 GPT-5.x 高档
+    "gpt-5-codex": "openai/gpt-5.6-sol",
+    "gpt-5.1-codex": "openai/gpt-5.6-sol",
+    "gpt-5.2-codex": "openai/gpt-5.6-sol",
+    "gpt-5-codex-max": "openai/gpt-5.6-sol",
+    "gpt-5.1-codex-max": "openai/gpt-5.6-sol",
+    # 轻量 / mini → 本平台 OpenAI mini
+    "codex-mini": "openai/gpt-5-mini",
+    "codex-mini-latest": "openai/gpt-5-mini",
+    "gpt-5-codex-mini": "openai/gpt-5-mini",
+    "gpt-5.1-codex-mini": "openai/gpt-5-mini",
+    # o 系列（推理）就近映射
+    "o3": "openai/gpt-5.6-sol",
+    "o4-mini": "openai/gpt-5-mini",
+}
+
+
 def resolve_model(model: str) -> str:
     if model in MODEL_ROUTES:
         return model
@@ -286,6 +309,21 @@ def resolve_model(model: str) -> str:
         prefixed = prefix + model
         if prefixed in MODEL_ROUTES:
             return prefixed
+    # 未命中：尝试 Codex/OpenAI 兼容别名（仅此处生效，不影响上面任何已支持模型）
+    alias = CODEX_MODEL_ALIASES.get(str(model).strip().lower())
+    if alias:
+        try:
+            import logging as _logging
+            _logging.getLogger("tokup.compat").info("model alias hit: %r -> %s", model, alias)
+        except Exception:
+            pass
+        return alias
+    # 仍未知：记一条日志（便于定位客户用的模型 ID），返回原名 → 上层照旧 400
+    try:
+        import logging as _logging
+        _logging.getLogger("tokup.compat").warning("unknown model requested: %r (not in MODEL_ROUTES)", model)
+    except Exception:
+        pass
     return model
 
 
