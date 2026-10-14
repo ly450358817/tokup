@@ -221,6 +221,18 @@ def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
                 if (referrer.paid_invite_count or 0) < 5:
                     referrer.token_balance += 100
                     referrer.paid_invite_count = (referrer.paid_invite_count or 0) + 1
+                    # 补记流水（原来只加余额不记账，导致赠送不可审计、账实不符）。
+                    # 沿用提成惯例：type=recharge 但不设 payment_method，
+                    # 这样既能在交易页显示为 +，又不会被 has_completed_recharge 当成真实充值解锁 API。
+                    db.add(Transaction(
+                        user_id=referrer.id,
+                        amount=1.0,
+                        token_amount=100,
+                        type="recharge",
+                        status="completed",
+                        description="邀请奖励（好友注册，满 5 次上限）",
+                        created_at=datetime.now(timezone.utc),
+                    ))
             # 被邀请人注册不再赠送 token（避免白嫖）
     
     db.commit()
