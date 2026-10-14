@@ -36,7 +36,7 @@ export default function TransactionsPage() {
       new Date(tx.created_at).toISOString().split('T')[0],
       tx.type,
       tx.description || '',
-      (tx.type === 'recharge' ? '+' : '-') + Math.abs(tx.amount || tx.token_amount / 100).toFixed(2),
+      (tx.type === 'recharge' || tx.type === 'correction' || tx.type === 'refund' ? '+' : '-') + Math.abs(tx.amount || tx.token_amount / 100).toFixed(2),
       tx.status,
     ]);
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -127,14 +127,14 @@ export default function TransactionsPage() {
               <div>
                 <p className="text-[13px] text-white/70">{tx.description || tx.type}</p>
                 <p className="text-[10px] text-white/30 mt-0.5">
-                  {tx.type === 'recharge' ? 'Recharge' : tx.type === 'consume' ? 'Usage' : tx.type}
+                  {tx.type === 'recharge' ? 'Recharge' : tx.type === 'consume' ? 'Usage' : tx.type === 'correction' ? 'Balance correction' : tx.type}
                   {' · '}{new Date(tx.created_at).toLocaleDateString()}
                 </p>
               </div>
               <span className={`text-[14px] font-medium ${
-                tx.type === 'recharge' ? 'text-emerald-400' : 'text-red-400'
+                (tx.type === 'recharge' || tx.type === 'correction' || tx.type === 'refund') ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {tx.type === 'recharge' ? '+' : '-'}¥{Math.abs(tx.amount || tx.token_amount / 100).toFixed(2)}
+                {(tx.type === 'recharge' || tx.type === 'correction' || tx.type === 'refund') ? '+' : '-'}¥{Math.abs(tx.amount || tx.token_amount / 100).toFixed(2)}
               </span>
               {tx.type === 'recharge' && tx.status === 'completed' && (
                 <button
