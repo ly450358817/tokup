@@ -124,12 +124,20 @@ fi
 # 5) 余额对账（每日 04:00 一次，零 token）
 #    应有余额 = 累计充值*100 - 已结算消费*100；低于该值即说明有预扣没退回（2026-10-14 修过一次）
 if [ "${TOKUP_BALCHK_FORCE:-0}" = "1" ] || { [ "$(date +%H)" = "${TOKUP_BALCHK_HOUR:-04}" ] && [ "$(date +%M)" = "00" ]; }; then
+  # 口径：以「已完成充值流水」为准（total_recharged 字段历史上多处未维护，不可靠），
+  # 并排除 system-correction 的修正流水（否则会把修正重复计成新入账）。
+  # 邀请奖励/手动发放会体现为"余额多于账面"，方向相反，不在此告警。
   BALCHK=$(sqlite3 /opt/tokup/backend/tokup.db "
-    WITH calc AS (
+    WITH c AS (
       SELECT u.id,
-        (COALESCE(u.total_recharged,0)*100 - COALESCE((SELECT SUM(t.amount)*100 FROM transactions t WHERE t.user_id=u.id AND t.type='consume'),0)) - u.token_balance AS d
+        (SELECT COALESCE(SUM(t.amount)*100,0) FROM transactions t
+           WHERE t.user_id=u.id AND t.type='recharge' AND t.status='completed'
+             AND COALESCE(t.payment_method,'')<>'system-correction')
+        - (SELECT COALESCE(SUM(t.amount)*100,0) FROM transactions t
+           WHERE t.user_id=u.id AND t.type='consume')
+        - u.token_balance AS d
       FROM users u WHERE u.is_admin=0
-    ) SELECT COUNT(*), COALESCE(ROUND(SUM(d)),0) FROM calc WHERE d > 5;" 2>/dev/null)
+    ) SELECT COUNT(*), COALESCE(ROUND(SUM(d)),0) FROM c WHERE d > 5;" 2>/dev/null)
   BCN=$(echo "$BALCHK" | cut -d'|' -f1)
   BSUM=$(echo "$BALCHK" | cut -d'|' -f2)
   case "$BSUM" in ''|*[!0-9-]*) BSUM=0 ;; esac
