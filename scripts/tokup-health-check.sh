@@ -4,6 +4,7 @@
 # 测试用覆盖（设置 TOKUP_HEALTH_LOG 或 TOKUP_HEALTH_FAIL 时不会触发推送）：
 #   TOKUP_HEALTH_LOG TOKUP_HEALTH_FAIL TOKUP_FORCE_MODEL_PROBE TOKUP_PROBE_MODELS(或TOKUP_PROBE_MODEL)
 #   TOKUP_MODEL_PROBE_EVERY_MIN TOKUP_DISK_WARN TOKUP_DISK_CRIT TOKUP_PROBE_FAIL_STREAK
+#   TOKUP_BALCHK_FORCE(测试用) TOKUP_BALCHK_HOUR TOKUP_BALCHK_THRESHOLD_FEN
 LOG="${TOKUP_HEALTH_LOG:-/var/log/tokup-health.log}"
 FAIL="${TOKUP_HEALTH_FAIL:-/var/log/tokup-health.fail}"
 DISK_WARN="${TOKUP_DISK_WARN:-85}"     # 85% 起：只记录
@@ -117,6 +118,24 @@ if [ "$due" = "1" ]; then
         fi
       fi
     fi
+  fi
+fi
+
+# 5) 余额对账（每日 04:00 一次，零 token）
+#    应有余额 = 累计充值*100 - 已结算消费*100；低于该值即说明有预扣没退回（2026-10-14 修过一次）
+if [ "${TOKUP_BALCHK_FORCE:-0}" = "1" ] || { [ "$(date +%H)" = "${TOKUP_BALCHK_HOUR:-04}" ] && [ "$(date +%M)" = "00" ]; }; then
+  BALCHK=$(sqlite3 /opt/tokup/backend/tokup.db "
+    WITH calc AS (
+      SELECT u.id,
+        (COALESCE(u.total_recharged,0)*100 - COALESCE((SELECT SUM(t.amount)*100 FROM transactions t WHERE t.user_id=u.id AND t.type='consume'),0)) - u.token_balance AS d
+      FROM users u WHERE u.is_admin=0
+    ) SELECT COUNT(*), COALESCE(ROUND(SUM(d)),0) FROM calc WHERE d > 5;" 2>/dev/null)
+  BCN=$(echo "$BALCHK" | cut -d'|' -f1)
+  BSUM=$(echo "$BALCHK" | cut -d'|' -f2)
+  case "$BSUM" in ''|*[!0-9-]*) BSUM=0 ;; esac
+  echo "$TS BALCHK users=${BCN:-?} shortfall_fen=${BSUM}" >> "$LOG"
+  if [ "$BSUM" -gt "${TOKUP_BALCHK_THRESHOLD_FEN:-500}" ]; then
+    issues="${issues} [余额对账异常:${BCN}人合计少$(awk "BEGIN{printf \"%.2f\", ${BSUM}/100}")元]"
   fi
 fi
 
