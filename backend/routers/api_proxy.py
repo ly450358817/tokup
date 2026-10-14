@@ -640,68 +640,89 @@ async def chat_completions(req: ChatReq, api_key: ApiKey = Depends(authenticate_
         raise HTTPException(status_code=402, detail="余额不足，请先充值")
     _max_tokens = _eff_max_tokens
     _t0 = time.monotonic()
-    result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
-    _latency = int((time.monotonic() - _t0) * 1000)
-    if "error" in result:
-        _log_conversation(db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
-                          request_messages=req.messages, response_content={"error": result["error"]},
-                          status="error")
-        settle_reserved(_uid, _need_balance, 0, db, f"API退回: {model}")
-        # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+    # 预扣"幂等结算"：成功/失败/客户端断连被取消（CancelledError 属 BaseException，
+    # 普通 except 接不住）都必须结算或退回预扣，否则用户余额会被无声冻结。
+    # 2026-10-14 发现：客户端中断会让预扣永不退回（24 人合计 ¥419 漏损）。
+    _rc = {"closed": False}
+
+    def _close_reserve(actual: float, desc: str):
+        if _rc["closed"]:
+            return None
+        _rc["closed"] = True
+        return settle_reserved(_uid, _need_balance, actual, db, desc)
+
+    try:
+        result = await proxy_request(model, req.messages, False, max_tokens=_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
+        _latency = int((time.monotonic() - _t0) * 1000)
+        if "error" in result:
+            _log_conversation(db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
+                              request_messages=req.messages, response_content={"error": result["error"]},
+                              status="error")
+            _close_reserve(0, f"API退回: {model}")
+            # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+            db.add(UsageRecord(
+                user_id=_uid, api_key_id=_kid, model=model,
+                provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+                output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+                created_at=datetime.now(timezone.utc),
+            ))
+            db.commit()
+            raise HTTPException(status_code=502, detail=result["error"])
+        usage_data = result.get("usage", {})
+        cost = usage_data.get("cost")
+        if cost is None:
+            cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
+        token_cost = max(round(cost * 100), 1) if cost > 0 else 0
+        if cost > 0:
+            _maybe_alert_high_cost(api_key, model, cost)
+        # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+        _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
+        _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
+        _q_covered = min(token_cost, _q_rem)
+        _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
+        if _sub and _balance_charge > 0:
+            _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
+        _deduct = _close_reserve(_balance_charge, f"API: {model}")
+        if not _admin_free and _deduct["success"]:
+            maybe_alert_low_balance(_u, _deduct.get("balance", _u.token_balance))
+        if not _deduct["success"]:
+            return JSONResponse(
+                status_code=402,
+                content={
+                    "detail": "余额不足，请充值后续费",
+                    "error": {
+                        "message": "余额不足 | 充值: https://tokup.net",
+                        "type": "insufficient_balance",
+                        "recharge_url": "https://tokup.net"
+                    }
+                }
+            )
         db.add(UsageRecord(
             user_id=_uid, api_key_id=_kid, model=model,
             provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
-            input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
-            output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+            input_tokens=usage_data.get("input", 0),
+            output_tokens=usage_data.get("output", 0),
+            cost_cny=cost, status="success", latency_ms=_latency,
             created_at=datetime.now(timezone.utc),
         ))
-        db.commit()
-        raise HTTPException(status_code=502, detail=result["error"])
-    usage_data = result.get("usage", {})
-    cost = usage_data.get("cost")
-    if cost is None:
-        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
-    token_cost = max(round(cost * 100), 1) if cost > 0 else 0
-    if cost > 0:
-        _maybe_alert_high_cost(api_key, model, cost)
-    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
-    _q_used_now = today_usage_tokens(_uid, db, _day_start, eligible_only=True)
-    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
-    _q_covered = min(token_cost, _q_rem)
-    _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
-    if _sub and _balance_charge > 0:
-        _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
-    _deduct = settle_reserved(_uid, _need_balance, _balance_charge, db, f"API: {model}")
-    if not _admin_free and _deduct["success"]:
-        maybe_alert_low_balance(_u, _deduct.get("balance", _u.token_balance))
-    if not _deduct["success"]:
-        return JSONResponse(
-            status_code=402,
-            content={
-                "detail": "余额不足，请充值后续费",
-                "error": {
-                    "message": "余额不足 | 充值: https://tokup.net",
-                    "type": "insufficient_balance",
-                    "recharge_url": "https://tokup.net"
-                }
-            }
+        _log_conversation(
+            db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
+            request_messages=req.messages, response_content=result["data"],
+            input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
+            cost_cny=cost,
         )
-    db.add(UsageRecord(
-        user_id=_uid, api_key_id=_kid, model=model,
-        provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
-        input_tokens=usage_data.get("input", 0),
-        output_tokens=usage_data.get("output", 0),
-        cost_cny=cost, status="success", latency_ms=_latency,
-        created_at=datetime.now(timezone.utc),
-    ))
-    _log_conversation(
-        db, user_id=_uid, api_key_id=_kid, model=model, endpoint="chat",
-        request_messages=req.messages, response_content=result["data"],
-        input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
-        cost_cny=cost,
-    )
-    db.commit()
-    return result["data"]
+        db.commit()
+        return result["data"]
+    except BaseException:
+        if not _rc["closed"]:
+            try:
+                _close_reserve(0, f"API退回: {model}")
+            except Exception:
+                import logging
+                logging.getLogger("tokup.payment").warning(
+                    "预扣退回失败，需人工核账: user=%s model=%s amount=%s", _uid, model, _need_balance)
+        raise
 
 
 @router.post("/test/chat")
@@ -865,56 +886,75 @@ async def test_chat(req: ChatReq, user: User = Depends(get_current_user), db: Se
             settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
             return {"success": False, "detail": str(e)}
     _t0 = time.monotonic()
-    result = await proxy_request(model, req.messages, False, max_tokens=_eff_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
-    _latency = int((time.monotonic() - _t0) * 1000)
-    if "error" in result:
-        _log_conversation(db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
-                          request_messages=req.messages, response_content={"error": result["error"]},
-                          status="error")
-        settle_reserved(user.id, _need_balance, 0, db, f"API退回: {model}")
-        # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+    # 同 /chat/completions：预扣必须幂等结算，客户端断连被取消也要退回（2026-10-14 资金漏损修复）
+    _rc = {"closed": False}
+
+    def _close_reserve(actual: float, desc: str):
+        if _rc["closed"]:
+            return None
+        _rc["closed"] = True
+        return settle_reserved(user.id, _need_balance, actual, db, desc)
+
+    try:
+        result = await proxy_request(model, req.messages, False, max_tokens=_eff_max_tokens, extra_payload=({"image_config": req.image_config} if req.image_config else None))
+        _latency = int((time.monotonic() - _t0) * 1000)
+        if "error" in result:
+            _log_conversation(db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
+                              request_messages=req.messages, response_content={"error": result["error"]},
+                              status="error")
+            _close_reserve(0, f"API退回: {model}")
+            # 失败也记账（status=error），供模型健康/成功率真实统计；未扣费
+            db.add(UsageRecord(
+                user_id=user.id, api_key_id=None, model=model,
+                provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
+                input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
+                output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+                created_at=datetime.now(timezone.utc),
+            ))
+            db.commit()
+            return {"success": False, "detail": result["error"]}
+        usage_data = result.get("usage", {})
+        cost = usage_data.get("cost")
+        if cost is None:
+            cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
+        token_cost = max(round(cost * 100), 1) if cost > 0 else 0
+        if cost > 0:
+            _maybe_alert_high_cost(api_key, model, cost)
+        # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
+        _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
+        _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
+        _q_covered = min(token_cost, _q_rem)
+        _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
+        if _sub and _balance_charge > 0:
+            _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
+        _deduct = _close_reserve(_balance_charge, f"API: {model}")
+        if not _deduct["success"]:
+            return {"success": False, "detail": "余额不足"}
         db.add(UsageRecord(
             user_id=user.id, api_key_id=None, model=model,
             provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
-            input_tokens=sum(len(str(m.get("content", ""))) for m in req.messages) // 2,
-            output_tokens=0, cost_cny=0.0, status="error", latency_ms=_latency,
+            input_tokens=usage_data.get("input", 0),
+            output_tokens=usage_data.get("output", 0),
+            cost_cny=cost, status="success", latency_ms=_latency,
             created_at=datetime.now(timezone.utc),
         ))
+        _log_conversation(
+            db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
+            request_messages=req.messages, response_content=result["data"],
+            input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
+            cost_cny=cost,
+        )
         db.commit()
-        return {"success": False, "detail": result["error"]}
-    usage_data = result.get("usage", {})
-    cost = usage_data.get("cost")
-    if cost is None:
-        cost = calculate_cost(model, usage_data.get("input", 0), usage_data.get("output", 0), usage_data.get("image", 0))
-    token_cost = max(round(cost * 100), 1) if cost > 0 else 0
-    if cost > 0:
-        _maybe_alert_high_cost(api_key, model, cost)
-    # 订阅配额：本次先消耗当日剩余免费额度，超出部分才从余额扣（仅低价模型）
-    _q_used_now = today_usage_tokens(user.id, db, _day_start, eligible_only=True)
-    _q_rem = max(0.0, (_sub.daily_limit or 0) - _q_used_now) if (_sub and _eligible) else 0.0
-    _q_covered = min(token_cost, _q_rem)
-    _balance_charge = 0 if _admin_free else max(0, token_cost - _q_covered)
-    if _sub and _balance_charge > 0:
-        _balance_charge = max(1, round(_balance_charge * SUBSCRIPTION_DISCOUNT))
-    _deduct = settle_reserved(user.id, _need_balance, _balance_charge, db, f"API: {model}")
-    if not _deduct["success"]:
-        return {"success": False, "detail": "余额不足"}
-    db.add(UsageRecord(
-        user_id=user.id, api_key_id=None, model=model,
-        provider=MODEL_ROUTES.get(model, ("unknown", ""))[0],
-        input_tokens=usage_data.get("input", 0),
-        output_tokens=usage_data.get("output", 0),
-        cost_cny=cost, status="success", latency_ms=_latency,
-        created_at=datetime.now(timezone.utc),
-    ))
-    _log_conversation(
-        db, user_id=user.id, api_key_id=None, model=model, endpoint="test",
-        request_messages=req.messages, response_content=result["data"],
-        input_tokens=usage_data.get("input", 0), output_tokens=usage_data.get("output", 0),
-        cost_cny=cost,
-    )
-    db.commit()
-    return {"success": True, "data": result["data"]}
+        return {"success": True, "data": result["data"]}
+    except BaseException:
+        if not _rc["closed"]:
+            try:
+                _close_reserve(0, f"API退回: {model}")
+            except Exception:
+                import logging
+                logging.getLogger("tokup.payment").warning(
+                    "预扣退回失败，需人工核账: user=%s model=%s amount=%s", user.id, model, _need_balance)
+        raise
 
 
 @router.post("/responses")
