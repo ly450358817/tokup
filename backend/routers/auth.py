@@ -105,9 +105,13 @@ def _is_automation_login(request) -> bool:
     if cf_ip not in exempt:
         return False
     ua = (request.headers.get("user-agent") or "").lower()
-    return any(k in ua for k in (
-        "curl", "wget", "python-requests", "python-urllib", "httpx", "go-http-client",
-    ))
+    # UA 白名单可用 ADMIN_LOGIN_ALERT_EXEMPT_UA 覆盖（逗号分隔）
+    # 注意：新增任何自动化脚本时，务必把它的 UA 加进来，否则会每轮都推告警（2026-10-14 踩过）
+    patterns = os.getenv(
+        "ADMIN_LOGIN_ALERT_EXEMPT_UA",
+        "tokup-healthcheck,curl,wget,python-requests,python-urllib,httpx,go-http-client",
+    )
+    return any(k.strip() and k.strip() in ua for k in patterns.split(","))
 
 
 def _validate_password(password: str):
