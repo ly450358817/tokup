@@ -204,7 +204,8 @@ def main():
                          GROUP_CONCAT(DISTINCT ur.model) models
                          FROM usage_records ur JOIN users u ON u.id=ur.user_id
                          WHERE ur.cost_cny=0 AND (ur.input_tokens+ur.output_tokens)>0
-                         GROUP BY ur.user_id ORDER BY toks DESC LIMIT 10""")
+                           AND ur.status='success' AND ur.created_at>=?
+                         GROUP BY ur.user_id ORDER BY toks DESC LIMIT 10""", start_iso + " 00:00:00")
 
         # 白嫖/异常检查
         qiniu_period_fee = sum(m["fee"] for m in q_models.values())

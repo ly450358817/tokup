@@ -36,8 +36,6 @@ MODEL_ROUTES = {
     "claude-4.7-opus": ("qiniu", QINIU_ENDPOINT),
     "claude-4.6-sonnet": ("qiniu", QINIU_ENDPOINT),
     # Google（上游）
-    "gemini-2.5-pro": ("qiniu", QINIU_ENDPOINT),
-    "gemini-2.5-flash": ("qiniu", QINIU_ENDPOINT),
     "gemini-3.5-flash": ("qiniu", QINIU_ENDPOINT),
     "gemini-3.5-flash-lite": ("qiniu", QINIU_ENDPOINT),
     # xAI（上游）
@@ -62,6 +60,7 @@ MODEL_ROUTES = {
     "glm-5.2": ("qiniu", QINIU_ENDPOINT),
     # 月之暗面（上游）
     "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k3-free": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
     # MiniMax（上游）
@@ -125,6 +124,7 @@ MODEL_COST = {
     "qwen3-max": (20.0, 80.0),                  # 上游分档 6/24·10/40·15/60，按最高档 15/60 定价防长上下文倒挂
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
     "moonshotai/kimi-k3": (26.0, 130.0),        # 上游 ¥20/¥100
+    "moonshotai/kimi-k3-free": (14.67, 67.33),  # 免费促销档；按同系列建议均价销售，防恢复收费后倒挂
     "qwen3.5-397b-a17b": (4.0, 24.0),           # 上游最高档 ¥3/¥18 ×1.33，盈利保留
     "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
@@ -135,8 +135,6 @@ MODEL_COST = {
     "claude-opus-5-5": (36.0, 180.0),            # 官方 $4/$20≈¥27.6/¥138（×6.9）×1.3；待首账单校准
     "claude-4.7-opus": (45.0, 225.0),           # 成本 ¥34.5/¥172.5
     "claude-4.6-sonnet": (27.0, 135.0),         # 成本 ¥20.7/¥103.5
-    "gemini-2.5-pro": (24.0, 141.0),            # 成本 ¥18.0/¥108.0
-    "gemini-2.5-flash": (3.0, 23.0),            # 成本 ¥2.2/¥17.3
     "gemini-3.5-flash": (4.0, 30.0),            # 2026-10-12 新增：无刊例价，按 gemini-2.5-flash 实测成本上浮后 ×1.3 宁高勿亏；待首笔账单校准
     "gemini-3.5-flash-lite": (1.8, 12.0),       # 2026-10-12 新增：同上（Lite 档，成本未知先保守定价）
     "openai/gpt-5.4": (45.0, 202.0),            # 成本 ¥34.5/¥155.3
@@ -174,6 +172,7 @@ MODEL_META = {
     "openai/gpt-5.6-sol": {"name": "GPT-5.6 Sol", "provider": "OpenAI", "note": "高效推理 Sol", "badge": "New"},
     "anthropic/claude-fable-5": {"name": "Claude Fable 5", "provider": "Anthropic", "note": "最新 Claude", "badge": "New"},
     "moonshotai/kimi-k3": {"name": "Kimi K3", "provider": "月之暗面", "note": "最新旗舰 · 中国开源", "badge": "New"},
+    "moonshotai/kimi-k3-free": {"name": "Kimi K3 Free", "provider": "月之暗面", "note": "同系列限时免费档", "badge": "New"},
     "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
     "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
     "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "旧版兼容 · 10月25日退役", "badge": "10/25下线"},
@@ -202,8 +201,6 @@ MODEL_META = {
     "claude-opus-5-5": {"name": "Claude Opus 5.5", "provider": "Anthropic", "note": "最新旗舰 · 5.5 系列", "badge": "New"},
     "claude-4.7-opus": {"name": "Claude 4.7 Opus", "provider": "Anthropic", "note": "最新旗舰 Opus", "badge": "New"},
     "claude-4.6-sonnet": {"name": "Claude 4.6 Sonnet", "provider": "Anthropic", "note": "旗舰 Sonnet", "badge": "New"},
-    "gemini-2.5-pro": {"name": "Gemini 2.5 Pro", "provider": "Google", "note": "谷歌旗舰", "badge": "New"},
-    "gemini-2.5-flash": {"name": "Gemini 2.5 Flash", "provider": "Google", "note": "谷歌高效", "badge": ""},
     "gemini-3.5-flash": {"name": "Gemini 3.5 Flash", "provider": "Google", "note": "新一代高效旗舰 · 2.5 迁移推荐", "badge": "New"},
     "gemini-3.5-flash-lite": {"name": "Gemini 3.5 Flash Lite", "provider": "Google", "note": "超低成本 · 高速", "badge": "New"},
     "openai/gpt-5.4": {"name": "GPT-5.4", "provider": "OpenAI", "note": "新一代旗舰", "badge": "New"},
