@@ -4,7 +4,7 @@ Token 管理服务（原子化：余额增减一律走 SQL UPDATE，防并发读
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import update
-from models import User, Transaction
+from models import User, Transaction, ReserveLog
 
 
 TOKEN_TO_CNY_RATIO = 100  # 1 元 = 100 token
@@ -123,19 +123,47 @@ def reserve_token(user_id: str, amount: float, db: Session, description: str = "
     )
     if res.rowcount != 1:
         return {"success": False, "message": "余额不足"}
+    # 预扣台账：记录本次预扣，供结算关闭；超时未关闭由 sweeper 自动退回
+    rl = ReserveLog(user_id=user_id, amount=amount, status="pending", description=description)
+    db.add(rl)
     db.commit()
-    return {"success": True, "balance": get_balance(user_id, db), "reserved": amount}
+    return {"success": True, "balance": get_balance(user_id, db), "reserved": amount, "reserve_id": rl.id}
 
 
-def settle_reserved(user_id: str, reserved: float, actual: float, db: Session, description: str = "") -> dict:
-    """结算预扣：恢复冻结金额后按实际用量扣费，退回差额或补扣超支（原子化）"""
-    if reserved > 0:
+def settle_reserved(user_id: str, reserved: float, actual: float, db: Session, description: str = "", reserve_id: str = "") -> dict:
+    """结算预扣：恢复冻结金额后按实际用量扣费，退回差额或补扣超支（原子化）。
+    同时关闭对应的预扣台账；若台账已被 sweeper 标记 refunded，则不重复恢复金额。"""
+    # 找对应的预扣台账（优先 reserve_id，否则按 用户+金额+pending 取最早一条）
+    rl = None
+    try:
+        q = db.query(ReserveLog)
+        if reserve_id:
+            rl = q.filter(ReserveLog.id == reserve_id).first()
+        elif reserved > 0:
+            # 取最近一条 pending/refunded（不能只查 pending：被 sweeper 退回的必须能被识别，
+            # 否则迟到的结算会重复把预扣加回余额）
+            rl = (q.filter(ReserveLog.user_id == user_id,
+                           ReserveLog.status.in_(["pending", "refunded"]),
+                           ReserveLog.amount == reserved)
+                    .order_by(ReserveLog.created_at.desc()).first())
+    except Exception:
+        rl = None
+    already_refunded = bool(rl is not None and rl.status == "refunded")
+
+    if reserved > 0 and not already_refunded:
         db.execute(
             update(User)
             .where(User.id == user_id)
             .values(token_balance=User.token_balance + reserved, updated_at=_now())
         )
         db.commit()
+    if rl is not None and rl.status == "pending":
+        try:
+            rl.status = "settled" if actual > 0 else "refunded"
+            rl.closed_at = _now()
+            db.commit()
+        except Exception:
+            db.rollback()
     if actual <= 0:
         return {"success": True, "balance": get_balance(user_id, db), "refunded": reserved, "deducted": 0}
     balance = get_balance(user_id, db)

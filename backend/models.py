@@ -153,3 +153,19 @@ class ConversationLog(Base):
 
     user = relationship("User")
     api_key = relationship("ApiKey")
+
+
+class ReserveLog(Base):
+    """预扣台账：每次 reserve_token 记一条，settle_reserved 关闭它；
+    超时仍 pending 的由 token-reserve-sweeper 自动退回，兜住任何路径漏结算。"""
+    __tablename__ = "reserve_log"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    api_key_id = Column(String, nullable=True)
+    model = Column(String, default="")
+    amount = Column(Float, nullable=False)          # 预扣金额（分）
+    status = Column(String, default="pending")      # pending | settled | refunded
+    description = Column(Text, default="")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    closed_at = Column(DateTime, nullable=True)
