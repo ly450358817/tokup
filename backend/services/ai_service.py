@@ -66,6 +66,7 @@ MODEL_ROUTES = {
     # MiniMax（上游）
     "MiniMax-M1": ("qiniu", QINIU_ENDPOINT),
     "minimax/minimax-m3": ("qiniu", QINIU_ENDPOINT),
+    "minimax/minimax-m3.1-flash": ("qiniu", QINIU_ENDPOINT),
     # 腾讯混元（上游）
     "tencent/hy4-preview": ("qiniu", QINIU_ENDPOINT),
     "glm-5.3-flash": ("qiniu", QINIU_ENDPOINT),
@@ -108,7 +109,7 @@ MODEL_COST = {
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
     # V4 Pro 走上游 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
-    "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 旧无日期别名：2026-10-25 退役，退役日前维持兼容价
+    "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 旧无日期别名：原计划 2026-10-25 退役，10/26 实测仍可用，继续保留
     "deepseek/deepseek-v4-flash-20260731": (4.0, 12.0),  # 七牛稳定版高峰成本 ¥2/¥8，卖价 ≥1.3x 且与 v4.1 对齐
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
@@ -128,6 +129,7 @@ MODEL_COST = {
     "qwen3.5-397b-a17b": (4.0, 24.0),           # 上游最高档 ¥3/¥18 ×1.33，盈利保留
     "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
+    "minimax/minimax-m3.1-flash": (7.0, 28.0), # 上游广场 ¥1/¥4；按同系列建议价 ¥7/¥28，满足 ≥1.3x
     "moonshotai/kimi-k2.7-code": (9.0, 36.0),   # 上游 ¥6.5/¥27
     "tencent/hy4-preview": (8.0, 24.0),         # 上游 ¥6/¥18（上游广场 2026-09-07 核实）×1.33
     "glm-4.6v-flash": (0.0, 0.0),               # 智谱免费
@@ -175,10 +177,10 @@ MODEL_META = {
     "moonshotai/kimi-k3-free": {"name": "Kimi K3 Free", "provider": "月之暗面", "note": "同系列限时免费档", "badge": "New"},
     "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
     "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
-    "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "旧版兼容 · 10月25日退役", "badge": "10/25下线"},
+    "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "兼容版本 · 当前仍可用", "badge": "兼容"},
     "deepseek/deepseek-v4-flash-20260731": {"name": "DeepSeek V4 Flash 0731", "provider": "DeepSeek", "note": "稳定版本 · 推荐迁移", "badge": "New"},
     "deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash", "provider": "DeepSeek", "note": "新一代高速 · 推荐迁移", "badge": "New"},
-    "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 10月25日退役", "badge": "10/25下线"},
+    "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 持续可用", "badge": "Vision"},
     "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "旧版兼容 · 10月9日退役", "badge": "10/9下线"},
     "deepseek/deepseek-v3.2": {"name": "DeepSeek V3.2", "provider": "DeepSeek", "note": "达 GPT-5 水平", "badge": "New"},
     "deepseek-r1": {"name": "DeepSeek R1", "provider": "DeepSeek", "note": "深度推理", "badge": ""},
@@ -191,7 +193,8 @@ MODEL_META = {
     "qwen3-max": {"name": "Qwen3 Max", "provider": "通义千问", "note": "通义旗舰 · 全量版", "badge": "New"},
     "qwen3.5-397b-a17b": {"name": "Qwen3.5 397B", "provider": "通义千问", "note": "397B 超大杯旗舰", "badge": "New"},
     "MiniMax-M1": {"name": "MiniMax M1", "provider": "MiniMax", "note": "顶级推理旗舰", "badge": "New"},
-    "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "最新旗舰", "badge": "New"},
+    "minimax/minimax-m3": {"name": "MiniMax M3", "provider": "MiniMax", "note": "旗舰模型", "badge": "New"},
+    "minimax/minimax-m3.1-flash": {"name": "MiniMax M3.1 Flash", "provider": "MiniMax", "note": "高速 · 成本优化", "badge": "New"},
     "moonshotai/kimi-k2.7-code": {"name": "Kimi K2.7 Code", "provider": "月之暗面", "note": "代码最强", "badge": "New"},
     "tencent/hy4-preview": {"name": "混元 Hy4 Preview", "provider": "腾讯混元", "note": "1M 上下文 · 代码/智能体", "badge": "New"},
     "glm-5.3-flash": {"name": "GLM-5.3 Flash", "provider": "智谱AI", "note": "1M多模态 · 成本优化", "badge": "New"},

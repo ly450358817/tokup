@@ -45,13 +45,13 @@ const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', input: '¥1.8', output: '¥12', note: '超低成本 · 高速', badge: 'New' },
   { id: 'gemini-3.0-pro-image-preview', name: 'Gemini 3.0 Pro Image', provider: 'Google', input: '¥24', output: '¥130 + 图片', note: '图片输出 ¥1300/M · 1K单图约 ¥1.5', badge: 'New' },
   { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro', provider: 'DeepSeek', input: '¥6 / ¥12', output: '¥18 / ¥36', note: '旗舰模型 · 峰谷计价', badge: 'Hot' },
-  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.8', output: '¥3.6', note: '旧版兼容 · 请尽快迁移', badge: '10/25下线' },
+  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥1.8', output: '¥3.6', note: '兼容版本 · 当前仍可用', badge: '兼容' },
   { id: 'deepseek/deepseek-v4-flash-20260731', name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', note: '稳定版本 · 推荐迁移', badge: 'New' },
   { id: 'deepseek/deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', note: '新一代高速 · 推荐迁移', badge: 'New' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', note: '达GPT-5水平', badge: 'New' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', note: '旧版兼容 · 请尽快迁移', badge: '10/9下线' },
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥6.0', output: '¥21.0', note: '深度推理', badge: '' },
-  { id: 'deepseek/deepseek-v4-flash-vision-exp', name: 'DeepSeek V4 Flash Vision', provider: 'DeepSeek', input: '¥4', output: '¥12', note: '请迁移至 V4.1 Flash', badge: '10/25下线' },
+  { id: 'deepseek/deepseek-v4-flash-vision-exp', name: 'DeepSeek V4 Flash Vision', provider: 'DeepSeek', input: '¥4', output: '¥12', note: '视觉理解 · 持续可用', badge: 'Vision' },
   { id: 'qwen/qwen3.8-max', name: 'Qwen3.8 Max', provider: '通义千问', input: '¥16', output: '¥48', note: '2.4T参数新旗舰', badge: 'New' },
   { id: 'qwen/qwen3.7-max', name: 'Qwen 3.7 Max', provider: '通义千问', input: '¥16', output: '¥48', note: '通义旗舰', badge: '' },
   { id: 'qwen/qwen3.7-plus', name: 'Qwen 3.7 Plus', provider: '通义千问', input: '¥8', output: '¥32', note: '高性价比中杯', badge: 'New' },
@@ -66,6 +66,7 @@ const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', provider: '月之暗面', input: '¥9', output: '¥36', note: '稳定可靠', badge: '' },
   { id: 'MiniMax-M1', name: 'MiniMax M1', provider: 'MiniMax', input: '¥8.0', output: '¥32.0', note: '顶级推理旗舰', badge: 'New' },
   { id: 'minimax/minimax-m3', name: 'MiniMax M3', provider: 'MiniMax', input: '¥6.0', output: '¥24.0', note: '最新旗舰', badge: 'New' },
+  { id: 'minimax/minimax-m3.1-flash', name: 'MiniMax M3.1 Flash', provider: 'MiniMax', input: '¥7.0', output: '¥28.0', note: '高速 · 成本优化', badge: 'New' },
   { id: 'tencent/hy4-preview', name: '混元 Hy4 Preview', provider: '腾讯混元', input: '¥8', output: '¥24', note: '1M 上下文 · 代码/智能体', badge: 'New' },
 ];
 

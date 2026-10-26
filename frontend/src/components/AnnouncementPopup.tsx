@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v29';
+const VERSION = 'v30';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -60,31 +60,39 @@ export default function AnnouncementPopup() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📢 模型上新与退役通知</h2>
+        <h2 className="text-[18px] font-semibold text-white text-center mb-3">📢 模型服务更新通知</h2>
         <div className="text-[13px] text-white/50 leading-relaxed space-y-3 mb-6">
           <p>尊敬的用户，您好：</p>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">① Kimi K3 Free 已上线</p>
+            <p className="text-white/85 font-medium">① MiniMax M3.1 Flash 已上线</p>
+            <p>模型 ID：<span className="text-emerald-300/90">minimax/minimax-m3.1-flash</span></p>
+            <p>价格：¥7 / ¥28（每百万输入 / 输出 Token）</p>
+            <p>定位：高速、低延迟，适合高并发日常任务</p>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
+            <p className="text-white/85 font-medium">② Kimi K3 Free 持续提供</p>
             <p>模型 ID：<span className="text-emerald-300/90">moonshotai/kimi-k3-free</span></p>
             <p>价格：¥14.67 / ¥67.33（每百万输入 / 输出 Token）</p>
             <p>定位：Kimi K3 同系列限时免费档，适合日常推理与长文本任务</p>
           </div>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">② Gemini 3.5 系列迁移选项</p>
+            <p className="text-white/85 font-medium">③ Gemini 3.5 系列迁移选项</p>
             <p>· <span className="text-emerald-300/90">gemini-3.5-flash</span>：¥4 / ¥30（每百万输入 / 输出 Token）</p>
             <p>· <span className="text-emerald-300/90">gemini-3.5-flash-lite</span>：¥1.8 / ¥12（每百万输入 / 输出 Token）</p>
             <p>定位：新一代高速模型，原 Gemini 2.5 用户请优先迁移</p>
           </div>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">③ 模型退役时间表</p>
+            <p className="text-white/85 font-medium">④ 模型状态说明</p>
             <p>· <span className="text-white/85 font-medium">deepseek-v3</span>：本平台将于 <span className="text-amber-300/90">2026-10-09</span> 起不再提供。</p>
             <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span>。</p>
             <p>· <span className="text-white/85 font-medium">gemini-2.5-flash</span>、<span className="text-white/85 font-medium">gemini-2.5-pro</span>：本平台已于 <span className="text-amber-300/90">2026-10-19</span> 下架。</p>
             <p>　建议迁移至 <span className="text-white/85 font-medium">gemini-3.5-flash</span> 或 <span className="text-white/85 font-medium">gemini-3.5-flash-lite</span>（本平台已上线），或 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>（¥1.8 / ¥3.6）。</p>
-            <p>以上价格单位均为 ¥ / 百万 Token（输入 / 输出）。请在截止日前更换模型 ID。</p>
+            <p>· <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>、<span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-vision-exp</span>：原计划 2026-10-25 退役，10/26 上游实测仍可调用，本平台继续提供；如后续退役将提前通知。</p>
+            <p>以上价格单位均为 ¥ / 百万 Token（输入 / 输出）。</p>
           </div>
 
           <p>您的 API Key、余额与订阅均不受影响。</p>

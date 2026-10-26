@@ -54,6 +54,7 @@ MODEL_LABELS = {
     "qwen3.5-397b-a17b": "Qwen3.5 397B",
     "MiniMax-M1": "MiniMax M1",
     "minimax/minimax-m3": "MiniMax M3",
+    "minimax/minimax-m3.1-flash": "MiniMax M3.1 Flash",
     "moonshotai/kimi-k2.7-code": "Kimi K2.7 Code",
     "anthropic/claude-fable-5": "Claude Fable 5",
     "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet",

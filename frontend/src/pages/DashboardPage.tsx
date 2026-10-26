@@ -34,13 +34,13 @@ const DEFAULT_MODELS = [
   { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', provider: 'Google', cost: '¥1.8/1M input' },
   { id: 'gemini-3.0-pro-image-preview', label: 'Gemini 3.0 Pro Image', provider: 'Google', cost: '¥24/1M input · 图片另计' },
   { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek', cost: '¥6~¥12/1M input (闲时~高峰)' },
-  { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥1.8/1M input · 10/25下线' },
+  { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥1.8/1M input · 当前仍可用' },
   { id: 'deepseek/deepseek-v4-flash-20260731', label: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥3.0/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥3.0/1M input · 10/9下线' },
   { id: 'deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek', cost: '¥6.0/1M input' },
-  { id: 'deepseek/deepseek-v4-flash-vision-exp', label: 'DeepSeek V4 Flash Vision', provider: 'DeepSeek', cost: '¥4/1M input · 10/25下线' },
+  { id: 'deepseek/deepseek-v4-flash-vision-exp', label: 'DeepSeek V4 Flash Vision', provider: 'DeepSeek', cost: '¥4/1M input · Vision' },
   { id: 'qwen/qwen3.8-max', label: 'Qwen3.8 Max', provider: '通义千问', cost: '¥16/1M input' },
   { id: 'qwen/qwen3.7-max', label: 'Qwen 3.7 Max', provider: '通义千问', cost: '¥16/1M input' },
   { id: 'qwen/qwen3.7-plus', label: 'Qwen 3.7 Plus', provider: '通义千问', cost: '¥8/1M input' },
@@ -55,6 +55,7 @@ const DEFAULT_MODELS = [
   { id: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', provider: '月之暗面', cost: '¥9/1M input' },
   { id: 'MiniMax-M1', label: 'MiniMax M1', provider: 'MiniMax', cost: '¥8.0/1M input' },
   { id: 'minimax/minimax-m3', label: 'MiniMax M3', provider: 'MiniMax', cost: '¥6.0/1M input' },
+  { id: 'minimax/minimax-m3.1-flash', label: 'MiniMax M3.1 Flash', provider: 'MiniMax', cost: '¥7.0/1M input' },
   { id: 'tencent/hy4-preview', label: '混元 Hy4 Preview', provider: '腾讯混元', cost: '¥8/1M input' },
 ];
 
