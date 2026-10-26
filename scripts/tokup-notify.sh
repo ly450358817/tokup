@@ -1,10 +1,10 @@
 #!/bin/bash
 # TokUp 告警推送：健康检查发现异常时推送到微信。
 # 渠道配置在 /opt/tokup/scripts/alert-config.env，未配置则静默退出。
-CFG=/opt/tokup/scripts/alert-config.env
+CFG="${TOKUP_ALERT_CONFIG:-/opt/tokup/scripts/alert-config.env}"
 [ -f "$CFG" ] && . "$CFG"
-FAILFILE=/var/log/tokup-health.fail
-MARK=/tmp/tokup-alert-sent.marker
+FAILFILE="${TOKUP_HEALTH_FAIL:-/var/log/tokup-health.fail}"
+MARK="${TOKUP_ALERT_MARK:-/tmp/tokup-alert-sent.marker}"
 
 [ -f "$FAILFILE" ] || exit 0
 
@@ -22,7 +22,7 @@ fi
 exec 9>/tmp/tokup-alert.lock
 flock -n 9 || exit 0
 
-LAST=$(tail -n 5 "$FAILFILE")
+LAST=$(tail -n 1 "$FAILFILE")
 TITLE="⚡TokUp | 监控告警 $(date '+%H:%M')"
 
 if [ -n "$WECOM_WEBHOOK" ]; then

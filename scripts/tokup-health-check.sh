@@ -4,6 +4,7 @@
 # 测试用覆盖（设置 TOKUP_HEALTH_LOG 或 TOKUP_HEALTH_FAIL 时不会触发推送）：
 #   TOKUP_HEALTH_LOG TOKUP_HEALTH_FAIL TOKUP_FORCE_MODEL_PROBE TOKUP_PROBE_MODELS(或TOKUP_PROBE_MODEL)
 #   TOKUP_MODEL_PROBE_EVERY_MIN TOKUP_DISK_WARN TOKUP_DISK_CRIT TOKUP_PROBE_FAIL_STREAK
+#   TOKUP_HEALTH_URL TOKUP_HEALTH_FAIL_STREAK TOKUP_HEALTH_COUNT_FILE
 #   TOKUP_BALCHK_FORCE(测试用) TOKUP_BALCHK_HOUR TOKUP_BALCHK_THRESHOLD_FEN
 LOG="${TOKUP_HEALTH_LOG:-/var/log/tokup-health.log}"
 FAIL="${TOKUP_HEALTH_FAIL:-/var/log/tokup-health.fail}"
@@ -11,6 +12,9 @@ DISK_WARN="${TOKUP_DISK_WARN:-85}"     # 85% 起：只记录
 DISK_CRIT="${TOKUP_DISK_CRIT:-90}"     # 90% 起：重大
 PROBE_FAIL_STREAK="${TOKUP_PROBE_FAIL_STREAK:-2}"   # 连续失败次数达此值才升级为重大
 CNT_FILE="${TOKUP_PROBE_COUNT_FILE:-/tmp/tokup-model-probe.failcount}"
+HEALTH_URL="${TOKUP_HEALTH_URL:-https://tokup.net/api/health}"
+HEALTH_FAIL_STREAK="${TOKUP_HEALTH_FAIL_STREAK:-2}"  # 健康接口连续失败次数达此值才升级为重大
+HEALTH_CNT_FILE="${TOKUP_HEALTH_COUNT_FILE:-/tmp/tokup-health-check.failcount}"
 TS=$(date "+%Y-%m-%d %H:%M:%S")
 issues=""
 warns=""
@@ -22,10 +26,20 @@ for svc in tokup-backend nginx; do
   fi
 done
 
-# 2) 健康接口（重大）
-health=$(curl -s --max-time 15 "https://tokup.net/api/health" 2>/dev/null)
-if ! echo "$health" | grep -q 'status.*"ok"'; then
-  issues="${issues} [健康接口异常]"
+# 2) 健康接口（连续失败 2 次才升级为重大，单次瞬断只记录 WARN）
+health=$(curl -s --max-time 15 "$HEALTH_URL" 2>/dev/null)
+if echo "$health" | grep -q 'status.*"ok"'; then
+  rm -f "$HEALTH_CNT_FILE" 2>/dev/null
+else
+  cnt=$(cat "$HEALTH_CNT_FILE" 2>/dev/null || echo 0)
+  case "$cnt" in ''|*[!0-9]*) cnt=0 ;; esac
+  cnt=$((cnt + 1))
+  echo "$cnt" > "$HEALTH_CNT_FILE" 2>/dev/null
+  if [ "$cnt" -ge "$HEALTH_FAIL_STREAK" ]; then
+    issues="${issues} [健康接口异常连续${cnt}次]"
+  else
+    warns="${warns} [健康接口异常第${cnt}次]"
+  fi
 fi
 
 # 3) 磁盘使用率（>=90 重大；85~89 仅记录）
