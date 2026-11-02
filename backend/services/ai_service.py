@@ -18,6 +18,7 @@ def get_api_keys() -> dict:
 
 
 QINIU_ENDPOINT = "https://api.qnaigc.com/v1/chat/completions"
+DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions"
 ZHIPU_ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
 MODEL_ROUTES = {
@@ -41,7 +42,7 @@ MODEL_ROUTES = {
     # xAI（上游）
     # DeepSeek → 上游（合规上游）
     "deepseek/deepseek-v4-pro": ("qiniu", QINIU_ENDPOINT),
-    "deepseek/deepseek-v4-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4-flash": ("deepseek", DEEPSEEK_ENDPOINT),
     "deepseek/deepseek-v4-flash-20260731": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4.1-flash": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
@@ -84,6 +85,7 @@ MODEL_ROUTES = {
 #   内部计费仍按 tokup key deepseek/deepseek-v4-pro，模型名不变。
 UPSTREAM_MODEL_NAME = {
     "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro-0813",
+    "deepseek/deepseek-v4-flash": "deepseek-chat",
     # V3 已于上游标记 2026-10-09 退役；在退役日前明确走 V3 本体，避免 deepseek-chat 实际解析成 Flash。
     "deepseek-v3": "deepseek-v3",
     "glm-5.3-flash": "z-ai/glm-5.3-flash",
@@ -111,7 +113,7 @@ MODEL_COST = {
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
     # V4 Pro 走上游 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
-    "deepseek/deepseek-v4-flash": (2.8, 10.8),  # 2026-11-02 广场最高成本 ¥2/¥8，按 ≥1.3x 修正倒挂；旧无日期别名继续保留
+    "deepseek/deepseek-v4-flash": (2.8, 10.8),  # 2026-11-02 七牛旧别名 disabled，改官方直连；按成本 ¥2/¥8 的 ≥1.3x 定价
     "deepseek/deepseek-v4-flash-20260731": (4.0, 12.0),  # 七牛稳定版高峰成本 ¥2/¥8，卖价 ≥1.3x 且与 v4.1 对齐
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
@@ -258,7 +260,7 @@ def get_headers(provider: str) -> dict:
 
 
 # ── DeepSeek 官方兜底（备胎）：上游失败时自动切换，需配置 DEEPSEEK_API_KEY ──
-DEEPSEEK_OFFICIAL_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_OFFICIAL_URL = DEEPSEEK_ENDPOINT
 DEEPSEEK_MODEL_MAP = {
     "deepseek-v3": "deepseek-chat",
     "deepseek/deepseek-v3.2": "deepseek-chat",
