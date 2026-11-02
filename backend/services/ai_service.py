@@ -61,6 +61,8 @@ MODEL_ROUTES = {
     # 月之暗面（上游）
     "moonshotai/kimi-k3": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k3-free": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k3.1-pro": ("qiniu", QINIU_ENDPOINT),
+    "moonshotai/kimi-k3.1-pro-highspeed": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.7-code": ("qiniu", QINIU_ENDPOINT),
     "moonshotai/kimi-k2.6": ("qiniu", QINIU_ENDPOINT),
     # MiniMax（上游）
@@ -109,7 +111,7 @@ MODEL_COST = {
     "deepseek-r1": (6.0, 21.0),                 # 上游 ¥4/¥16
     # V4 Pro 走上游 -0813 峰谷计价：闲时成本 ¥4.5/¥13.5 → 卖 ¥6/¥18（×1.33）；高峰卖价见 MODEL_COST_PEAK
     "deepseek/deepseek-v4-pro": (6.0, 18.0),
-    "deepseek/deepseek-v4-flash": (1.8, 3.6),   # 旧无日期别名：原计划 2026-10-25 退役，10/26 实测仍可用，继续保留
+    "deepseek/deepseek-v4-flash": (2.8, 10.8),  # 2026-11-02 广场最高成本 ¥2/¥8，按 ≥1.3x 修正倒挂；旧无日期别名继续保留
     "deepseek/deepseek-v4-flash-20260731": (4.0, 12.0),  # 七牛稳定版高峰成本 ¥2/¥8，卖价 ≥1.3x 且与 v4.1 对齐
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
@@ -126,6 +128,8 @@ MODEL_COST = {
     "moonshotai/kimi-k2.6": (9.0, 36.0),        # 上游 ¥6.5/¥27
     "moonshotai/kimi-k3": (26.0, 130.0),        # 上游 ¥20/¥100
     "moonshotai/kimi-k3-free": (14.67, 67.33),  # 免费促销档；按同系列建议均价销售，防恢复收费后倒挂
+    "moonshotai/kimi-k3.1-pro": (17.0, 89.0),   # 上游广场 ¥13/¥68，按 ≥1.3x 定价
+    "moonshotai/kimi-k3.1-pro-highspeed": (34.0, 177.0),  # 上游广场 ¥26/¥136，按 ≥1.3x 定价
     "qwen3.5-397b-a17b": (4.0, 24.0),           # 上游最高档 ¥3/¥18 ×1.33，盈利保留
     "MiniMax-M1": (8.0, 32.0),                  # 上游 ¥4/¥16，盈利保留
     "minimax/minimax-m3": (6.0, 24.0),          # 上游 ¥2.1-4.2/¥8.4-16.8，盈利保留
@@ -175,6 +179,8 @@ MODEL_META = {
     "anthropic/claude-fable-5": {"name": "Claude Fable 5", "provider": "Anthropic", "note": "最新 Claude", "badge": "New"},
     "moonshotai/kimi-k3": {"name": "Kimi K3", "provider": "月之暗面", "note": "最新旗舰 · 中国开源", "badge": "New"},
     "moonshotai/kimi-k3-free": {"name": "Kimi K3 Free", "provider": "月之暗面", "note": "同系列限时免费档", "badge": "New"},
+    "moonshotai/kimi-k3.1-pro": {"name": "Kimi K3.1 Pro", "provider": "月之暗面", "note": "新一代专业旗舰", "badge": "New"},
+    "moonshotai/kimi-k3.1-pro-highspeed": {"name": "Kimi K3.1 Pro Highspeed", "provider": "月之暗面", "note": "专业旗舰 · 高速版", "badge": "New"},
     "moonshotai/kimi-k2.6": {"name": "Kimi K2.6", "provider": "月之暗面", "note": "稳定可靠", "badge": ""},
     "deepseek/deepseek-v4-pro": {"name": "DeepSeek V4 Pro", "provider": "DeepSeek", "note": "旗舰模型 · 峰谷计价", "badge": "Hot"},
     "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "兼容版本 · 当前仍可用", "badge": "兼容"},
