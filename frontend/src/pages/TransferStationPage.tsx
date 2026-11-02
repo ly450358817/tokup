@@ -36,7 +36,6 @@ const DEFAULT_MODELS: ModelPrice[] = [
   { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥45', output: '¥270', note: '高效推理 Sol', badge: 'New' },
   { id: 'openai/gpt-5.4', name: 'GPT-5.4', provider: 'OpenAI', input: '¥45', output: '¥202', note: '新一代旗舰', badge: 'New' },
   { id: 'openai/gpt-5-mini', name: 'GPT-5-mini', provider: 'OpenAI', input: '¥3.0', output: '¥19', note: '轻量快速', badge: 'New' },
-  { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', input: '¥2.0', output: '¥8.0', note: '开源高性价比', badge: 'New' },
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥135', output: '¥750', note: '最新 Claude', badge: 'New' },
   { id: 'claude-opus-5-5', name: 'Claude Opus 5.5', provider: 'Anthropic', input: '¥36', output: '¥180', note: '最新旗舰 · 5.5 系列', badge: 'New' },
   { id: 'claude-4.7-opus', name: 'Claude 4.7 Opus', provider: 'Anthropic', input: '¥45', output: '¥225', note: '最新旗舰 Opus', badge: 'New' },

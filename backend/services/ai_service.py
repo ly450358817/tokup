@@ -30,7 +30,6 @@ MODEL_ROUTES = {
     "openai/gpt-5.6-sol": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5.4": ("qiniu", QINIU_ENDPOINT),
     "openai/gpt-5-mini": ("qiniu", QINIU_ENDPOINT),
-    "gpt-oss-120b": ("qiniu", QINIU_ENDPOINT),
     # Anthropic（上游）
     "anthropic/claude-fable-5": ("qiniu", QINIU_ENDPOINT),
     "claude-opus-5-5": ("qiniu", QINIU_ENDPOINT),
@@ -147,7 +146,6 @@ MODEL_COST = {
     "gemini-3.5-flash-lite": (1.8, 12.0),       # 2026-10-12 新增：同上（Lite 档，成本未知先保守定价）
     "openai/gpt-5.4": (45.0, 202.0),            # 成本 ¥34.5/¥155.3
     "openai/gpt-5-mini": (3.0, 19.0),           # 成本 ¥1.8/¥14.4
-    "gpt-oss-120b": (2.0, 8.0),                 # 成本 ¥1.1/¥5.4（输出≤15，进免费配额）
 }
 
 
@@ -216,7 +214,6 @@ MODEL_META = {
     "gemini-3.5-flash-lite": {"name": "Gemini 3.5 Flash Lite", "provider": "Google", "note": "超低成本 · 高速", "badge": "New"},
     "openai/gpt-5.4": {"name": "GPT-5.4", "provider": "OpenAI", "note": "新一代旗舰", "badge": "New"},
     "openai/gpt-5-mini": {"name": "GPT-5-mini", "provider": "OpenAI", "note": "轻量快速", "badge": "New"},
-    "gpt-oss-120b": {"name": "GPT-OSS 120B", "provider": "OpenAI", "note": "开源高性价比", "badge": "New"},
 }
 
 

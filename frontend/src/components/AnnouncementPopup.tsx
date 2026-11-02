@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v31';
+const VERSION = 'v32';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -87,7 +87,8 @@ export default function AnnouncementPopup() {
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
             <p className="text-white/85 font-medium">④ 模型状态说明</p>
-            <p>· 本周无模型退役。</p>
+            <p>· <span className="text-white/85 font-medium">gpt-oss-120b</span>：七牛已于 <span className="text-amber-300/90">2026-10-29</span> 正式下线，本平台已同步下架。</p>
+            <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v3.2</span>、<span className="text-white/85 font-medium">qwen/qwen3.8-flash-next</span> 或 <span className="text-white/85 font-medium">glm-5.3-flash</span>。</p>
             <p>· <span className="text-white/85 font-medium">deepseek-v3</span>：本平台将于 <span className="text-amber-300/90">2026-10-09</span> 起不再提供。</p>
             <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span>。</p>
             <p>· <span className="text-white/85 font-medium">gemini-2.5-flash</span>、<span className="text-white/85 font-medium">gemini-2.5-pro</span>：本平台已于 <span className="text-amber-300/90">2026-10-19</span> 下架。</p>

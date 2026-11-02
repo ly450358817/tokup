@@ -23,7 +23,6 @@ const MODELS = [
   { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol', provider: 'OpenAI', input: '¥45', output: '¥270', badge: 'New', note: '高效推理 Sol' },
   { id: 'openai/gpt-5.4', name: 'GPT-5.4', provider: 'OpenAI', input: '¥45', output: '¥202', badge: 'New', note: '新一代旗舰' },
   { id: 'openai/gpt-5-mini', name: 'GPT-5-mini', provider: 'OpenAI', input: '¥3.0', output: '¥19', badge: 'New', note: '轻量快速' },
-  { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'OpenAI', input: '¥2.0', output: '¥8.0', badge: 'New', note: '开源高性价比' },
   { id: 'anthropic/claude-fable-5', name: 'Claude Fable 5', provider: 'Anthropic', input: '¥135', output: '¥750', badge: 'New', note: '最新 Claude' },
   { id: 'claude-opus-5-5', name: 'Claude Opus 5.5', provider: 'Anthropic', input: '¥36', output: '¥180', badge: 'New', note: '最新旗舰 · 5.5 系列' },
   { id: 'claude-4.7-opus', name: 'Claude 4.7 Opus', provider: 'Anthropic', input: '¥45', output: '¥225', badge: 'New', note: '最新旗舰 Opus' },
@@ -181,7 +180,7 @@ export default function PricingPage() {
   const handlePurchase = async (planId: string) => {
     const plan = plans.find((x: any) => x.id === planId);
     const ok = window.confirm(
-      `开通「${plan?.label || planId}」\n\n请确认已知悉：每日免费额度仅限低价模型（DeepSeek V4 Flash / V3.2 等）；GPT-5.5 / Claude / Gemini 等旗舰模型不享受免费额度，仅享全模型余额消费 9 折。\n\n确定用余额开通？`
+      `开通「${plan?.label || planId}」\n\n请确认已知悉：每日免费额度仅限低价模型（DeepSeek V3.2 / Qwen3.8 Flash / GLM-5.3 Flash 等）；GPT-5.5 / Claude / Gemini 等旗舰模型不享受免费额度，仅享全模型余额消费 9 折。\n\n确定用余额开通？`
     );
     if (!ok) return;
     setBuying(planId);

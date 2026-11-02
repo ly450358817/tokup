@@ -64,7 +64,6 @@ MODEL_LABELS = {
     "claude-4.6-sonnet": "Claude 4.6 Sonnet",
     "openai/gpt-5.4": "GPT-5.4",
     "openai/gpt-5-mini": "GPT-5-mini",
-    "gpt-oss-120b": "GPT-OSS 120B",
 }
 
 
