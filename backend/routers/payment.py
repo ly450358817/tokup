@@ -433,6 +433,16 @@ async def payment_notify(request: Request, db: Session = Depends(get_db)):
 
         txn = db.query(Transaction).filter(Transaction.payment_id == xorpay_order_id).first()
         if txn and txn.status == "pending":
+            user = db.query(User).filter(User.id == txn.user_id).first()
+            if not user or not user.is_active:
+                import logging
+                logging.getLogger("tokup.payment").warning(
+                    "拒绝为停用账号补账: order=%s user=%s", xorpay_order_id, txn.user_id
+                )
+                txn.status = "failed"
+                txn.description = (txn.description or "") + " [blocked: inactive user at payment callback]"
+                db.commit()
+                return {"code": 1, "msg": "success"}
             # 实付金额校验：低于订单金额不补账（防低价支付骗 token），仅记录待人工处理
             try:
                 paid = float(pay_price)
@@ -446,11 +456,9 @@ async def payment_notify(request: Request, db: Session = Depends(get_db)):
                 )
                 return {"code": 1, "msg": "success"}
             txn.status = "completed"
-            user = db.query(User).filter(User.id == txn.user_id).first()
-            if user:
-                user.token_balance += txn.token_amount
-                user.total_recharged += txn.amount
-                user.updated_at = datetime.now(timezone.utc)
+            user.token_balance += txn.token_amount
+            user.total_recharged += txn.amount
+            user.updated_at = datetime.now(timezone.utc)
             db.commit()
         return {"code": 1, "msg": "success"}
 
@@ -471,12 +479,20 @@ async def payment_notify(request: Request, db: Session = Depends(get_db)):
     if order_id and (status in ("success", "1", "paid") or data.get("return_code") == "1"):
         txn = db.query(Transaction).filter(Transaction.payment_id == order_id).first()
         if txn and txn.status == "pending":
-            txn.status = "completed"
             user = db.query(User).filter(User.id == txn.user_id).first()
-            if user:
-                user.token_balance += txn.token_amount
-                user.total_recharged += txn.amount
-                user.updated_at = datetime.now(timezone.utc)
+            if not user or not user.is_active:
+                import logging
+                logging.getLogger("tokup.payment").warning(
+                    "拒绝为停用账号补账: order=%s user=%s", order_id, txn.user_id
+                )
+                txn.status = "failed"
+                txn.description = (txn.description or "") + " [blocked: inactive user at payment callback]"
+                db.commit()
+                return {"code": 1, "msg": "success"}
+            txn.status = "completed"
+            user.token_balance += txn.token_amount
+            user.total_recharged += txn.amount
+            user.updated_at = datetime.now(timezone.utc)
             db.commit()
             return {"code": 1, "msg": "success"}
 
@@ -568,5 +584,4 @@ def get_order_status(
         "method": txn.payment_method,
         "created_at": txn.created_at.isoformat(),
     }
-
 

@@ -27,6 +27,15 @@ ALGORITHM = "HS256"
 # ── Cloudflare Turnstile 人机验证 ──
 TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
 TURNSTILE_ENABLED = os.getenv("TURNSTILE_ENABLED", "true").lower() == "true"
+BLOCKED_EMAIL_DOMAINS = {
+    d.strip().lower()
+    for d in os.getenv(
+        "TOKUP_BLOCKED_EMAIL_DOMAINS",
+        "lnovic.com,ooynib.com,ruutukf.com,olipii.com,tanpony.com,gmeenramy.com,"
+        "mailinator.com,guerrillamail.com,temp-mail.org,10minutemail.com,yopmail.com",
+    ).split(",")
+    if d.strip()
+}
 
 
 def _verify_turnstile(token: str) -> bool:
@@ -121,6 +130,9 @@ def _validate_password(password: str):
 def _validate_email(email: str):
     if "@" not in email or "." not in email.split("@")[-1]:
         raise HTTPException(status_code=400, detail="邮箱格式不正确")
+    domain = email.rsplit("@", 1)[-1].strip().lower()
+    if domain in BLOCKED_EMAIL_DOMAINS:
+        raise HTTPException(status_code=400, detail="暂不支持该邮箱域名，请使用常用邮箱")
 
 
 
@@ -171,24 +183,23 @@ def get_current_user(token: HTTPAuthorizationCredentials = Depends(security), db
 
 @router.post("/register")
 def register(req: RegisterReq, request: Request, db: Session = Depends(get_db)):
-    _rate_limit("register:" + _get_client_ip(request))
+    client_ip = _get_client_ip(request)
+    _rate_limit("register:" + client_ip, max_attempts=5, window=60)
     # 轻量防刷（零依赖，不影响正常用户）：蜜罐 + 填表耗时检测
     if req.website:
         raise HTTPException(status_code=400, detail="请求无效")
     if req.form_started_at and time.time() - req.form_started_at < 2:
         raise HTTPException(status_code=400, detail="提交太快，请稍后再试")
-    # 数据库级限流：该 IP 24 小时内已注册 ≥10 个则拒绝（无条件生效，跨 worker/重启可靠）
-    client_ip = _get_client_ip(request)
+    # 数据库级限流：该 IP 24 小时内最多注册 3 个（无条件生效，跨 worker/重启可靠）
     _recent = db.query(func.count(User.id)).filter(
         User.ip_address == client_ip,
         User.created_at >= datetime.now(timezone.utc) - timedelta(hours=24),
     ).scalar() or 0
-    if _recent >= 10:
+    if _recent >= 3:
         raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
-    # Turnstile：配置了密钥才校验；未配置不硬卡真实用户（IP 上限已兜底）
-    if req.turnstile_token:
-        if TURNSTILE_ENABLED and TURNSTILE_SECRET_KEY and not _verify_turnstile(req.turnstile_token):
-            raise HTTPException(status_code=400, detail="人机验证失败，请重试")
+    # Turnstile：开启且配置密钥时必须校验；缺失 token 不能绕过
+    if TURNSTILE_ENABLED and TURNSTILE_SECRET_KEY and not _verify_turnstile(req.turnstile_token):
+        raise HTTPException(status_code=400, detail="人机验证失败，请重试")
     _validate_password(req.password)
     _validate_email(req.email)
     if db.query(User).filter(User.email == req.email).first():
