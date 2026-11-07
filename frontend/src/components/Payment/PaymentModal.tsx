@@ -31,17 +31,20 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
   const [paid, setPaid] = useState(false);
   const [qrExpired, setQrExpired] = useState(false);
   const [expireLeft, setExpireLeft] = useState(QR_TTL);
-  const [paymentPaused, setPaymentPaused] = useState(false);
-  const [pauseMessage, setPauseMessage] = useState('微信支付通道维护中，暂时无法充值；已有余额和 API 调用不受影响。');
+  const [wechatPaused, setWechatPaused] = useState(false);
+  const [pauseMessage, setPauseMessage] = useState('微信支付通道维护中，仍可使用支付宝充值；已有余额和 API 调用不受影响。');
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const expireRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const amountNum = Number(amount) || 0;
+  const payBlocked = method === 'wechat' && wechatPaused;
 
   useEffect(() => {
     paymentApi.packages()
       .then((data) => {
-        setPaymentPaused(Boolean(data?.paused));
+        const paused = Boolean(data?.wechat_paused);
+        setWechatPaused(paused);
+        if (paused) setMethod('alipay');
         if (data?.pause_message) setPauseMessage(data.pause_message);
       })
       .catch(() => { /* 后端仍会再次拦截，前端拉取失败不影响已有订单查询 */ });
@@ -113,7 +116,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
     if (pollRef.current) clearTimeout(pollRef.current);
     if (expireRef.current) clearInterval(expireRef.current);
     const amt = Number(amount) || 0;
-    if (paymentPaused) {
+    if (payBlocked) {
       setError(pauseMessage);
       setPaying(false);
       return;
@@ -185,7 +188,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
             </div>
           ) : (
             <>
-              {paymentPaused && (
+              {wechatPaused && (
                 <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-[12px] leading-relaxed text-amber-200/90">
                   {pauseMessage}
                 </div>
@@ -227,9 +230,9 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                 <p className="text-[11px] text-white/30 tracking-[0.1em] uppercase mb-3">支付方式</p>
                 <div className="flex gap-3">
                   <div
-                    onClick={() => { if (!paymentPaused) setMethod('wechat'); }}
+                    onClick={() => { if (!wechatPaused) setMethod('wechat'); }}
                     className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm cursor-pointer select-none transition-all ${
-                      method === 'wechat' && !paymentPaused
+                      method === 'wechat' && !wechatPaused
                         ? 'border border-emerald-500/40 bg-emerald-500/5 text-white'
                         : 'border border-white/[0.06] text-white/40 cursor-not-allowed'
                     }`}
@@ -238,6 +241,21 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                       <img src="/assets/wechatpay.jpeg" className="w-[24px] h-[24px] object-contain" alt="WeChat Pay" style={{mixBlendMode:"multiply"}} />
                     </span>
                     微信支付
+                  </div>
+                  <div
+                    onClick={() => setMethod('alipay')}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm cursor-pointer select-none transition-all ${
+                      method === 'alipay'
+                        ? 'border border-[#1677FF]/60 bg-[#1677FF]/10 text-white'
+                        : 'border border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className="w-[28px] h-[28px] rounded-lg bg-[#1677FF] flex items-center justify-center shrink-0">
+                      <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                        <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial, sans-serif">支</text>
+                      </svg>
+                    </span>
+                    支付宝
                   </div>
                 </div>
               </div>
@@ -252,10 +270,10 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                       <p className="text-[12px] text-white/40 mt-3">二维码已失效，请重新生成</p>
                       <button
                         onClick={handlePay}
-                        disabled={paying || paymentPaused}
+                        disabled={paying || payBlocked}
                         className="mt-3 px-6 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                       >
-                        {paying ? '生成中...' : paymentPaused ? '充值暂停' : '重新生成二维码'}
+                        {paying ? '生成中...' : payBlocked ? '微信支付暂停' : '重新生成二维码'}
                       </button>
                     </>
                   ) : (
@@ -281,7 +299,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
               ) : (
                 <button
                   onClick={handlePay}
-                  disabled={paying || paymentPaused}
+                  disabled={paying || payBlocked}
                   className="w-full py-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                 >
                   {paying ? (
@@ -289,7 +307,7 @@ export default function PaymentModal({ onClose, onSuccess, onError }: Props) {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       处理中...
                     </span>
-                  ) : paymentPaused ? '充值暂停' : `支付 ¥${amountNum.toFixed(2)}`}
+                  ) : payBlocked ? '微信支付暂停' : `支付 ¥${amountNum.toFixed(2)}`}
                 </button>
               )}
 

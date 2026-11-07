@@ -32,10 +32,10 @@ MAX_RECHARGE_CNY = float(os.getenv("MAX_RECHARGE_CNY", "5000"))
 
 # ── 支付渠道配置（环境变量）──
 PAY_CHANNEL = os.getenv("PAY_CHANNEL", "mock")  # mock | manual | payjs | custom
-PAYMENTS_PAUSED = os.getenv("TOKUP_PAYMENT_PAUSED", "false").lower() == "true"
+WECHAT_PAYMENTS_PAUSED = os.getenv("TOKUP_WECHAT_PAYMENT_PAUSED", "false").lower() == "true"
 PAYMENT_PAUSE_MESSAGE = os.getenv(
-    "TOKUP_PAYMENT_PAUSE_MESSAGE",
-    "微信支付通道维护中，暂时无法充值；已有余额和 API 调用不受影响。",
+    "TOKUP_WECHAT_PAYMENT_PAUSE_MESSAGE",
+    "微信支付通道维护中，仍可使用支付宝充值；已有余额和 API 调用不受影响。",
 )
 
 # 手动收款（最稳定，零依赖）
@@ -187,9 +187,10 @@ def get_packages():
     return {
         "packages": PACKAGES,
         "channel": PAY_CHANNEL,
-        "paused": PAYMENTS_PAUSED,
+        "paused": False,
+        "wechat_paused": WECHAT_PAYMENTS_PAUSED,
         "pause_message": PAYMENT_PAUSE_MESSAGE,
-        "enabled_methods": [] if PAYMENTS_PAUSED else ["wechat"],
+        "enabled_methods": ["alipay"] if WECHAT_PAYMENTS_PAUSED else ["wechat", "alipay"],
     }
 
 
@@ -214,14 +215,15 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
         label = pkg["label"]
         desc = f"{pkg['label']} ¥{pkg['price']:g}"
 
-    if PAYMENTS_PAUSED:
+    if req.payment_method == "wechat" and WECHAT_PAYMENTS_PAUSED:
         return {"success": False, "paused": True, "message": PAYMENT_PAUSE_MESSAGE}
-    if req.payment_method != "wechat":
-        return {"success": False, "message": "支付宝暂未开放，请使用微信支付"}
+    if req.payment_method not in ("wechat", "alipay"):
+        return {"success": False, "message": "不支持的支付方式"}
 
     # XorPay 支付宝个人商户单笔限额：超限直接拒绝，避免生成无法支付的二维码
     if PAY_CHANNEL == "xorpay" and req.payment_method == "alipay" and price > XORPAY_ALIPAY_MAX:
-        return {"success": False, "message": f"支付宝单笔限额 ¥{XORPAY_ALIPAY_MAX:g}，请分笔充值或使用微信支付"}
+        extra = "" if WECHAT_PAYMENTS_PAUSED else "或使用微信支付"
+        return {"success": False, "message": f"支付宝单笔限额 ¥{XORPAY_ALIPAY_MAX:g}，请分笔充值{extra}"}
 
     order_id = f"TK{uuid.uuid4().hex[:12].upper()}"
 
