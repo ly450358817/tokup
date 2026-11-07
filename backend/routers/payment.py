@@ -32,6 +32,11 @@ MAX_RECHARGE_CNY = float(os.getenv("MAX_RECHARGE_CNY", "5000"))
 
 # ── 支付渠道配置（环境变量）──
 PAY_CHANNEL = os.getenv("PAY_CHANNEL", "mock")  # mock | manual | payjs | custom
+PAYMENTS_PAUSED = os.getenv("TOKUP_PAYMENT_PAUSED", "false").lower() == "true"
+PAYMENT_PAUSE_MESSAGE = os.getenv(
+    "TOKUP_PAYMENT_PAUSE_MESSAGE",
+    "微信支付通道维护中，暂时无法充值；已有余额和 API 调用不受影响。",
+)
 
 # 手动收款（最稳定，零依赖）
 MANUAL_ALIPAY_QR = os.getenv("MANUAL_ALIPAY_QR", "")    # 你的个人支付宝收款码图片URL
@@ -179,7 +184,13 @@ async def upload_qr(
 
 @router.get("/packages")
 def get_packages():
-    return {"packages": PACKAGES, "channel": PAY_CHANNEL}
+    return {
+        "packages": PACKAGES,
+        "channel": PAY_CHANNEL,
+        "paused": PAYMENTS_PAUSED,
+        "pause_message": PAYMENT_PAUSE_MESSAGE,
+        "enabled_methods": [] if PAYMENTS_PAUSED else ["wechat"],
+    }
 
 
 @router.post("/recharge")
@@ -202,6 +213,11 @@ async def recharge(req: RechargeReq, user: User = Depends(get_current_user), db:
         tokens = pkg["tokens"]
         label = pkg["label"]
         desc = f"{pkg['label']} ¥{pkg['price']:g}"
+
+    if PAYMENTS_PAUSED:
+        return {"success": False, "paused": True, "message": PAYMENT_PAUSE_MESSAGE}
+    if req.payment_method != "wechat":
+        return {"success": False, "message": "支付宝暂未开放，请使用微信支付"}
 
     # XorPay 支付宝个人商户单笔限额：超限直接拒绝，避免生成无法支付的二维码
     if PAY_CHANNEL == "xorpay" and req.payment_method == "alipay" and price > XORPAY_ALIPAY_MAX:
@@ -584,4 +600,3 @@ def get_order_status(
         "method": txn.payment_method,
         "created_at": txn.created_at.isoformat(),
     }
-
