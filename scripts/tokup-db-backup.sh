@@ -6,6 +6,13 @@
 BK_DIR=/opt/tokup/db_backups
 LOG=/var/log/tokup-health.log
 mkdir -p "$BK_DIR"
+# 低磁盘保护：剩余空间低于 5GB 时不再生成新的 666MB 数据库备份。
+# 保留最近一份有效备份，避免备份动作本身把生产盘写满。
+FREE_KB=$(df -Pk "$BK_DIR" | awk 'NR==2 {print $4}')
+if [ "${FREE_KB:-0}" -lt 5242880 ]; then
+  echo "$(date "+%Y-%m-%d %H:%M:%S") DB_BACKUP_SKIP_LOW_DISK free_kb=$FREE_KB" >> "$LOG"
+  exit 0
+fi
 TS=$(date "+%Y%m%d_%H%M%S")
 OUT="$BK_DIR/tokup_$TS.db"
 # 一致性备份（sqlite3 .backup 支持并发读）；失败重试，最多 3 次
@@ -29,6 +36,6 @@ if ! sqlite3 "$OUT" "PRAGMA integrity_check;" 2>/dev/null | grep -q "^ok$"; then
 fi
 # 清理历史遗留的空/损坏备份（如 9/11 留下的 0 字节文件）
 find "$BK_DIR" -maxdepth 1 -name 'tokup_*.db' -size 0 -delete 2>/dev/null
-# 只保留最近 14 份有效备份
-ls -1t "$BK_DIR"/tokup_*.db 2>/dev/null | tail -n +15 | xargs -r rm -f
+# 只保留最近 7 份有效每日备份；手工取证备份不参与轮换
+ls -1t "$BK_DIR"/tokup_20*.db 2>/dev/null | tail -n +8 | xargs -r rm -f
 echo "$(date "+%Y-%m-%d %H:%M:%S") DB_BACKUP_OK $TS" >> "$LOG"
