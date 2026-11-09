@@ -180,7 +180,7 @@ export default function PricingPage() {
   const handlePurchase = async (planId: string) => {
     const plan = plans.find((x: any) => x.id === planId);
     const ok = window.confirm(
-      `开通「${plan?.label || planId}」\n\n请确认已知悉：每日免费额度仅限低价模型（DeepSeek V3.2 / Qwen3.8 Flash / GLM-5.3 Flash 等）；GPT-5.5 / Claude / Gemini 等旗舰模型不享受免费额度，仅享全模型余额消费 9 折。\n\n确定用余额开通？`
+      `开通「${plan?.label || planId}」\n\n请确认已知悉：每日免费额度仅限低价模型（DeepSeek V3.2 / GLM-5.3 Flash 等）；GPT-5.5 / Claude / Gemini 等旗舰模型不享受免费额度，仅享全模型余额消费 9 折。\n\n确定用余额开通？`
     );
     if (!ok) return;
     setBuying(planId);
@@ -272,7 +272,7 @@ export default function PricingPage() {
             </div>
           </div>
           <div className="rounded-xl bg-amber-500/10 border border-amber-500/25 px-3 py-2.5 text-[12px] text-amber-200/95 leading-relaxed">
-            <span className="text-amber-300 font-semibold">⚠️ 免费额度仅限低价模型：</span>当前 {quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V4 Flash / DeepSeek V3.2'}；GPT-5.5 / Claude / Gemini 等旗舰模型<span className="text-white font-medium">不享受免费额度</span>，仅享全模型余额消费 9 折。
+            <span className="text-amber-300 font-semibold">⚠️ 免费额度仅限低价模型：</span>当前 {quotaModels.length > 0 ? quotaModels.join(' / ') : 'DeepSeek V3.2 / GLM-5.3 Flash'}；GPT-5.5 / Claude / Gemini 等旗舰模型<span className="text-white font-medium">不享受免费额度</span>，仅享全模型余额消费 9 折。
           </div>
 
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-[12px] text-emerald-200/90 leading-relaxed">
