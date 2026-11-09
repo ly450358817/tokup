@@ -34,6 +34,7 @@ const MODELS = [
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', provider: 'DeepSeek', input: '¥2.8', output: '¥10.8', badge: '兼容', note: '兼容版本 · 当前仍可用' },
   { id: 'deepseek/deepseek-v4-flash-20260731', name: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', badge: 'New', note: '稳定版本 · 推荐迁移' },
   { id: 'deepseek/deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', badge: 'New', note: '新一代高速 · 推荐迁移' },
+  { id: 'deepseek/deepseek-v4.1-flash-1017', name: 'DeepSeek V4.1 Flash 1017', provider: 'DeepSeek', input: '¥4.0', output: '¥12.0', badge: 'New', note: '稳定版本 · 图文理解' },
   { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', input: '¥3.0', output: '¥4.0', badge: 'New', note: '达GPT-5水平' },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', input: '¥3.0', output: '¥11.0', badge: '10/9下线', note: '旧版兼容 · 请尽快迁移' },
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', input: '¥6.0', output: '¥21.0', badge: '', note: '深度推理' },

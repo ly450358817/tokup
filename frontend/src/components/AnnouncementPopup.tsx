@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // 公告版本号：内容变更时必须递增，否则已点击「我知道了」的用户 5 天内看不到新版
-const VERSION = 'v32';
+const VERSION = 'v33';
 
 function safeGet(store: Storage, key: string): string | null {
   try {
@@ -65,35 +65,16 @@ export default function AnnouncementPopup() {
           <p>尊敬的用户，您好：</p>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">① Kimi K3.1 Pro 已上线</p>
-            <p>模型 ID：<span className="text-emerald-300/90">moonshotai/kimi-k3.1-pro</span></p>
-            <p>价格：¥17 / ¥89（每百万输入 / 输出 Token）</p>
-            <p>定位：新一代专业旗舰，适合复杂推理与长文本任务</p>
+            <p className="text-white/85 font-medium">① DeepSeek V4.1 Flash 1017 已上线</p>
+            <p>模型 ID：<span className="text-emerald-300/90">deepseek/deepseek-v4.1-flash-1017</span></p>
+            <p>价格：¥4 / ¥12（每百万输入 / 输出 Token）</p>
+            <p>能力：1M 上下文、最高 384K 输出，支持图像理解、工具调用与 JSON 输出</p>
           </div>
 
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">② Kimi K3.1 Pro Highspeed 已上线</p>
-            <p>模型 ID：<span className="text-emerald-300/90">moonshotai/kimi-k3.1-pro-highspeed</span></p>
-            <p>价格：¥34 / ¥177（每百万输入 / 输出 Token）</p>
-            <p>定位：专业旗舰高速版，适合高并发与低延迟场景</p>
-          </div>
-
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">③ DeepSeek V4 Flash 兼容版价格校准</p>
-            <p>模型 ID：<span className="text-emerald-300/90">deepseek/deepseek-v4-flash</span></p>
-            <p>价格调整为 ¥2.8 / ¥10.8（每百万输入 / 输出 Token）</p>
-            <p>原因：上游峰时成本已升至 ¥2 / ¥8，旧售价会倒挂</p>
-          </div>
-
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 space-y-1.5 text-[12px]">
-            <p className="text-white/85 font-medium">④ 模型状态说明</p>
-            <p>· <span className="text-white/85 font-medium">gpt-oss-120b</span>：七牛已于 <span className="text-amber-300/90">2026-10-29</span> 正式下线，本平台已同步下架。</p>
-            <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v3.2</span>、<span className="text-white/85 font-medium">qwen/qwen3.8-flash-next</span> 或 <span className="text-white/85 font-medium">glm-5.3-flash</span>。</p>
-            <p>· <span className="text-white/85 font-medium">deepseek-v3</span>：本平台将于 <span className="text-amber-300/90">2026-10-09</span> 起不再提供。</p>
-            <p>　建议迁移至 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-20260731</span> 或 <span className="text-white/85 font-medium">deepseek/deepseek-v4.1-flash</span>。</p>
-            <p>· <span className="text-white/85 font-medium">gemini-2.5-flash</span>、<span className="text-white/85 font-medium">gemini-2.5-pro</span>：本平台已于 <span className="text-amber-300/90">2026-10-19</span> 下架。</p>
-            <p>　建议迁移至 <span className="text-white/85 font-medium">gemini-3.5-flash</span> 或 <span className="text-white/85 font-medium">gemini-3.5-flash-lite</span>（本平台已上线），或 <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>（¥2.8 / ¥10.8）。</p>
-            <p>· <span className="text-white/85 font-medium">deepseek/deepseek-v4-flash</span>、<span className="text-white/85 font-medium">deepseek/deepseek-v4-flash-vision-exp</span>：原计划 2026-10-25 退役，10/26 上游实测仍可调用，本平台继续提供；如后续退役将提前通知。</p>
+            <p className="text-white/85 font-medium">② 模型状态说明</p>
+            <p>本周无新增退役模型，现有模型与价格继续有效。</p>
+            <p>如上游发布退役或调价通知，我们会先完成实测与成本核验，再同步公告。</p>
             <p>以上价格单位均为 ¥ / 百万 Token（输入 / 输出）。</p>
           </div>
 

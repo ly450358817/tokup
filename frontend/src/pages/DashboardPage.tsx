@@ -36,6 +36,7 @@ const DEFAULT_MODELS = [
   { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek', cost: '¥2.8/1M input · 当前仍可用' },
   { id: 'deepseek/deepseek-v4-flash-20260731', label: 'DeepSeek V4 Flash 0731', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash', provider: 'DeepSeek', cost: '¥4.0/1M input' },
+  { id: 'deepseek/deepseek-v4.1-flash-1017', label: 'DeepSeek V4.1 Flash 1017', provider: 'DeepSeek', cost: '¥4.0/1M input' },
   { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2', provider: 'DeepSeek', cost: '¥3.0/1M input' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', provider: 'DeepSeek', cost: '¥3.0/1M input · 10/9下线' },
   { id: 'deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek', cost: '¥6.0/1M input' },

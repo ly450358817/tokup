@@ -39,6 +39,7 @@ MODEL_LABELS = {
     "deepseek-r1": "DeepSeek R1",
     "deepseek/deepseek-v4-pro": "DeepSeek V4 Pro",
     "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
+    "deepseek/deepseek-v4.1-flash-1017": "DeepSeek V4.1 Flash 1017",
     "deepseek/deepseek-v3.2": "DeepSeek V3.2",
     "qwen3-max": "Qwen3 Max",
     "qwen/qwen3.7-max": "Qwen3.7 Max",

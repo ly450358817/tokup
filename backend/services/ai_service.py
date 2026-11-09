@@ -44,6 +44,7 @@ MODEL_ROUTES = {
     "deepseek/deepseek-v4-flash": ("deepseek", DEEPSEEK_ENDPOINT),
     "deepseek/deepseek-v4-flash-20260731": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v4.1-flash": ("qiniu", QINIU_ENDPOINT),
+    "deepseek/deepseek-v4.1-flash-1017": ("qiniu", QINIU_ENDPOINT),
     "deepseek/deepseek-v3.2": ("qiniu", QINIU_ENDPOINT),
     "deepseek-v3": ("qiniu", QINIU_ENDPOINT),
     "deepseek-r1": ("qiniu", QINIU_ENDPOINT),
@@ -115,6 +116,7 @@ MODEL_COST = {
     "deepseek/deepseek-v4-flash": (2.8, 10.8),  # 2026-11-02 七牛旧别名 disabled，改官方直连；按成本 ¥2/¥8 的 ≥1.3x 定价
     "deepseek/deepseek-v4-flash-20260731": (4.0, 12.0),  # 七牛稳定版高峰成本 ¥2/¥8，卖价 ≥1.3x 且与 v4.1 对齐
     "deepseek/deepseek-v4.1-flash": (4.0, 12.0),   # 新模型成本未知，按 flash 高峰 ¥3/¥9 ×1.33 宁高勿亏；待账单实测后校准
+    "deepseek/deepseek-v4.1-flash-1017": (4.0, 12.0),  # 广场峰时成本 ¥2/¥8，售价约 2.0x/1.5x；带 1M 上下文与图像理解
     "deepseek/deepseek-v4-flash-vision-exp": (4.0, 12.0),   # 官方高峰 ¥3/¥9 ×1.33 统一按高峰价（上游未公开价，待账单验证）
     "deepseek/deepseek-v3.2": (3.0, 4.0),       # 上游 ¥2/¥3
     "glm-5.2": (11.0, 37.0),                    # 上游 ¥8/¥28
@@ -186,6 +188,7 @@ MODEL_META = {
     "deepseek/deepseek-v4-flash": {"name": "DeepSeek V4 Flash", "provider": "DeepSeek", "note": "兼容版本 · 当前仍可用", "badge": "兼容"},
     "deepseek/deepseek-v4-flash-20260731": {"name": "DeepSeek V4 Flash 0731", "provider": "DeepSeek", "note": "稳定版本 · 推荐迁移", "badge": "New"},
     "deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash", "provider": "DeepSeek", "note": "新一代高速 · 推荐迁移", "badge": "New"},
+    "deepseek/deepseek-v4.1-flash-1017": {"name": "DeepSeek V4.1 Flash 1017", "provider": "DeepSeek", "note": "稳定版本 · 图文理解", "badge": "New"},
     "deepseek/deepseek-v4-flash-vision-exp": {"name": "DeepSeek V4 Flash Vision", "provider": "DeepSeek", "note": "视觉理解 · 持续可用", "badge": "Vision"},
     "deepseek-v3": {"name": "DeepSeek V3", "provider": "DeepSeek", "note": "旧版兼容 · 10月9日退役", "badge": "10/9下线"},
     "deepseek/deepseek-v3.2": {"name": "DeepSeek V3.2", "provider": "DeepSeek", "note": "达 GPT-5 水平", "badge": "New"},
