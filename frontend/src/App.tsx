@@ -24,7 +24,6 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AnnouncementPopup from './components/AnnouncementPopup';
 import SubscriptionReminder from './components/SubscriptionReminder';
-import TermsNoticePopup from './components/TermsNoticePopup';
 import AdminConversationsPage from './pages/AdminConversationsPage';
 import ModelAnalyticsPage from './pages/ModelAnalyticsPage';
 
@@ -100,7 +99,6 @@ export default function App() {
             <ThemeProvider>
               <AnnouncementPopup />
               <SubscriptionReminder />
-              <TermsNoticePopup />
               <RechargeProvider>
               <AppRoutes />
             </RechargeProvider>
